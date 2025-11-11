@@ -1,0 +1,35 @@
+version: "3.8"
+
+services:
+  # Database services
+  postgres:
+    image: postgres:latest
+    container_name: gameService
+    restart: always
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: mydb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - backend_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    labels:
+      app.component: "database"
+      app.description: "PostgreSQL database for GameHub"
+
+volumes:
+  postgres_data:
+    name: gamehub_postgres_data
+
+networks:
+  backend_network:
+    name: gamehub_backend
+    driver: bridge
