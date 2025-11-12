@@ -1,0 +1,60 @@
+syntax = "proto3";
+
+package nekzabirov.igambling.v1;
+
+option java_package = "com.nekzabirov.igambling.proto.service";
+option java_multiple_files = true;
+
+import "dto/game_variant.dto.proto";
+import "dto/provider.dto.proto";
+import "dto/game.dto.proto";
+
+service Sync {
+  rpc AssignGameVariant(AssignGameVariantCommand) returns (EmptyResult);
+
+  rpc AssignProvider(AssignProviderCommand) returns (EmptyResult);
+
+  rpc ListVariants(ListVariantsCommand) returns (ListVariantResult);
+}
+
+message EmptyResult {}
+
+message AssignGameVariantCommand {
+  string variant_id = 1;
+
+  string game_id = 2;
+}
+
+message AssignProviderCommand {
+  string provider_id = 1;
+
+  string partner_identity = 2;
+
+  int32 partner_type = 3;
+}
+
+message ListVariantsCommand {
+  string query = 1;
+
+  optional int32 partner_type = 2;
+
+  optional string game_identity = 3;
+
+  int32 page_number = 4;
+
+  int32 page_size = 5;
+}
+
+message ListVariantResult {
+  message ItemDto {
+    GameVariantDto variant = 1;
+
+    GameDto game = 2;
+
+    ProviderDto provider = 3;
+  }
+
+  repeated ItemDto items = 1;
+
+  int32 total_page = 2;
+}

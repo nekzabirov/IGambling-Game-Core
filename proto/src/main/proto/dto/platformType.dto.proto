@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package nekzabirov.igambling.v1;
+
+option java_package = "com.nekzabirov.igambling.proto.dto";
+option java_multiple_files = true;
+
+enum PlatformType {
+  PLATFORM_TYPE_DESKTOP = 0;
+  PLATFORM_TYPE_MOBILE = 1;
+  PLATFORM_TYPE_DOWNLOAD = 2;
+}

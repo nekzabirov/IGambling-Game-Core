@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package nekzabirov.igambling.v1;
+
+import "google/protobuf/empty.proto";
+
+option java_package = "com.nekzabirov.igambling.proto.dto";
+option java_multiple_files = true;
+
+message ProviderDto {
+  string id = 1;
+
+  string identity = 2;
+
+  string name = 3;
+
+  int32 order = 4;
+
+  string aggregatorId = 5;
+
+  map<string, string> images = 6;
+
+  bool active = 7;
+}

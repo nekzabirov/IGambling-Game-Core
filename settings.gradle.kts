@@ -1,9 +1,8 @@
 rootProject.name = "IGambling"
 
-//include(":shared")
-include(":aggregators")
-include(":catalog")
+include(":shared")
 include(":syncGameJob")
+include(":proto")
 
 dependencyResolutionManagement {
     repositories {

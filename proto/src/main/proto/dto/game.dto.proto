@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package nekzabirov.igambling.v1;
+
+import "google/protobuf/empty.proto";
+
+option java_package = "com.nekzabirov.igambling.proto.dto";
+option java_multiple_files = true;
+
+message GameDto {
+  string id = 1;
+
+  string identity = 2;
+
+  string name = 3;
+
+  string provider_id = 4;
+
+  map<string, string> images = 5;
+
+  bool bonus_bet_enable = 6;
+
+  bool bonus_wagering_enable = 7;
+
+  repeated string tags = 8;
+
+  bool active = 9;
+}

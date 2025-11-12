@@ -1,7 +1,5 @@
-import com.nekzabirov.catalog.CatalogPlugin
-import com.nekzabirov.catalog.usecase.AddAggregatorUsecase
-import com.nekzabirov.catalog.usecase.ListAllActiveAggregatorUsecase
-import com.nekzabirov.catalog.usecase.SyncGameUsecase
+import app.usecase.ListAllActiveAggregatorUsecase
+import app.usecase.SyncGameUsecase
 import io.ktor.server.application.*
 import io.ktor.server.cio.*
 import io.ktor.server.engine.*
