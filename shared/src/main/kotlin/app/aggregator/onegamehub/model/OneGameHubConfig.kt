@@ -1,6 +1,6 @@
 package app.aggregator.onegamehub.model
 
-import domain.adapter.aggregator.IAggregatorConfig
+import app.aggregator.base.IAggregatorConfig
 
 class OneGameHubConfig : IAggregatorConfig {
     var salt: String = ""

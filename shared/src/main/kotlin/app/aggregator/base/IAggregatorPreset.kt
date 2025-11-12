@@ -1,4 +1,4 @@
-package domain.adapter.aggregator
+package app.aggregator.base
 
 interface IAggregatorPreset {
     val quantity: Int

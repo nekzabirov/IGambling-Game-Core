@@ -1,6 +1,6 @@
 package app.aggregator.onegamehub.model
 
-import domain.adapter.aggregator.IAggregatorPreset
+import app.aggregator.base.IAggregatorPreset
 
 data class OneGameHubPreset(
     override var quantity: Int,

@@ -2,8 +2,8 @@ package app.aggregator
 
 import app.aggregator.onegamehub.OneGameHubAdapter
 import app.aggregator.onegamehub.model.OneGameHubConfig
-import domain.adapter.aggregator.IAggregatorAdapter
-import domain.adapter.aggregator.IAggregatorConfig
+import app.aggregator.base.IAggregatorAdapter
+import app.aggregator.base.IAggregatorConfig
 import domain.value.Aggregator
 
 object AggregatorFabric {

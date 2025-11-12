@@ -1,8 +1,8 @@
 import app.aggregator.onegamehub.OneGameHubAdapter
 import app.aggregator.onegamehub.model.OneGameHubConfig
 import app.aggregator.onegamehub.model.OneGameHubPreset
-import domain.adapter.aggregator.command.CreateFreenspinCommand
-import domain.adapter.aggregator.command.CreateLaunchUrlCommand
+import app.aggregator.base.command.CreateFreenspinCommand
+import app.aggregator.base.command.CreateLaunchUrlCommand
 import domain.value.Currency
 import domain.value.Locale
 import domain.value.Platform

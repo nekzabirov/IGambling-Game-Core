@@ -1,6 +1,6 @@
-package domain.adapter.aggregator.command
+package app.aggregator.base.command
 
-import domain.adapter.aggregator.IAggregatorPreset
+import app.aggregator.base.IAggregatorPreset
 import domain.value.Currency
 import kotlinx.datetime.LocalDateTime
 

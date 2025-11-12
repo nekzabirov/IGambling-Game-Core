@@ -1,18 +1,15 @@
 package app.aggregator.onegamehub
 
-import app.aggregator.onegamehub.dto.CancelFreespinDto
 import app.aggregator.onegamehub.dto.CreateFreespinDto
-import app.aggregator.onegamehub.dto.GameDto
 import app.aggregator.onegamehub.dto.GameUrlDto
-import app.aggregator.onegamehub.dto.ResponseDto
 import app.aggregator.onegamehub.model.OneGameHubConfig
 import app.aggregator.onegamehub.model.OneGameHubPreset
 import core.error.InvalidatePresetError
-import domain.adapter.aggregator.IAggregatorAdapter
-import domain.adapter.aggregator.IAggregatorPreset
-import domain.adapter.aggregator.command.CancelFreespinCommand
-import domain.adapter.aggregator.command.CreateFreenspinCommand
-import domain.adapter.aggregator.command.CreateLaunchUrlCommand
+import app.aggregator.base.IAggregatorAdapter
+import app.aggregator.base.IAggregatorPreset
+import app.aggregator.base.command.CancelFreespinCommand
+import app.aggregator.base.command.CreateFreenspinCommand
+import app.aggregator.base.command.CreateLaunchUrlCommand
 import domain.model.AggregatorGame
 import domain.value.Aggregator
 import domain.value.Platform

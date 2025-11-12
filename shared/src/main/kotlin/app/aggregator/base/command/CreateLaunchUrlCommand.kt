@@ -1,4 +1,4 @@
-package domain.adapter.aggregator.command
+package app.aggregator.base.command
 
 import domain.value.Currency
 import domain.value.Locale
