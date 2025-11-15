@@ -8,12 +8,14 @@ import io.ktor.server.application.Application
 import org.koin.dsl.module
 import usecase.AddCollectionUsecase
 import usecase.AddGameCollectionUsecase
+import usecase.AddGameFavouriteUsecase
 import usecase.AddGameTagUsecase
 import usecase.AssignProviderToAggregatorUsecase
 import usecase.ChangeGameOrderUsecase
 import usecase.ListGameUsecase
 import usecase.ProviderListUsecase
 import usecase.RemoveGameCollectionUsecase
+import usecase.RemoveGameFavouriteUsecase
 import usecase.RemoveGameTagUsecase
 import usecase.UpdateCollectionUsecase
 import usecase.UpdateGameUsecase
@@ -39,5 +41,7 @@ val Application.sharedModule
         factory { UpdateGameUsecase() }
         factory { AddGameTagUsecase() }
         factory { RemoveGameTagUsecase() }
+        factory { AddGameFavouriteUsecase() }
+        factory { RemoveGameFavouriteUsecase() }
         factory { ListGameUsecase() }
     }

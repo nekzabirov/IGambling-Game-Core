@@ -1,6 +1,7 @@
 package service
 
 import com.nekzabirov.igambling.proto.dto.EmptyResult
+import com.nekzabirov.igambling.proto.service.GameFavouriteCommand
 import com.nekzabirov.igambling.proto.service.GameGrpcKt
 import com.nekzabirov.igambling.proto.service.GameTagCommand
 import com.nekzabirov.igambling.proto.service.ListGameCommand
@@ -16,8 +17,10 @@ import mapper.toGameVariantProto
 import mapper.toPlatform
 import mapper.toProviderProto
 import org.koin.ktor.ext.get
+import usecase.AddGameFavouriteUsecase
 import usecase.AddGameTagUsecase
 import usecase.ListGameUsecase
+import usecase.RemoveGameFavouriteUsecase
 import usecase.RemoveGameTagUsecase
 import usecase.UpdateGameUsecase
 
@@ -26,6 +29,8 @@ class GameServiceImpl(application: Application) : GameGrpcKt.GameCoroutineImplBa
     private val updateGameUsecase = application.get<UpdateGameUsecase>()
     private val addGameTagUsecase = application.get<AddGameTagUsecase>()
     private val removeGameTagUsecase = application.get<RemoveGameTagUsecase>()
+    private val addGameFavouriteUsecase = application.get<AddGameFavouriteUsecase>()
+    private val removeGameFavouriteUsecase = application.get<RemoveGameFavouriteUsecase>()
 
     override suspend fun list(request: ListGameCommand): ListGameResult =
         listGameUsecase(pageable = Pageable(page = request.pageNumber, size = request.pageSize)) {
@@ -119,6 +124,16 @@ class GameServiceImpl(application: Application) : GameGrpcKt.GameCoroutineImplBa
 
     override suspend fun removeTag(request: GameTagCommand): EmptyResult =
         removeGameTagUsecase(identity = request.identity, tag = request.tag)
+            .map { EmptyResult.getDefaultInstance() }
+            .getOrElse { throw StatusException(Status.INVALID_ARGUMENT.withDescription(it.message)) }
+
+    override suspend fun addFavourite(request: GameFavouriteCommand): EmptyResult =
+        addGameFavouriteUsecase(gameIdentity = request.gameIdentity, playerId = request.playerId)
+            .map { EmptyResult.getDefaultInstance() }
+            .getOrElse { throw StatusException(Status.INVALID_ARGUMENT.withDescription(it.message)) }
+
+    override suspend fun removeFavourite(request: GameFavouriteCommand): EmptyResult =
+        removeGameFavouriteUsecase(gameIdentity = request.gameIdentity, playerId = request.playerId)
             .map { EmptyResult.getDefaultInstance() }
             .getOrElse { throw StatusException(Status.INVALID_ARGUMENT.withDescription(it.message)) }
 }

@@ -98,7 +98,7 @@ class ListGameUsecase {
 
             val joins = GameTable
                 .innerJoin(ProviderTable, { ProviderTable.id }, { GameTable.providerId })
-                .innerJoin(AggregatorInfoTable, { AggregatorInfoTable.id }, { ProviderTable.aggregatorId})
+                .innerJoin(AggregatorInfoTable, { AggregatorInfoTable.id }, { ProviderTable.aggregatorId })
                 .innerJoin(
                     GameVariantTable,
                     { GameVariantTable.gameId },
@@ -106,14 +106,7 @@ class ListGameUsecase {
                     { GameVariantTable.aggregator eq AggregatorInfoTable.aggregator })
                 .leftJoin(CollectionGameTable, { CollectionGameTable.gameId }, { GameTable.id })
                 .leftJoin(CollectionTable, { CollectionTable.id }, { CollectionGameTable.categoryId })
-
-            filter.playerId?.let { playerId ->
-                joins.leftJoin(
-                    GameFavouriteTable,
-                    { GameFavouriteTable.gameId },
-                    { GameTable.id },
-                    { GameFavouriteTable.playerId eq playerId })
-            }
+                .leftJoin(GameFavouriteTable, { GameFavouriteTable.gameId }, { GameTable.id })
 
             val rows = joins.selectAll()
                 .applyFilters()
@@ -168,6 +161,8 @@ class ListGameUsecase {
                     AggregatorInfoTable.identity,
                     AggregatorInfoTable.config,
                     AggregatorInfoTable.aggregator,
+                    GameFavouriteTable.playerId,
+                    GameFavouriteTable.gameId,
                 )
 
             val gameSet = linkedMapOf<UUID, GameDto>()

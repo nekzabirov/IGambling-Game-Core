@@ -20,6 +20,10 @@ service Game {
   rpc AddTag (GameTagCommand) returns (EmptyResult);
 
   rpc RemoveTag (GameTagCommand) returns (EmptyResult);
+
+  rpc AddFavourite (GameFavouriteCommand) returns (EmptyResult);
+
+  rpc RemoveFavourite (GameFavouriteCommand) returns (EmptyResult);
 }
 
 message ListGameCommand {
@@ -88,4 +92,10 @@ message GameTagCommand {
   string identity = 1;
 
   string tag = 2;
+}
+
+message GameFavouriteCommand {
+  string game_identity = 1;
+
+  string player_id = 2;
 }
