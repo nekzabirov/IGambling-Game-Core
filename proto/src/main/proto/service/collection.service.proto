@@ -18,6 +18,8 @@ service Collection {
   rpc ChangeGameOrder(ChangeGameOrderCollectionCommand) returns (EmptyResult);
 
   rpc RemoveGameFromCollection(AddGameCollectionCommand) returns (EmptyResult);
+
+  rpc List(ListCollectionCommand) returns (ListCollectionResult);
 }
 
 message AddCollectionCommand {
@@ -48,4 +50,28 @@ message ChangeGameOrderCollectionCommand {
   string gameIdentity = 2;
 
   int32 order = 3;
+}
+
+message ListCollectionCommand {
+  string query = 1;
+
+  optional bool active = 2;
+
+  int32 page_number = 3;
+
+  int32 page_size = 4;
+}
+
+message ListCollectionResult {
+  message Item {
+    CollectionDto collection = 1;
+
+    int32 active_games = 2;
+
+    int32 total_games = 3;
+  }
+
+  repeated Item items = 1;
+
+  int32 total_page = 2;
 }

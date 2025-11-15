@@ -6,6 +6,8 @@ import domain.collection.table.CollectionGameTable
 import domain.collection.table.CollectionTable
 import domain.game.table.GameTable
 import core.db.paging
+import core.ext.ilike
+import core.ext.toJsonText
 import core.value.Page
 import core.value.Pageable
 import org.jetbrains.exposed.sql.*
@@ -23,8 +25,8 @@ class ListCollectionUsecase {
             fun Query.applyFilters() = apply {
                 if (filter.query.isNotBlank()) {
                     andWhere {
-                        CollectionTable.identity like "%${filter.query}%" or
-                                CollectionTable.name.contains(filter.query)
+                        CollectionTable.identity ilike "%${filter.query}%" or
+                                (CollectionTable.name.toJsonText() ilike "%${filter.query}%")
                     }
                 }
 
