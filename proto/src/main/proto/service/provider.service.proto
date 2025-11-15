@@ -10,7 +10,9 @@ import "dto/empty.result.proto";
 import "dto/aggregator.dto.proto";
 
 service Provider {
-  rpc List(ListProviderCommand) returns (ListProviderResult);
+  rpc List (ListProviderCommand) returns (ListProviderResult);
+
+  rpc Update (UpdateProviderConfig) returns (EmptyResult);
 }
 
 message ListProviderCommand {
@@ -37,4 +39,12 @@ message ListProviderResult {
   repeated AggregatorDto aggregators = 2;
 
   int32 total_page = 3;
+}
+
+message UpdateProviderConfig {
+  string identity = 1;
+
+  int32 order = 2;
+
+  bool active = 3;
 }

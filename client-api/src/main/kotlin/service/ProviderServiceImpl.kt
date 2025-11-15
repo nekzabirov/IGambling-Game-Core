@@ -1,17 +1,23 @@
 package service
 
+import com.nekzabirov.igambling.proto.dto.EmptyResult
 import com.nekzabirov.igambling.proto.service.ListProviderCommand
 import com.nekzabirov.igambling.proto.service.ListProviderResult
 import com.nekzabirov.igambling.proto.service.ProviderGrpcKt
+import com.nekzabirov.igambling.proto.service.UpdateProviderConfig
 import core.value.Pageable
+import io.grpc.Status
+import io.grpc.StatusException
 import io.ktor.server.application.*
 import mapper.toAggregatorProto
 import mapper.toProviderProto
 import org.koin.ktor.ext.get
 import usecase.ProviderListUsecase
+import usecase.UpdateProviderUsecase
 
 class ProviderServiceImpl(application: Application) : ProviderGrpcKt.ProviderCoroutineImplBase() {
     private val providerListUsecase = application.get<ProviderListUsecase>()
+    private val updateProviderUsecase = application.get<UpdateProviderUsecase>()
 
     override suspend fun list(request: ListProviderCommand): ListProviderResult =
         providerListUsecase(pageable = Pageable(request.pageNumber, request.pageSize)) {
@@ -42,4 +48,9 @@ class ProviderServiceImpl(application: Application) : ProviderGrpcKt.ProviderCor
                     .addAllAggregators(aggregators)
                     .build()
             }
+
+    override suspend fun update(request: UpdateProviderConfig): EmptyResult =
+        updateProviderUsecase(identity = request.identity, order = request.order, active = request.active)
+            .map { EmptyResult.getDefaultInstance() }
+            .getOrElse { throw StatusException(Status.INVALID_ARGUMENT.withDescription(it.message)) }
 }

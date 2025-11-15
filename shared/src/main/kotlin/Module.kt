@@ -13,6 +13,7 @@ import usecase.ChangeGameOrderUsecase
 import usecase.ProviderListUsecase
 import usecase.RemoveGameCollectionUsecase
 import usecase.UpdateCollectionUsecase
+import usecase.UpdateProviderUsecase
 
 val Application.sharedModule
     get() = module {
@@ -30,4 +31,5 @@ val Application.sharedModule
         factory { ChangeGameOrderUsecase() }
         factory { RemoveGameCollectionUsecase() }
         factory { ProviderListUsecase() }
+        factory { UpdateProviderUsecase() }
     }
