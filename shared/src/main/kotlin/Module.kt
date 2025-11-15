@@ -8,6 +8,7 @@ import io.ktor.server.application.Application
 import org.koin.dsl.module
 import usecase.AddCollectionUsecase
 import usecase.AssignProviderToAggregatorUsecase
+import usecase.UpdateCollectionUsecase
 
 val Application.sharedModule
     get() = module {
@@ -20,4 +21,5 @@ val Application.sharedModule
         factory { ListGameVariantsUsecase() }
         factory { AssignProviderToAggregatorUsecase() }
         factory { AddCollectionUsecase() }
+        factory { UpdateCollectionUsecase() }
     }

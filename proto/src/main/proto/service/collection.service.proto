@@ -10,10 +10,22 @@ import "dto/empty.result.proto";
 
 service Collection {
   rpc AddCollection(AddCollectionCommand) returns (EmptyResult);
+
+  rpc UpdateCollection(UpdateCollectionCommand) returns (EmptyResult);
 }
 
 message AddCollectionCommand {
   string identity = 1;
 
   map<string, string> name = 2;
+}
+
+message UpdateCollectionCommand {
+  string identity = 1;
+
+  map<string, string> name = 2;
+
+  int32 order = 3;
+
+  bool active = 4;
 }
