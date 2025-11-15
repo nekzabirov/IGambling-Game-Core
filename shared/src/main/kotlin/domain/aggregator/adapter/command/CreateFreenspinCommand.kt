@@ -1,11 +1,10 @@
 package domain.aggregator.adapter.command
 
-import domain.aggregator.adapter.IAggregatorPreset
 import core.value.Currency
 import kotlinx.datetime.LocalDateTime
 
 data class CreateFreenspinCommand(
-    val preset: IAggregatorPreset,
+    val presetValue: Map<String, Int>,
 
     val referenceId: String,
 

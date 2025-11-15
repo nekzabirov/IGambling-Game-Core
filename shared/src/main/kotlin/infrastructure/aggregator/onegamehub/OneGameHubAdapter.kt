@@ -107,29 +107,29 @@ class OneGameHubAdapter(override val config: OneGameHubConfig) : IAggregatorAdap
     }
 
     override suspend fun getPreset(gameSymbol: String): Result<IAggregatorPreset> {
-        return OneGameHubPreset(
-            quantity = 1,
-            betAmount = 10,
-            minBetAmount = 10,
-            minQuantity = 5,
-            lines = 10
-        ).let { Result.success(it) }
+        val present = OneGameHubPreset().apply {
+            quantity.default = 10
+            quantity.minimal = 1
+
+            betAmount.default = 100
+            betAmount.minimal = 100
+
+            lines.default = 10
+            lines.minimal = 10
+            lines.maximum = 10
+        }
+
+        return Result.success(present)
     }
 
     override suspend fun createFreespin(command: CreateFreenspinCommand): Result<Unit> {
-        val mainPreset = getPreset(gameSymbol = command.gameSymbol).getOrElse {
+        val preset = getPreset(gameSymbol = command.gameSymbol).getOrElse {
             return Result.failure(it)
-        }
+        }.apply {
+            pushValue(command.presetValue)
+        } as OneGameHubPreset
 
-        val preset = (command.preset as? OneGameHubPreset) ?: return Result.failure(
-            InvalidatePresetError()
-        )
-
-        if (preset.quantity < mainPreset.minQuantity) {
-            return Result.failure(InvalidatePresetError())
-        }
-
-        if (preset.betAmount < mainPreset.minBetAmount) {
+        if (!preset.isValid()) {
             return Result.failure(InvalidatePresetError())
         }
 
@@ -139,7 +139,7 @@ class OneGameHubAdapter(override val config: OneGameHubConfig) : IAggregatorAdap
             startAt = command.startAt,
             endAt = command.endAt,
 
-            number = preset.quantity,
+            number = preset.quantity.value!!,
 
             playerId = command.playerId,
 
@@ -147,9 +147,9 @@ class OneGameHubAdapter(override val config: OneGameHubConfig) : IAggregatorAdap
 
             gameId = command.gameSymbol,
 
-            bet = preset.betAmount,
+            bet = preset.betAmount.value!!,
 
-            lineNumber = preset.lines
+            lineNumber = preset.lines.value!!
         )
 
         val response = client.post(addressUrl) {

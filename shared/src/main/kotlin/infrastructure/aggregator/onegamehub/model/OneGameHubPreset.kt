@@ -1,31 +1,28 @@
 package infrastructure.aggregator.onegamehub.model
 
-import domain.aggregator.adapter.IAggregatorPreset
+import domain.aggregator.adapter.BaseFreespinPreset
+import domain.aggregator.adapter.PresetParam
+import javax.swing.UIManager.put
 
-data class OneGameHubPreset(
-    override var quantity: Int,
+class OneGameHubPreset : BaseFreespinPreset() {
+    val lines = PresetParam()
 
-    override var betAmount: Int,
+    override fun toMap(): Map<String, PresetParam> {
+        return super.toMap().apply {
+            put("lines", lines)
+        }
+    }
 
-    override var minQuantity: Int = 1,
+    override fun pushValue(map: Map<String, Int>) {
+        super.pushValue(map)
+        lines.value = map["lines"]
+    }
 
-    override var minBetAmount: Int = 10,
+    override fun isValid(): Boolean {
+        if (lines.value == null || lines.value!! < lines.minimal!!) {
+            return false
+        }
 
-    var lines: Int = 10
-) : IAggregatorPreset {
-    override fun toMap(): Map<String, Any> = mapOf(
-        "quantity" to quantity,
-        "bet_amount" to betAmount,
-        "min_quantity" to minQuantity,
-        "min_bet_amount" to minBetAmount,
-        "lines" to lines,
-    )
-
-    override fun fromMap(map: Map<String, Any>) {
-        quantity = map.getOrDefault("quantity", 1) as Int
-
-        betAmount = map.getOrDefault("betAmount", 10) as Int
-
-        lines = map.getOrDefault("lines", 10) as Int
+        return super.isValid()
     }
 }
