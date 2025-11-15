@@ -7,9 +7,9 @@ import core.value.Platform
 data class CreateLaunchUrlCommand(
     val gameSymbol: String,
 
-    val playerId: String,
+    val playerId: String = "",
 
-    val sessionToken: String,
+    val sessionToken: String = "",
 
     val lobbyUrl: String,
 

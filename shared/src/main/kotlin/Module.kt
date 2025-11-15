@@ -12,6 +12,7 @@ import usecase.AddGameFavouriteUsecase
 import usecase.AddGameTagUsecase
 import usecase.AssignProviderToAggregatorUsecase
 import usecase.ChangeGameOrderUsecase
+import usecase.DemoGameUsecase
 import usecase.ListGameUsecase
 import usecase.OpenSessionUsecase
 import usecase.ProviderListUsecase
@@ -46,4 +47,5 @@ val Application.sharedModule
         factory { RemoveGameFavouriteUsecase() }
         factory { OpenSessionUsecase() }
         factory { ListGameUsecase() }
+        factory { DemoGameUsecase() }
     }
