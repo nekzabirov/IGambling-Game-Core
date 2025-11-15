@@ -10,6 +10,7 @@ import "dto/empty.result.proto";
 import "dto/game.dto.proto";
 import "dto/collection.dto.proto";
 import "dto/game_variant.dto.proto";
+import "dto/platformType.dto.proto";
 
 service Game {
   rpc List (ListGameCommand) returns (ListGameResult);
@@ -23,6 +24,30 @@ message ListGameCommand {
   int32 page_number = 3;
 
   int32 page_size = 4;
+
+  optional bool bonus_bet = 5;
+
+  optional bool bonus_wagering = 6;
+
+  optional bool free_spin_enable = 7;
+
+  optional bool free_chip_enable = 8;
+
+  optional bool jackpot_enable = 9;
+
+  optional bool demo_enable = 10;
+
+  optional bool bonus_buy_enable = 11;
+
+  repeated PlatformType platforms = 12;
+
+  repeated string provider_identity = 13;
+
+  repeated string category_identity = 14;
+
+  repeated string tags = 15;
+
+  optional string player_id = 16;
 }
 
 message ListGameResult {

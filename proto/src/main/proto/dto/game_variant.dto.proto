@@ -19,7 +19,7 @@ message GameVariantDto {
   
   string provider_name = 5;
   
-  int32 partner = 6;
+  string aggregator = 6;
   
   int32 play_lines = 7;
   
