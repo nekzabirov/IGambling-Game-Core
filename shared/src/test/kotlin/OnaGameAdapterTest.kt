@@ -1,4 +1,4 @@
-import infrastructure.aggregator.onegamehub.OneGameHubAdapter
+import infrastructure.aggregator.onegamehub.adapter.OneGameHubAdapter
 import infrastructure.aggregator.onegamehub.model.OneGameHubConfig
 import infrastructure.aggregator.onegamehub.model.OneGameHubPreset
 import domain.aggregator.adapter.command.CreateFreenspinCommand

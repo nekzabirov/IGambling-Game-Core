@@ -1,3 +1,5 @@
+import adapter.CurrencyAdapter
+import infrastructure.adapter.BaseCurrencyAdapter
 import usecase.AddAggregatorUsecase
 import usecase.ListAggregatorUsecase
 import usecase.ListAllActiveAggregatorUsecase
@@ -28,6 +30,8 @@ import usecase.UpdateProviderUsecase
 
 val Application.sharedModule
     get() = module {
+        single<CurrencyAdapter> { BaseCurrencyAdapter() }
+
         //Usecase
         factory { AddAggregatorUsecase() }
         factory { ListAllActiveAggregatorUsecase() }

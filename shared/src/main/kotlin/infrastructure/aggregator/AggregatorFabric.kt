@@ -1,6 +1,6 @@
 package infrastructure.aggregator
 
-import infrastructure.aggregator.onegamehub.OneGameHubAdapter
+import infrastructure.aggregator.onegamehub.adapter.OneGameHubAdapter
 import infrastructure.aggregator.onegamehub.model.OneGameHubConfig
 import domain.aggregator.adapter.IAggregatorAdapter
 import domain.aggregator.adapter.IAggregatorConfig

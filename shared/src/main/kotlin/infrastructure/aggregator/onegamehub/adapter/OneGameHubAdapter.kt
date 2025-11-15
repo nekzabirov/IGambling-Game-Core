@@ -1,4 +1,4 @@
-package infrastructure.aggregator.onegamehub
+package infrastructure.aggregator.onegamehub.adapter
 
 import infrastructure.aggregator.onegamehub.dto.CreateFreespinDto
 import infrastructure.aggregator.onegamehub.dto.GameUrlDto
@@ -133,6 +133,8 @@ class OneGameHubAdapter(override val config: OneGameHubConfig) : IAggregatorAdap
             return Result.failure(InvalidatePresetError())
         }
 
+        val amount = OneGameHubCurrencyAdapter.convertToAggregator(command.currency, preset.betAmount.value!!)
+
         val payload = CreateFreespinDto(
             id = command.referenceId,
 
@@ -147,7 +149,7 @@ class OneGameHubAdapter(override val config: OneGameHubConfig) : IAggregatorAdap
 
             gameId = command.gameSymbol,
 
-            bet = preset.betAmount.value!!,
+            bet = amount,
 
             lineNumber = preset.lines.value!!
         )
