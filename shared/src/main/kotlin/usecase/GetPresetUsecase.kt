@@ -1,5 +1,6 @@
 package usecase
 
+import domain.aggregator.adapter.PresetParam
 import domain.game.service.GameService
 import infrastructure.aggregator.AggregatorFabric
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
@@ -14,8 +15,17 @@ class GetPresetUsecase {
         val preset = adapter.getPreset(game.symbol)
             .getOrElse { return@newSuspendedTransaction Result.failure(it) }
 
-        Result.success(Response(preset.toMap()))
+        val presetMap = preset.toMap().mapValues { (_, param) ->
+            mapOf(
+                "value" to param.value,
+                "default" to param.default,
+                "minimal" to param.minimal,
+                "maximum" to param.maximum
+            )
+        }
+
+        Result.success(Response(presetMap))
     }
 
-    data class Response(val preset: Map<String, Any>)
+    data class Response(val preset: Map<String, Map<String, Int?>>)
 }
