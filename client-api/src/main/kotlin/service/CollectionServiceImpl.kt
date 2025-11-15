@@ -14,6 +14,7 @@ import org.koin.ktor.ext.get
 import usecase.AddCollectionUsecase
 import usecase.AddGameCollectionUsecase
 import usecase.ChangeGameOrderUsecase
+import usecase.RemoveGameCollectionUsecase
 import usecase.UpdateCollectionUsecase
 
 class CollectionServiceImpl(application: Application) : CollectionGrpcKt.CollectionCoroutineImplBase() {
@@ -21,6 +22,7 @@ class CollectionServiceImpl(application: Application) : CollectionGrpcKt.Collect
     private val updateCollectionUsecase = application.get<UpdateCollectionUsecase>()
     private val addGameCollectionUsecase = application.get<AddGameCollectionUsecase>()
     private val changeGameOrderUsecase = application.get<ChangeGameOrderUsecase>()
+    private val removeGameCollectionUsecase = application.get<RemoveGameCollectionUsecase>()
 
     override suspend fun addCollection(request: AddCollectionCommand): EmptyResult {
         addCollectionUsecase(request.identity, LocaleName(request.nameMap))
@@ -53,6 +55,13 @@ class CollectionServiceImpl(application: Application) : CollectionGrpcKt.Collect
             gameIdentity = request.gameIdentity,
             order = request.order
         ).getOrElse { throw StatusException(Status.INVALID_ARGUMENT.withDescription(it.message)) }
+
+        return EmptyResult.getDefaultInstance()
+    }
+
+    override suspend fun removeGameFromCollection(request: AddGameCollectionCommand): EmptyResult {
+        removeGameCollectionUsecase(request.identity, request.gameIdentity)
+            .getOrElse { throw StatusException(Status.INVALID_ARGUMENT.withDescription(it.message)) }
 
         return EmptyResult.getDefaultInstance()
     }

@@ -16,6 +16,8 @@ service Collection {
   rpc AddGameCollection(AddGameCollectionCommand) returns (EmptyResult);
 
   rpc ChangeGameOrder(ChangeGameOrderCollectionCommand) returns (EmptyResult);
+
+  rpc RemoveGameFromCollection(AddGameCollectionCommand) returns (EmptyResult);
 }
 
 message AddCollectionCommand {
