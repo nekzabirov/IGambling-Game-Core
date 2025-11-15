@@ -24,6 +24,8 @@ service Game {
   rpc AddFavourite (GameFavouriteCommand) returns (EmptyResult);
 
   rpc RemoveFavourite (GameFavouriteCommand) returns (EmptyResult);
+
+  rpc DemoGame (DemoGameCommand) returns (DemoGameResult);
 }
 
 message ListGameCommand {
@@ -98,4 +100,20 @@ message GameFavouriteCommand {
   string game_identity = 1;
 
   string player_id = 2;
+}
+
+message DemoGameCommand {
+  string game_identity = 1;
+
+  string currency = 2;
+
+  string locale = 3;
+
+  PlatformType platform = 4;
+
+  string lobby_url = 5;
+}
+
+message DemoGameResult {
+  string launch_url = 1;
 }

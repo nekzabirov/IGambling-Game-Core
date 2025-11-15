@@ -1,12 +1,16 @@
 package service
 
 import com.nekzabirov.igambling.proto.dto.EmptyResult
+import com.nekzabirov.igambling.proto.service.DemoGameCommand
+import com.nekzabirov.igambling.proto.service.DemoGameResult
 import com.nekzabirov.igambling.proto.service.GameFavouriteCommand
 import com.nekzabirov.igambling.proto.service.GameGrpcKt
 import com.nekzabirov.igambling.proto.service.GameTagCommand
 import com.nekzabirov.igambling.proto.service.ListGameCommand
 import com.nekzabirov.igambling.proto.service.ListGameResult
 import com.nekzabirov.igambling.proto.service.UpdateGameConfig
+import core.value.Currency
+import core.value.Locale
 import core.value.Pageable
 import io.grpc.Status
 import io.grpc.StatusException
@@ -19,6 +23,7 @@ import mapper.toProviderProto
 import org.koin.ktor.ext.get
 import usecase.AddGameFavouriteUsecase
 import usecase.AddGameTagUsecase
+import usecase.DemoGameUsecase
 import usecase.ListGameUsecase
 import usecase.RemoveGameFavouriteUsecase
 import usecase.RemoveGameTagUsecase
@@ -31,6 +36,7 @@ class GameServiceImpl(application: Application) : GameGrpcKt.GameCoroutineImplBa
     private val removeGameTagUsecase = application.get<RemoveGameTagUsecase>()
     private val addGameFavouriteUsecase = application.get<AddGameFavouriteUsecase>()
     private val removeGameFavouriteUsecase = application.get<RemoveGameFavouriteUsecase>()
+    private val demoGameUsecase = application.get<DemoGameUsecase>()
 
     override suspend fun list(request: ListGameCommand): ListGameResult =
         listGameUsecase(pageable = Pageable(page = request.pageNumber, size = request.pageSize)) {
@@ -135,5 +141,16 @@ class GameServiceImpl(application: Application) : GameGrpcKt.GameCoroutineImplBa
     override suspend fun removeFavourite(request: GameFavouriteCommand): EmptyResult =
         removeGameFavouriteUsecase(gameIdentity = request.gameIdentity, playerId = request.playerId)
             .map { EmptyResult.getDefaultInstance() }
+            .getOrElse { throw StatusException(Status.INVALID_ARGUMENT.withDescription(it.message)) }
+
+    override suspend fun demoGame(request: DemoGameCommand): DemoGameResult =
+        demoGameUsecase(
+            gameIdentity = request.gameIdentity,
+            currency = Currency(request.currency),
+            locale = Locale(request.locale),
+            platform = request.platform.toPlatform(),
+            lobbyUrl = request.lobbyUrl
+        )
+            .map { DemoGameResult.newBuilder().setLaunchUrl(it.launchUrl).build() }
             .getOrElse { throw StatusException(Status.INVALID_ARGUMENT.withDescription(it.message)) }
 }
