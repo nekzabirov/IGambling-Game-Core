@@ -9,6 +9,7 @@ import org.koin.dsl.module
 import usecase.AddCollectionUsecase
 import usecase.AddGameCollectionUsecase
 import usecase.AssignProviderToAggregatorUsecase
+import usecase.ChangeGameOrderUsecase
 import usecase.UpdateCollectionUsecase
 
 val Application.sharedModule
@@ -24,4 +25,5 @@ val Application.sharedModule
         factory { AddCollectionUsecase() }
         factory { UpdateCollectionUsecase() }
         factory { AddGameCollectionUsecase() }
+        factory { ChangeGameOrderUsecase() }
     }
