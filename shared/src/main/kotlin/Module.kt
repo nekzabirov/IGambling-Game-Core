@@ -1,4 +1,4 @@
-import adapter.CurrencyAdapter
+import app.adapter.CurrencyAdapter
 import infrastructure.adapter.BaseCurrencyAdapter
 import usecase.AddAggregatorUsecase
 import usecase.ListAggregatorUsecase

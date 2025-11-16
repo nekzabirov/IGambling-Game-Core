@@ -15,12 +15,12 @@ import io.grpc.StatusException
 import io.ktor.server.application.Application
 import mapper.toCollectionProto
 import org.koin.ktor.ext.get
-import usecase.AddCollectionUsecase
-import usecase.AddGameCollectionUsecase
-import usecase.ChangeGameOrderUsecase
-import usecase.ListCollectionUsecase
-import usecase.RemoveGameCollectionUsecase
-import usecase.UpdateCollectionUsecase
+import app.usecase.AddCollectionUsecase
+import app.usecase.AddGameCollectionUsecase
+import app.usecase.ChangeGameOrderUsecase
+import app.usecase.ListCollectionUsecase
+import app.usecase.RemoveGameCollectionUsecase
+import app.usecase.UpdateCollectionUsecase
 
 class CollectionServiceImpl(application: Application) : CollectionGrpcKt.CollectionCoroutineImplBase() {
     private val addCollectionUsecase = application.get<AddCollectionUsecase>()

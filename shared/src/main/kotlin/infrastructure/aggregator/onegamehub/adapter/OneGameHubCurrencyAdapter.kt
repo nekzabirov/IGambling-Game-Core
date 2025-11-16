@@ -1,6 +1,6 @@
 package infrastructure.aggregator.onegamehub.adapter
 
-import adapter.CurrencyAdapter
+import app.adapter.CurrencyAdapter
 import core.value.Currency
 import org.koin.core.component.KoinComponent
 

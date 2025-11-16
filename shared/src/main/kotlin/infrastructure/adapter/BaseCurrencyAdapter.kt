@@ -1,6 +1,6 @@
 package infrastructure.adapter
 
-import adapter.CurrencyAdapter
+import app.adapter.CurrencyAdapter
 import core.value.Currency
 
 class BaseCurrencyAdapter : CurrencyAdapter {
