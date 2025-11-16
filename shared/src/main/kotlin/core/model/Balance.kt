@@ -3,12 +3,12 @@ package core.model
 import core.value.Currency
 
 data class Balance(
-    val realAmount: Int,
+    val real: Int,
 
-    val bonusAmount: Int,
+    val bonus: Int,
 
     val currency: Currency,
 ) {
     val totalAmount: Int
-        get() = realAmount + bonusAmount
+        get() = real + bonus
 }

@@ -1,6 +1,6 @@
 import domain.aggregator.model.Aggregator
 import domain.aggregator.table.AggregatorInfoTable
-import usecase.SyncGameUsecase
+import app.usecase.SyncGameUsecase
 import kotlinx.coroutines.withTimeout
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction

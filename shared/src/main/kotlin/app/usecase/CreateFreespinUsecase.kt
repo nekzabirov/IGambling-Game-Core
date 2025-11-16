@@ -2,7 +2,7 @@ package app.usecase
 
 import core.value.Currency
 import domain.aggregator.adapter.command.CreateFreenspinCommand
-import service.GameService
+import app.service.GameService
 import infrastructure.aggregator.AggregatorFabric
 import io.ktor.server.plugins.BadRequestException
 import kotlinx.datetime.LocalDateTime

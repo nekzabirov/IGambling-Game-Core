@@ -4,7 +4,9 @@ import core.model.Balance
 import core.value.Currency
 
 interface WalletAdapter {
-    fun findBalance(playerId: String): Result<Balance>
+    suspend fun findBalance(playerId: String): Result<Balance>
 
-    fun placeBet(playerId: String, amount: Int, currency: Currency): Result<Balance>
+    suspend fun withdraw(playerId: String, currency: Currency, real: Int, bonus: Int): Result<Unit>
+
+    suspend fun deposit(playerId: String, currency: Currency, real: Int, bonus: Int): Result<Unit>
 }

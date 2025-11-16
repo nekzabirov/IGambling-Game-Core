@@ -1,7 +1,7 @@
 package app.usecase
 
 import domain.aggregator.adapter.PresetParam
-import service.GameService
+import app.service.GameService
 import infrastructure.aggregator.AggregatorFabric
 import io.ktor.server.plugins.BadRequestException
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction

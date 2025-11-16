@@ -21,13 +21,13 @@ import mapper.toGameVariantProto
 import mapper.toPlatform
 import mapper.toProviderProto
 import org.koin.ktor.ext.get
-import usecase.AddGameFavouriteUsecase
-import usecase.AddGameTagUsecase
-import usecase.DemoGameUsecase
-import usecase.ListGameUsecase
-import usecase.RemoveGameFavouriteUsecase
-import usecase.RemoveGameTagUsecase
-import usecase.UpdateGameUsecase
+import app.usecase.AddGameFavouriteUsecase
+import app.usecase.AddGameTagUsecase
+import app.usecase.DemoGameUsecase
+import app.usecase.ListGameUsecase
+import app.usecase.RemoveGameFavouriteUsecase
+import app.usecase.RemoveGameTagUsecase
+import app.usecase.UpdateGameUsecase
 
 class GameServiceImpl(application: Application) : GameGrpcKt.GameCoroutineImplBase() {
     private val listGameUsecase = application.get<ListGameUsecase>()

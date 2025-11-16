@@ -1,5 +1,5 @@
-import usecase.ListAllActiveAggregatorUsecase
-import usecase.SyncGameUsecase
+import app.usecase.ListAllActiveAggregatorUsecase
+import app.usecase.SyncGameUsecase
 import io.ktor.server.application.*
 import io.ktor.server.cio.*
 import io.ktor.server.engine.*

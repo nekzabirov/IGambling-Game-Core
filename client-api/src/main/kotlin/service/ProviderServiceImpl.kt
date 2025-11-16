@@ -12,8 +12,8 @@ import io.ktor.server.application.*
 import mapper.toAggregatorProto
 import mapper.toProviderProto
 import org.koin.ktor.ext.get
-import usecase.ProviderListUsecase
-import usecase.UpdateProviderUsecase
+import app.usecase.ProviderListUsecase
+import app.usecase.UpdateProviderUsecase
 
 class ProviderServiceImpl(application: Application) : ProviderGrpcKt.ProviderCoroutineImplBase() {
     private val providerListUsecase = application.get<ProviderListUsecase>()

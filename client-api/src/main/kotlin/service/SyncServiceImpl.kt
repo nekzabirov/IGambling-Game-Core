@@ -1,9 +1,9 @@
 package service
 
 import com.nekzabirov.igambling.proto.dto.EmptyResult
-import usecase.AddAggregatorUsecase
-import usecase.ListAggregatorUsecase
-import usecase.ListGameVariantsUsecase
+import app.usecase.AddAggregatorUsecase
+import app.usecase.ListAggregatorUsecase
+import app.usecase.ListGameVariantsUsecase
 import com.nekzabirov.igambling.proto.service.AddAggregatorCommand
 import com.nekzabirov.igambling.proto.service.AssignProviderCommand
 import com.nekzabirov.igambling.proto.service.ListAggregatorCommand
@@ -22,7 +22,7 @@ import mapper.toGameProto
 import mapper.toGameVariantProto
 import mapper.toProviderProto
 import org.koin.ktor.ext.get
-import usecase.AssignProviderToAggregatorUsecase
+import app.usecase.AssignProviderToAggregatorUsecase
 import java.util.UUID
 import kotlin.collections.map
 

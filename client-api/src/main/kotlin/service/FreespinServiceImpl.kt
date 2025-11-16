@@ -13,9 +13,9 @@ import io.grpc.Status
 import io.grpc.StatusException
 import io.ktor.server.application.*
 import org.koin.ktor.ext.get
-import usecase.CancelFreespinUsecase
-import usecase.CreateFreespinUsecase
-import usecase.GetPresetUsecase
+import app.usecase.CancelFreespinUsecase
+import app.usecase.CreateFreespinUsecase
+import app.usecase.GetPresetUsecase
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime

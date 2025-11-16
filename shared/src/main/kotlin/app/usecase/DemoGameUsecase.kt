@@ -4,8 +4,8 @@ import core.value.Currency
 import core.value.Locale
 import core.value.Platform
 import domain.aggregator.adapter.command.CreateLaunchUrlCommand
-import service.GameService
-import service.SessionService
+import app.service.GameService
+import app.service.SessionService
 import infrastructure.aggregator.AggregatorFabric
 import io.ktor.server.plugins.*
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction

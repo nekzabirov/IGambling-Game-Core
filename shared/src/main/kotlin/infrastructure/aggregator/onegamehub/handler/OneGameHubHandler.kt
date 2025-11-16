@@ -1,10 +1,14 @@
 package infrastructure.aggregator.onegamehub.handler
 
+import app.service.BetService
+import app.service.GameService
+import app.service.SessionService
+import core.model.Balance
 import core.value.Currency
 import domain.aggregator.handler.IAggregatorHttpHandler
-import infrastructure.adapter.decorator.GameWalletAdapter
-import service.GameService
-import service.SessionService
+import domain.session.model.Session
+import infrastructure.aggregator.onegamehub.adapter.OneGameHubCurrencyAdapter
+import infrastructure.aggregator.onegamehub.handler.error.OneGameHubError
 import infrastructure.aggregator.onegamehub.handler.error.OneGameHubInvalidateRequest
 import infrastructure.aggregator.onegamehub.handler.error.OneGameHubTokenExpired
 import io.ktor.http.*
@@ -18,27 +22,51 @@ object OneGameHubHandler : IAggregatorHttpHandler, KoinComponent {
         val action = call.parameters["action"] ?: throw OneGameHubInvalidateRequest()
         val sessionToken = call.parameters["extra"] ?: throw OneGameHubInvalidateRequest()
 
-        if (action == "balance") {
-            balance(sessionToken)
-        }
-    }
-
-    private suspend fun RoutingContext.balance(sessionToken: String) {
         val session = SessionService.findByToken(sessionToken).getOrElse {
             throw OneGameHubTokenExpired()
         }
 
-        val game = GameService.findById(session.gameId).getOrElse {
-            throw OneGameHubInvalidateRequest()
+        when (action) {
+            "balance" -> {
+                balance(session)
+            }
+            "bet" -> {
+                bet(session)
+            }
+            else -> {
+                throw OneGameHubInvalidateRequest()
+            }
         }
+    }
 
-        val walletAdapter = GameWalletAdapter(game)
-
-        val balance = walletAdapter.findBalance(session.playerId).getOrElse {
+    private suspend fun RoutingContext.balance(session: Session) {
+        val balance = BetService.findBalance(session).getOrElse {
             throw OneGameHubTokenExpired()
         }
 
-        call.respondSuccess(balance.totalAmount, balance.currency)
+        call.respondSuccess(balance)
+    }
+
+    private suspend fun RoutingContext.bet(session: Session) {
+        val betAmount = call.parameters["betAmount"]?.toIntOrNull() ?: throw OneGameHubInvalidateRequest()
+
+        val systemBetAmount = OneGameHubCurrencyAdapter.convertFromAggregator(session.currency, betAmount)
+
+        val balance = BetService.placeBet(session, systemBetAmount).getOrElse {
+            throw OneGameHubError.transform(it)
+        }
+
+        call.respondSuccess(balance)
+    }
+
+    private suspend fun ApplicationCall.respondSuccess(balance: Balance) {
+        val totalAmount = OneGameHubCurrencyAdapter.convertToAggregator(balance.currency, balance.totalAmount)
+
+        respond(HttpStatusCode.OK, mapOf(
+            "status" to 200,
+            "balance" to totalAmount,
+            "currency" to balance.currency.value
+        ))
     }
 
     private suspend fun ApplicationCall.respondSuccess(balance: Int, currency: Currency) =
