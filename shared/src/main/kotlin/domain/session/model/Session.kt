@@ -10,6 +10,8 @@ data class Session(
 
     val gameId: UUID,
 
+    val aggregatorId: UUID,
+
     val playerId: String,
 
     val token: String,

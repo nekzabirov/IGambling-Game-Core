@@ -11,6 +11,8 @@ fun ResultRow.toSession() = Session(
 
     gameId = this[SessionTable.gameId].value,
 
+    aggregatorId = this[SessionTable.aggregatorId].value,
+
     playerId = this[SessionTable.playerId],
 
     token = this[SessionTable.token],

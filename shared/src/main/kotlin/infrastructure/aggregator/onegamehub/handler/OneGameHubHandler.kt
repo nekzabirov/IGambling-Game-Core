@@ -1,11 +1,10 @@
 package infrastructure.aggregator.onegamehub.handler
 
 import app.service.SpinService
-import app.service.SessionService
 import core.model.Balance
 import core.value.Currency
+import core.value.SessionToken
 import domain.aggregator.handler.IAggregatorHttpHandler
-import domain.session.model.Session
 import infrastructure.aggregator.onegamehub.adapter.OneGameHubCurrencyAdapter
 import infrastructure.aggregator.onegamehub.handler.error.OneGameHubError
 import infrastructure.aggregator.onegamehub.handler.error.OneGameHubInvalidateRequest
@@ -16,42 +15,66 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.koin.core.component.KoinComponent
 
+private val Parameters.amount get() = this["amount"]!!.toInt()
+private val Parameters.gameSymbol get() = this["game_id"]!!
+private val Parameters.transactionId get() = this["transaction_id"]!!
+private val Parameters.roundId get() = this["round_id"]!!
+private val Parameters.freespinId get() = this["freerounds_id"]
+private val Parameters.isRoundEnd get() = this["ext_round_finished"] == "1"
+
 object OneGameHubHandler : IAggregatorHttpHandler, KoinComponent {
-    override fun Route.route() = post("/onegamehub") {
+    override fun makeRoute(route: Route) = route.post("/onegamehub") {
         val action = call.parameters["action"] ?: throw OneGameHubInvalidateRequest()
         val sessionToken = call.parameters["extra"] ?: throw OneGameHubInvalidateRequest()
 
-        val session = SessionService.findByToken(sessionToken).getOrElse {
-            throw OneGameHubTokenExpired()
-        }
-
         when (action) {
             "balance" -> {
-                balance(session)
+                balance(SessionToken(sessionToken))
             }
+
             "bet" -> {
-                bet(session)
+                bet(SessionToken(sessionToken))
             }
+
+            "win" -> {
+                win(SessionToken(sessionToken))
+            }
+
             else -> {
                 throw OneGameHubInvalidateRequest()
             }
         }
     }
 
-    private suspend fun RoutingContext.balance(session: Session) {
-        val balance = SpinService.findBalance(session).getOrElse {
+    private suspend fun RoutingContext.balance(token: SessionToken) {
+        val balance = SpinService.findBalance(token).getOrElse {
             throw OneGameHubTokenExpired()
         }
 
         call.respondSuccess(balance)
     }
 
-    private suspend fun RoutingContext.bet(session: Session) {
-        val betAmount = call.parameters["betAmount"]?.toIntOrNull() ?: throw OneGameHubInvalidateRequest()
+    private suspend fun RoutingContext.bet(token: SessionToken) {
+        val balance = SpinService.place(
+            token = token,
+            gameSymbol = call.parameters.gameSymbol,
+            extRoundId = call.parameters.roundId,
+            transactionId = call.parameters.transactionId,
+            amount = call.parameters.amount
+        ).getOrElse {
+            throw OneGameHubError.transform(it)
+        }
 
-        val systemBetAmount = OneGameHubCurrencyAdapter.convertFromAggregator(session.currency, betAmount)
+        call.respondSuccess(balance)
+    }
 
-        val balance = SpinService.placeBet(session, systemBetAmount).getOrElse {
+    private suspend fun RoutingContext.win(token: SessionToken) {
+        val balance = SpinService.settle(
+            token = token,
+            extRoundId = call.parameters.roundId,
+            transactionId = call.parameters.transactionId,
+            amount = call.parameters.amount
+        ).getOrElse {
             throw OneGameHubError.transform(it)
         }
 
@@ -61,17 +84,15 @@ object OneGameHubHandler : IAggregatorHttpHandler, KoinComponent {
     private suspend fun ApplicationCall.respondSuccess(balance: Balance) {
         val totalAmount = OneGameHubCurrencyAdapter.convertToAggregator(balance.currency, balance.totalAmount)
 
-        respond(HttpStatusCode.OK, mapOf(
-            "status" to 200,
-            "balance" to totalAmount,
-            "currency" to balance.currency.value
-        ))
+        respondSuccess(totalAmount, balance.currency)
     }
 
     private suspend fun ApplicationCall.respondSuccess(balance: Int, currency: Currency) =
-        respond(HttpStatusCode.OK, mapOf(
-        "status" to 200,
-        "balance" to balance,
-        "currency" to currency.value
-    ))
+        respond(
+            HttpStatusCode.OK, mapOf(
+                "status" to 200,
+                "balance" to balance,
+                "currency" to currency.value
+            )
+        )
 }
