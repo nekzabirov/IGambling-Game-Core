@@ -14,6 +14,8 @@ object SpinTable : AbstractTable("spins") {
 
     val type = enumeration<SpinType>("type")
 
+    val amount = integer("amount")
+
     val realAmount = integer("real_amount")
 
     val bonusAmount = integer("bonus_amount")

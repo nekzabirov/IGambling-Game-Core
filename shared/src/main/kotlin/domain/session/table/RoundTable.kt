@@ -11,7 +11,11 @@ object RoundTable : AbstractTable("rounds") {
 
     val extId = varchar("ext_id", 255)
 
-    val endAt = datetime("created_at")
+    val endAt = datetime("end_at")
+        .nullable()
+        .default(null)
+
+    val freespinId = varchar("freespin_id", 255)
         .nullable()
         .default(null)
 

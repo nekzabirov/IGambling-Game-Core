@@ -1,4 +1,6 @@
 import app.adapter.CurrencyAdapter
+import app.adapter.PlayerAdapter
+import app.adapter.WalletAdapter
 import infrastructure.adapter.BaseCurrencyAdapter
 import app.usecase.AddAggregatorUsecase
 import app.usecase.ListAggregatorUsecase
@@ -27,10 +29,14 @@ import app.usecase.RemoveGameTagUsecase
 import app.usecase.UpdateCollectionUsecase
 import app.usecase.UpdateGameUsecase
 import app.usecase.UpdateProviderUsecase
+import infrastructure.adapter.FakePlayerAdapter
+import infrastructure.adapter.FakeWalletAdapter
 
 val Application.sharedModule
     get() = module {
         single<CurrencyAdapter> { BaseCurrencyAdapter() }
+        single<WalletAdapter> { FakeWalletAdapter() }
+        single<PlayerAdapter> { FakePlayerAdapter() }
 
         //Usecase
         factory { AddAggregatorUsecase() }

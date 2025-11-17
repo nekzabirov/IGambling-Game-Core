@@ -6,6 +6,7 @@ import core.error.BetOutLimitError
 import core.error.InsufficientBalanceError
 import core.error.RoundFinishedError
 import core.model.Balance
+import core.model.BetAmount
 import core.model.SpinType
 import core.value.SessionToken
 import domain.aggregator.mapper.toAggregatorModel
@@ -23,14 +24,18 @@ import domain.session.table.SessionTable
 import domain.session.table.SpinTable
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.datetime.toKotlinLocalDateTime
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.innerJoin
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
+import org.jetbrains.exposed.sql.update
 import org.jetbrains.exposed.sql.upsert
 import org.jetbrains.exposed.sql.upsertReturning
 import org.koin.core.component.KoinComponent
+import java.time.LocalDateTime
 import java.util.UUID
 
 object SpinService : KoinComponent {
@@ -70,26 +75,24 @@ object SpinService : KoinComponent {
         gameSymbol: String,
         extRoundId: String,
         transactionId: String,
-        amount: Int
-    ): Result<Balance> {
-        val session = findSession(token).getOrElse { return Result.failure(it) }
+        amount: Int,
+        freespinId: String? = null,
+    ): Result<Unit> {
+        val (session, aggregatorInfo, game) = newSuspendedTransaction {
+            val session = findSession(token).getOrElse { return@newSuspendedTransaction null }
 
-        val aggregatorInfo = findAggregator(session.aggregatorId).getOrElse { return Result.failure(it) }
+            val aggregatorInfo = findAggregator(session.aggregatorId).getOrElse { return@newSuspendedTransaction null }
 
-        val game = findGame(gameSymbol, aggregatorInfo.aggregator).getOrElse { return Result.failure(it) }
+            val game = findGame(gameSymbol, aggregatorInfo.aggregator).getOrElse { return@newSuspendedTransaction null }
 
-        val isRoundFinished = newSuspendedTransaction {
-            RoundTable.select(RoundTable.extId, RoundTable.sessionId, RoundTable.endAt)
-                .where { RoundTable.extId eq extRoundId and (RoundTable.sessionId eq session.id) }
-                .count() > 0
-        }
+            Triple(session, aggregatorInfo, game)
+        } ?: return Result.failure(NoSuchElementException())
 
-        if (isRoundFinished) {
-            return Result.failure(RoundFinishedError())
-        }
+        val betAmount = coroutineScope {
+            if (freespinId != null) {
+                return@coroutineScope Result.success(BetAmount(real = 0, bonus = 0, currency = session.currency))
+            }
 
-        // run balance and bet limit lookups in parallel and keep the rest of the logic flat and clear
-        return coroutineScope {
             val balanceDeferred = async { findBalance(session, game) }
             val betLimitDeferred = async { playerAdapter.findCurrentBetLimit(session.playerId) }
 
@@ -107,44 +110,63 @@ object SpinService : KoinComponent {
             val realAmount = minOf(balance.real, amount)
             val bonusAmount = amount - realAmount
 
+            Result.success(BetAmount(real = realAmount, bonus = bonusAmount, currency = session.currency))
+        }
+            .getOrElse { return Result.failure(it) }
+
+        if (freespinId == null) {
             walletAdapter.withdraw(
-                playerId = session.playerId,
-                referenceId = session.id.toString(),
-                currency = balance.currency,
-                real = realAmount,
-                bonus = bonusAmount
-            ).getOrElse { return@coroutineScope Result.failure(it) }
+                session.playerId,
+                session.id.toString(),
+                session.currency,
+                betAmount.real,
+                betAmount.bonus
+            ).getOrElse { return Result.failure(it) }
+        }
 
-            newSuspendedTransaction {
-                val roundId = RoundTable.upsertReturning(
-                    keys = arrayOf(RoundTable.extId, RoundTable.sessionId),
-                    onUpdateExclude = listOf(RoundTable.endAt, RoundTable.createdAt),
-                    returning = listOf(RoundTable.id)
-                ) {
-                    it[RoundTable.sessionId] = session.id
-                    it[RoundTable.gameId] = game.id
-                    it[RoundTable.extId] = extRoundId
-                }.single()[RoundTable.id].value
+        return newSuspendedTransaction {
+            val round = RoundTable.upsertReturning(
+                keys = arrayOf(RoundTable.extId, RoundTable.sessionId),
+                onUpdateExclude = listOf(RoundTable.endAt, RoundTable.createdAt),
+            ) {
+                it[RoundTable.sessionId] = session.id
+                it[RoundTable.gameId] = game.id
+                it[RoundTable.extId] = extRoundId
+                it[RoundTable.freespinId] = freespinId
+            }.single()
 
-                SpinTable.insert {
-                    it[SpinTable.roundId] = roundId
-                    it[SpinTable.type] = SpinType.PLACE
-                    it[SpinTable.realAmount] = realAmount
-                    it[SpinTable.bonusAmount] = bonusAmount
-                    it[SpinTable.extId] = transactionId
-                }
+            if (round[RoundTable.endAt] != null) {
+                return@newSuspendedTransaction Result.failure(RoundFinishedError())
             }
 
-            Result.success(
-                balance.copy(
-                    real = balance.real - realAmount,
-                    bonus = balance.bonus - bonusAmount
-                )
-            )
+            SpinTable.insert {
+                it[SpinTable.type] = SpinType.PLACE
+                it[SpinTable.amount] = amount
+                it[SpinTable.realAmount] = betAmount.real
+                it[SpinTable.bonusAmount] = betAmount.bonus
+                it[SpinTable.extId] = transactionId
+                it[SpinTable.roundId] = round[RoundTable.id].value
+            }
+
+            Result.success(Unit)
         }
     }
 
     suspend fun settle(token: SessionToken, extRoundId: String, transactionId: String, amount: Int): Result<Balance> {
+        newSuspendedTransaction {
+            val session = findSession(token).getOrElse { return@newSuspendedTransaction null }
+
+            val round = RoundTable.selectAll()
+                .where { RoundTable.extId eq extRoundId and (RoundTable.sessionId eq session.id) }
+                .singleOrNull() ?: return@newSuspendedTransaction null
+
+            if (round[RoundTable.endAt] != null) {
+                return@newSuspendedTransaction null
+            }
+
+
+        }
+
         val session = findSession(token).getOrElse { return Result.failure(it) }
 
         val roundId = newSuspendedTransaction {
@@ -180,8 +202,8 @@ object SpinService : KoinComponent {
 
         newSuspendedTransaction {
             SpinTable.insert {
-                it[SpinTable.id] = spinPlaceId
                 it[SpinTable.type] = SpinType.SETTLE
+                it[SpinTable.amount] = amount
                 it[SpinTable.realAmount] = realAmount
                 it[SpinTable.bonusAmount] = bonusAmount
                 it[SpinTable.extId] = transactionId
@@ -191,6 +213,26 @@ object SpinService : KoinComponent {
         }
 
         return findBalance(token)
+    }
+
+    suspend fun closeRound(token: SessionToken, extRoundId: String): Result<Unit> {
+        return newSuspendedTransaction {
+            val session = findSession(token).getOrElse { return@newSuspendedTransaction Result.failure(it) }
+
+            val round = RoundTable.selectAll()
+                .where { RoundTable.extId eq extRoundId and (RoundTable.sessionId eq session.id) }
+                .singleOrNull() ?: return@newSuspendedTransaction Result.failure(Exception("Round not found"))
+
+            if (round[RoundTable.endAt] != null) {
+                return@newSuspendedTransaction Result.failure(Exception("Round is end"))
+            }
+
+            RoundTable.update({ RoundTable.id eq round[RoundTable.id].value }) {
+                it[RoundTable.endAt] = LocalDateTime.now().toKotlinLocalDateTime()
+            }
+
+            return@newSuspendedTransaction Result.success(Unit)
+        }
     }
 
     private suspend fun findSession(token: SessionToken): Result<Session> {

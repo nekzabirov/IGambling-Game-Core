@@ -52,6 +52,7 @@ class OpenSessionUsecase {
             it[SessionTable.currency] = currency.value
             it[SessionTable.locale] = locale.value
             it[SessionTable.platform] = platformN
+            it[SessionTable.aggregatorId] = game.aggregator.id
         }
 
         Result.success(Response(result))

@@ -5,7 +5,9 @@ import domain.game.table.GameFavouriteTable
 import domain.game.table.GameTable
 import domain.game.table.GameVariantTable
 import domain.provider.table.ProviderTable
+import domain.session.table.RoundTable
 import domain.session.table.SessionTable
+import domain.session.table.SpinTable
 import io.ktor.server.application.*
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils.create
@@ -38,7 +40,9 @@ val SharedPlugin = createApplicationPlugin(name = "SharedPlugin", createConfigur
             CollectionGameTable,
             GameFavouriteTable,
             AggregatorInfoTable,
-            SessionTable
+            SessionTable,
+            RoundTable,
+            SpinTable
         )
     }
 }

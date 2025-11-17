@@ -58,13 +58,19 @@ private suspend fun RoutingContext.balance(token: SessionToken) {
 }
 
 private suspend fun RoutingContext.bet(token: SessionToken) {
-    val balance = SpinService.place(
+    SpinService.place(
         token = token,
         gameSymbol = call.queryParameters.gameSymbol,
         extRoundId = call.queryParameters.roundId,
         transactionId = call.queryParameters.transactionId,
-        amount = call.queryParameters.amount
+        amount = call.queryParameters.amount,
+        freespinId = call.queryParameters.freespinId,
     ).getOrElse {
+        call.respond(OneGameHubError.transform(it))
+        return
+    }
+
+    val balance = SpinService.findBalance(token).getOrElse {
         call.respond(OneGameHubError.transform(it))
         return
     }
@@ -73,6 +79,21 @@ private suspend fun RoutingContext.bet(token: SessionToken) {
 }
 
 private suspend fun RoutingContext.win(token: SessionToken) {
+    if (call.queryParameters.isRoundEnd && call.queryParameters.amount <= 0) {
+        SpinService.closeRound(token, call.queryParameters.roundId).getOrElse {
+            call.respond(OneGameHubError.transform(it))
+            return
+        }
+
+        val balance = SpinService.findBalance(token).getOrElse {
+            call.respond(OneGameHubError.transform(it))
+            return
+        }
+
+        call.respondSuccess(balance)
+        return
+    }
+
     val balance = SpinService.settle(
         token = token,
         extRoundId = call.queryParameters.roundId,
@@ -89,18 +110,9 @@ private suspend fun RoutingContext.win(token: SessionToken) {
 private suspend fun ApplicationCall.respondSuccess(balance: Balance) {
     val totalAmount = OneGameHubCurrencyAdapter.convertToAggregator(balance.currency, balance.totalAmount)
 
-    respondSuccess(totalAmount, balance.currency)
+    respond(OneGameHubBalanceDto(balance = totalAmount, currency = balance.currency.value))
 }
 
 private suspend fun ApplicationCall.respondFail(error: OneGameHubError) {
     respond(HttpStatusCode.BadRequest, error.body)
 }
-
-private suspend fun ApplicationCall.respondSuccess(balance: Int, currency: Currency) =
-    respond(
-        HttpStatusCode.OK, mapOf(
-            "status" to 200,
-            "balance" to balance,
-            "currency" to currency.value
-        )
-    )

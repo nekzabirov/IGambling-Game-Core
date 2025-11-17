@@ -35,7 +35,7 @@ fun main() {
     application.start(wait = false)
 
     val server: Server = NettyServerBuilder
-        .forPort(8080)
+        .forPort(5050)
         .addService(SyncServiceImpl(application.application))
         .addService(CollectionServiceImpl(application.application))
         .addService(ProviderServiceImpl(application.application))
