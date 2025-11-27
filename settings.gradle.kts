@@ -1,10 +1,10 @@
 rootProject.name = "IGambling"
 
-include(":shared")
-include(":syncGameJob")
+include(":core")
+include(":game-sync-job")
 include(":proto")
-include(":client-api")
-include(":webhook-api")
+include(":grpc-api")
+include(":aggregator-api")
 include(":event-worker")
 
 dependencyResolutionManagement {

@@ -23,7 +23,7 @@ application {
 }
 
 dependencies {
-    implementation(project(":shared"))
+    implementation(project(":core"))
 
     implementation("io.ktor:ktor-server-core:$ktor_version")
     implementation("io.ktor:ktor-server-content-negotiation:$ktor_version")

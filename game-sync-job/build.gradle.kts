@@ -10,7 +10,6 @@ plugins {
     kotlin("jvm") version "2.2.20"
     id("org.jetbrains.kotlin.plugin.serialization") version "2.2.20"
     id("io.ktor.plugin") version "3.3.1"
-    id("com.google.protobuf") version "0.9.4"
     application
 }
 
@@ -23,20 +22,20 @@ application {
 }
 
 dependencies {
-    implementation(project(":shared"))
+    implementation(project(":core"))
 
     implementation("io.ktor:ktor-server-core:$ktor_version")
     implementation("io.ktor:ktor-server-content-negotiation:$ktor_version")
     implementation("io.ktor:ktor-serialization-kotlinx-json:$ktor_version")
     implementation("io.ktor:ktor-server-cio:$ktor_version")
-    implementation("io.ktor:ktor-server-status-pages-jvm:$ktor_version")
 
     implementation("io.insert-koin:koin-ktor:$koin_version")
     implementation("io.insert-koin:koin-logger-slf4j:$koin_version")
 
-    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.1")
-
     implementation("ch.qos.logback:logback-classic:$logback_version")
+
+    testImplementation("io.ktor:ktor-server-test-host:$ktor_version")
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
 }
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {

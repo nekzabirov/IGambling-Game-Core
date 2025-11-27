@@ -10,6 +10,7 @@ plugins {
     kotlin("jvm") version "2.2.20"
     id("org.jetbrains.kotlin.plugin.serialization") version "2.2.20"
     id("io.ktor.plugin") version "3.3.1"
+    id("com.google.protobuf") version "0.9.4"
     application
 }
 
@@ -22,7 +23,8 @@ application {
 }
 
 dependencies {
-    implementation(project(":shared"))
+    implementation(project(":proto"))
+    implementation(project(":core"))
 
     implementation("io.ktor:ktor-server-core:$ktor_version")
     implementation("io.ktor:ktor-server-content-negotiation:$ktor_version")
@@ -32,7 +34,16 @@ dependencies {
     implementation("io.insert-koin:koin-ktor:$koin_version")
     implementation("io.insert-koin:koin-logger-slf4j:$koin_version")
 
+    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.1")
+
     implementation("ch.qos.logback:logback-classic:$logback_version")
+
+    api("io.grpc:grpc-netty-shaded:1.76.0")
+    api("io.grpc:grpc-services:1.76.0")
+    api("io.grpc:grpc-kotlin-stub:1.5.0")
+
+    implementation("com.google.protobuf:protobuf-java:3.25.1")
+    implementation("com.google.protobuf:protobuf-kotlin:3.25.1")
 
     testImplementation("io.ktor:ktor-server-test-host:$ktor_version")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
