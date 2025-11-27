@@ -8,6 +8,7 @@ import domain.provider.table.ProviderTable
 import domain.session.table.RoundTable
 import domain.session.table.SessionTable
 import domain.session.table.SpinTable
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.RabbitMQ
 import io.ktor.server.application.*
 import io.ktor.util.AttributeKey
 import org.jetbrains.exposed.sql.Database
@@ -43,6 +44,10 @@ val SharedPlugin = createApplicationPlugin(name = "SharedPlugin", createConfigur
         driver = pluginConfig.databaseDriver,
         password = pluginConfig.databasePassword,
     )
+
+    application.install(RabbitMQ) {
+        uri = pluginConfig.rabbitMq.url
+    }
 
     transaction {
         create(

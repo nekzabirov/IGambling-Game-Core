@@ -3,10 +3,16 @@ package app.event
 import core.model.SpinType
 import core.value.Currency
 import domain.game.model.GameFull
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonIgnoreUnknownKeys
 
+@OptIn(ExperimentalSerializationApi::class)
 @Serializable
+@JsonIgnoreUnknownKeys
 data class SpinEvent(
+    @SerialName("spinType")
     val type: SpinType,
 
     val game: GameFull,
@@ -21,8 +27,8 @@ data class SpinEvent(
 ) : IEvent {
     override val key: String
         get() = "spin." + when (type) {
-            SpinType.PLACE -> "place"
-            SpinType.SETTLE -> "settle"
-            SpinType.ROLLBACK -> "rollback"
+            SpinType.PLACE -> "placed"
+            SpinType.SETTLE -> "settled"
+            SpinType.ROLLBACK -> "rolled_back"
         }
 }
