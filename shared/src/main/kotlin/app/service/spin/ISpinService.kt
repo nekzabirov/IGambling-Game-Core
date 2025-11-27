@@ -20,6 +20,8 @@ abstract class ISpinService {
 
     abstract suspend fun settle(session: Session, extRoundId: String, command: ISpinCommand): Result<Unit>
 
+    abstract suspend fun rollback(session: Session, command: ISpinCommand): Result<Unit>
+
     open suspend fun closeRound(session: Session, extRoundId: String): Result<Unit> {
         return newSuspendedTransaction {
             val roundId = findRoundId(session, extRoundId)
@@ -97,5 +99,12 @@ class SpinServiceSpec : ISpinService(), KoinComponent {
         }
 
         return spinService.settle(session, extRoundId, command)
+    }
+
+    override suspend fun rollback(session: Session, command: ISpinCommand): Result<Unit> {
+        if (command is FreespinSpinCommand) {
+            return freeSpinService.rollback(session, command)
+        }
+        return spinService.rollback(session, command)
     }
 }

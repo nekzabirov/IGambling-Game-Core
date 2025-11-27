@@ -38,4 +38,8 @@ class FakeWalletAdapter : WalletAdapter {
         fakeBalance = fakeBalance.copy(real = fakeBalance.real + real, bonus = fakeBalance.bonus + bonus)
         return Result.success(Unit)
     }
+
+    override suspend fun rollback(playerId: String, referenceId: String): Result<Unit> {
+        return Result.success(Unit)
+    }
 }

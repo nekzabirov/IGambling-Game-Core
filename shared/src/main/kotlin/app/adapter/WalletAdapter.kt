@@ -9,4 +9,6 @@ interface WalletAdapter {
     suspend fun withdraw(playerId: String, referenceId: String, currency: Currency, real: Int, bonus: Int): Result<Unit>
 
     suspend fun deposit(playerId: String, referenceId: String, currency: Currency, real: Int, bonus: Int): Result<Unit>
+
+    suspend fun rollback(playerId: String, referenceId: String): Result<Unit>
 }
