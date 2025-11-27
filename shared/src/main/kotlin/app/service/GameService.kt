@@ -3,8 +3,8 @@ package app.service
 import app.adapter.CacheAdapter
 import core.error.GameUnavailableError
 import domain.aggregator.table.AggregatorInfoTable
-import domain.game.dao.GameDao
 import domain.game.dao.findBySymbol
+import domain.game.dao.full
 import domain.game.mapper.toGameFull
 import domain.game.model.Game
 import domain.game.model.GameFull
@@ -21,7 +21,7 @@ object GameService : KoinComponent {
     private val cacheAdapter = getKoin().get<CacheAdapter>()
 
     suspend fun findByIdentity(identity: String): Result<GameFull> = newSuspendedTransaction {
-        val gameResult = GameDao.gameFull
+        val gameResult = GameTable.full()
             .andWhere { GameTable.identity eq identity and (GameTable.active eq true) and (ProviderTable.active eq true) and (AggregatorInfoTable.active eq true) }
             .singleOrNull()
             ?: return@newSuspendedTransaction Result.failure(NotFoundException("Game not found"))
@@ -30,7 +30,7 @@ object GameService : KoinComponent {
     }
 
     suspend fun findById(id: UUID): Result<GameFull> = newSuspendedTransaction {
-        val gameResult = GameDao.gameFull
+        val gameResult = GameTable.full()
             .andWhere { GameTable.id eq id and (GameTable.active eq true) and (ProviderTable.active eq true) and (AggregatorInfoTable.active eq true) }
             .singleOrNull()
             ?: return@newSuspendedTransaction Result.failure(NotFoundException("Game not found"))

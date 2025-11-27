@@ -39,6 +39,8 @@ fun ResultRow.toGameFull() = GameFull(
 
     name = this[GameTable.name],
 
+    images = this[GameTable.images],
+
     bonusBetEnable = this[GameTable.bonusBetEnable],
 
     bonusWageringEnable = this[GameTable.bonusWageringEnable],

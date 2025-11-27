@@ -2,6 +2,7 @@ package domain.game.model
 
 import core.value.Locale
 import core.model.Platform
+import core.value.ImageMap
 import domain.aggregator.model.AggregatorInfo
 import domain.provider.model.Provider
 import java.util.*
@@ -12,6 +13,8 @@ data class GameFull(
     val identity: String,
 
     val name: String,
+
+    val images: ImageMap,
 
     val bonusBetEnable: Boolean = true,
 
@@ -40,4 +43,16 @@ data class GameFull(
     val provider: Provider,
 
     val aggregator: AggregatorInfo,
-)
+) {
+    fun toGame() = Game(
+        id = id,
+        identity = identity,
+        name = name,
+        providerId = provider.id,
+        images = images,
+        bonusBetEnable = bonusBetEnable,
+        bonusWageringEnable = bonusWageringEnable,
+        tags = tags,
+        active = true
+    )
+}
