@@ -1,5 +1,6 @@
 import app.adapter.CacheAdapter
 import app.adapter.CurrencyAdapter
+import app.adapter.EventProducerAdapter
 import app.adapter.PlayerAdapter
 import app.adapter.WalletAdapter
 import app.service.spin.FreeSpinService
@@ -40,6 +41,7 @@ import app.usecase.UpdateProviderUsecase
 import infrastructure.adapter.FakePlayerAdapter
 import infrastructure.adapter.FakeWalletAdapter
 import infrastructure.adapter.MapCacheAdapter
+import infrastructure.adapter.RabbitMqEventProducer
 
 val Application.sharedModule
     get() = module {
@@ -47,6 +49,7 @@ val Application.sharedModule
         single<WalletAdapter> { FakeWalletAdapter() }
         single<PlayerAdapter> { FakePlayerAdapter() }
         single<CacheAdapter> { MapCacheAdapter() }
+        single<EventProducerAdapter> { RabbitMqEventProducer(this@sharedModule) }
 
         single { SpinService() }
         single { FreeSpinService() }

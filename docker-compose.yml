@@ -16,14 +16,18 @@ services:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - backend_network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    labels:
-      app.component: "database"
-      app.description: "PostgreSQL database for GameHub"
+
+  rabbitmq:
+    image: rabbitmq:latest
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    networks:
+      - backend_network
 
 volumes:
   postgres_data:

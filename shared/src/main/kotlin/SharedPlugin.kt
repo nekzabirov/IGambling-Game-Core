@@ -30,7 +30,7 @@ class PluginConfig {
 
     var rabbitMq: RabbitMqConfig = RabbitMqConfig(
         url = System.getenv("RABBITMQ_URL") ?: "amqp://localhost:5672",
-        exchange = System.getenv("RABBITMQ_EXCHANGE") ?: "aggregator"
+        exchange = System.getenv("RABBITMQ_EXCHANGE") ?: "game.event"
     )
 }
 
