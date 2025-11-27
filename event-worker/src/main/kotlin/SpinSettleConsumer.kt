@@ -35,12 +35,14 @@ fun Application.consumeSpinSettle(exchange: String) = rabbitmq {
             val body = msg.body
             log.info("Spin event received: $body")
 
-            gameWonUsecase(
-                gameIdentity = body.game.identity,
-                playerId = body.playerId,
-                amount = body.amount,
-                currency = body.currency
-            )
+            if (body.freeSpinId == null) {
+                gameWonUsecase(
+                    gameIdentity = body.game.identity,
+                    playerId = body.playerId,
+                    amount = body.amount,
+                    currency = body.currency
+                )
+            }
         }
     }
 }
