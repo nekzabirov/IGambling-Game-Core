@@ -1,16 +1,15 @@
 import app.event.SpinEvent
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.basicConsume
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.exchangeDeclare
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.queueBind
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.queueDeclare
-import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.rabbitmq
-import io.ktor.server.application.Application
-import io.ktor.server.application.log
+import app.usecase.AddGameWonUsecase
+import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.*
+import io.ktor.server.application.*
+import org.koin.ktor.ext.getKoin
 
 private const val QUEUE_NAME = "spin.events"
 private const val ROUTING_KEY = "spin.settled"
 
 fun Application.consumeSpinSettle(exchange: String) = rabbitmq {
+    val gameWonUsecase = getKoin().get<AddGameWonUsecase>()
+
     queueBind {
         queue = QUEUE_NAME
         this.exchange = exchange
@@ -35,6 +34,13 @@ fun Application.consumeSpinSettle(exchange: String) = rabbitmq {
         deliverCallback<SpinEvent> { msg ->
             val body = msg.body
             log.info("Spin event received: $body")
+
+            gameWonUsecase(
+                gameIdentity = body.game.identity,
+                playerId = body.playerId,
+                amount = body.amount,
+                currency = body.currency
+            )
         }
     }
 }

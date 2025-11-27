@@ -4,6 +4,7 @@ import domain.collection.table.CollectionTable
 import domain.game.table.GameFavouriteTable
 import domain.game.table.GameTable
 import domain.game.table.GameVariantTable
+import domain.game.table.GameWonTable
 import domain.provider.table.ProviderTable
 import domain.session.table.RoundTable
 import domain.session.table.SessionTable
@@ -60,7 +61,8 @@ val SharedPlugin = createApplicationPlugin(name = "SharedPlugin", createConfigur
             AggregatorInfoTable,
             SessionTable,
             RoundTable,
-            SpinTable
+            SpinTable,
+            GameWonTable
         )
     }
 

@@ -19,6 +19,7 @@ import app.usecase.AddCollectionUsecase
 import app.usecase.AddGameCollectionUsecase
 import app.usecase.AddGameFavouriteUsecase
 import app.usecase.AddGameTagUsecase
+import app.usecase.AddGameWonUsecase
 import app.usecase.AssignProviderToAggregatorUsecase
 import app.usecase.CancelFreespinUsecase
 import app.usecase.ChangeGameOrderUsecase
@@ -85,4 +86,5 @@ val Application.sharedModule
         factory { PlaceSpinUsecase() }
         factory { SettleSpinUsecase() }
         factory { CloseRoundUsecase() }
+        factory { AddGameWonUsecase() }
     }

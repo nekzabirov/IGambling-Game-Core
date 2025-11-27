@@ -20,6 +20,7 @@ fun main() {
 fun Application.module() {
     install(Koin) {
         slf4jLogger()
+        modules(sharedModule)
     }
 
     install(SharedPlugin) {
