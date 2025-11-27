@@ -2,12 +2,16 @@ package domain.game.model
 
 import core.value.Locale
 import core.model.Platform
+import core.serializer.UUIDSerializer
 import core.value.ImageMap
 import domain.aggregator.model.AggregatorInfo
 import domain.provider.model.Provider
+import kotlinx.serialization.Serializable
 import java.util.*
 
+@Serializable
 data class GameFull(
+    @Serializable(with = UUIDSerializer::class)
     val id: UUID,
 
     val identity: String,

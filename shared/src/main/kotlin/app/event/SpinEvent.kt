@@ -3,7 +3,9 @@ package app.event
 import core.model.SpinType
 import core.value.Currency
 import domain.game.model.GameFull
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class SpinEvent(
     val type: SpinType,
 

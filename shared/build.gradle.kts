@@ -7,6 +7,7 @@ val kotlin_version: String by project
 val logback_version: String by project
 val postgres_version: String by project
 val ktor_version: String by project
+val rabbitmq_version: String by project
 
 plugins {
     kotlin("jvm") version "2.2.20"
@@ -45,6 +46,8 @@ dependencies {
     implementation("ch.qos.logback:logback-classic:$logback_version")
 
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.1")
+
+    implementation("io.github.damirdenis-tudor:ktor-server-rabbitmq:$rabbitmq_version")
 
     testImplementation("io.ktor:ktor-server-test-host")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
