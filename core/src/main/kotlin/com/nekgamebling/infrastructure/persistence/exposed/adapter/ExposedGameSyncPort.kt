@@ -38,6 +38,7 @@ class ExposedGameSyncPort : GameSyncPort {
                 ) {
                     it[identity] = providerIdentity
                     it[name] = gameVariant.providerName
+                    it[aggregatorId] = aggregatorInfo.id
                 }.single().toProvider()
 
                 val gameIdentity = "${provider.identity}-${gameVariant.name}".toUrlSlug()
