@@ -10,12 +10,19 @@ import java.util.UUID
  */
 interface ProviderRepository {
     suspend fun findById(id: UUID): Provider?
+
     suspend fun findByIdentity(identity: String): Provider?
+
     suspend fun findByAggregatorId(aggregatorId: UUID): List<Provider>
+
     suspend fun save(provider: Provider): Provider
+
     suspend fun update(provider: Provider): Provider
+
     suspend fun delete(id: UUID): Boolean
+
     suspend fun existsByIdentity(identity: String): Boolean
+
     suspend fun findAll(pageable: Pageable): Page<Provider>
 
     /**

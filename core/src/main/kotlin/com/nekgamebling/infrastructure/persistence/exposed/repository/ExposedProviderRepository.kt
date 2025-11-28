@@ -37,15 +37,26 @@ class ExposedProviderRepository : ProviderRepository {
     }
 
     override suspend fun save(provider: Provider): Provider = newSuspendedTransaction {
-        val id = ProviderTable.insertAndGetId {
+        val row = ProviderTable.upsertReturning(
+            keys = arrayOf(ProviderTable.identity),
+            onUpdateExclude = listOf(ProviderTable.name)
+        ) {
             it[identity] = provider.identity
             it[name] = provider.name
             it[images] = provider.images
             it[order] = provider.order
             it[aggregatorId] = provider.aggregatorId
             it[active] = provider.active
-        }
-        provider.copy(id = id.value)
+        }.single()
+
+        provider.copy(
+            id = row[ProviderTable.id].value,
+            aggregatorId = row[ProviderTable.aggregatorId]?.value,
+            active = row[ProviderTable.active],
+            order = row[ProviderTable.order],
+            name = row[ProviderTable.name],
+            images = row[ProviderTable.images]
+        )
     }
 
     override suspend fun update(provider: Provider): Provider = newSuspendedTransaction {

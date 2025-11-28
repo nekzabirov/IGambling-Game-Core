@@ -1,19 +1,21 @@
 package com.nekgamebling.infrastructure.aggregator.onegamehub.client
 
+import com.nekgamebling.domain.common.error.AggregatorError
+import com.nekgamebling.infrastructure.aggregator.onegamehub.OneGameHubConfig
+import com.nekgamebling.infrastructure.aggregator.onegamehub.client.dto.GameDto
+import com.nekgamebling.infrastructure.aggregator.onegamehub.client.dto.ResponseDto
 import io.ktor.client.*
+import io.ktor.client.call.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.plugins.logging.*
 import io.ktor.client.request.*
+import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
 
-internal class OneGameHubHttpClient(
-    private val gateway: String,
-    private val partner: String,
-    private val secret: String,
-)  {
+internal class OneGameHubHttpClient(private val config: OneGameHubConfig)  {
     private val client = HttpClient(CIO) {
         install(ContentNegotiation) {
             json(Json {
@@ -36,10 +38,23 @@ internal class OneGameHubHttpClient(
         }
     }
 
-    private val address = "https://$gateway/integrations/$partner/rpc"
+    private val address = "https://${config.gateway}/integrations/${config.partner}/rpc"
+
+    suspend fun listGames(): Result<ResponseDto<List<GameDto>>> {
+        val response = client.get(address) {
+            setAction("available_games")
+        }
+
+        if (!response.status.isSuccess())
+        {
+            return Result.failure(AggregatorError("Failed to fetch games from OneGameHub: ${response.status}"))
+        }
+
+        return Result.success(response.body())
+    }
 
     private fun HttpRequestBuilder.setAction(action: String) {
         parameter("action", action)
-        parameter("secret", secret)
+        parameter("secret", config.secret)
     }
 }

@@ -2,6 +2,7 @@ package com.nekgamebling.infrastructure.aggregator
 
 import com.nekgamebling.application.port.outbound.AggregatorAdapterFactory
 import com.nekgamebling.application.port.outbound.AggregatorAdapterRegistry
+import com.nekgamebling.infrastructure.aggregator.onegamehub.OneGameHubAdapterFactory
 import com.nekgamebling.shared.value.Aggregator
 
 /**
@@ -12,7 +13,9 @@ class AggregatorAdapterRegistryImpl : AggregatorAdapterRegistry {
     private val factories = mutableMapOf<Aggregator, AggregatorAdapterFactory>()
 
     override fun getFactory(aggregator: Aggregator): AggregatorAdapterFactory? {
-        return factories[aggregator]
+        return when (aggregator) {
+            Aggregator.ONEGAMEHUB -> OneGameHubAdapterFactory()
+        }
     }
 
     override fun register(factory: AggregatorAdapterFactory) {

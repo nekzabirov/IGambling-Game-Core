@@ -5,6 +5,7 @@ import com.nekgamebling.installCore
 import io.ktor.server.application.*
 import io.ktor.server.cio.*
 import io.ktor.server.engine.*
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.koin.ktor.ext.getKoin
 import org.koin.ktor.plugin.Koin
@@ -23,16 +24,14 @@ fun main() = runBlocking {
 
     val server = embeddedServer(CIO, port = 0) {
         installCore()
-
-        install(Koin) {
-            slf4jLogger()
-            modules(coreModule())
-        }
     }
 
     logger.info("Start job application")
 
     server.start(wait = false)
+
+    // Give the server/DI a moment to fully settle if there are async initializers
+    delay(1000)
 
     val koin = server.application.getKoin()
     val syncGameUsecase = koin.get<SyncGameUsecase>()

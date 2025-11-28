@@ -43,7 +43,7 @@ fun ResultRow.toGameVariant(): GameVariant = GameVariant(
     jackpotEnable = this[GameVariantTable.jackpotEnable],
     demoEnable = this[GameVariantTable.demoEnable],
     bonusBuyEnable = this[GameVariantTable.bonusBuyEnable],
-    locales = this[GameVariantTable.locales],
+    locales = this[GameVariantTable.locales].map { Locale(it) },
     platforms = this[GameVariantTable.platforms].map { Platform.valueOf(it) },
     playLines = this[GameVariantTable.playLines]
 )

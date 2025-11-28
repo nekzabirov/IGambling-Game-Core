@@ -14,7 +14,7 @@ fun GameVariant.toGameVariantProto(): GameVariantDto = GameVariantDto.newBuilder
     .setJackpotEnable(this.jackpotEnable)
     .setDemoEnable(this.demoEnable)
     .setBonusBuyEnable(this.bonusBuyEnable)
-    .addAllLocales(this.locales)
+    .addAllLocales(this.locales.map { it.value })
     .addAllPlatforms(this.platforms.map { it.toPlatformProto() })
     .setAggregator(this.aggregator.name)
     .build()

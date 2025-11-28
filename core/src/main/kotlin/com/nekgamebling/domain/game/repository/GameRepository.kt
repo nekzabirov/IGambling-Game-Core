@@ -15,18 +15,28 @@ import java.util.UUID
  */
 interface GameRepository {
     suspend fun findById(id: UUID): Game?
+
     suspend fun findByIdentity(identity: String): Game?
+
     suspend fun findBySymbol(symbol: String): Game?
+
+    suspend fun findByNameAndProviderId(name: String, providerId: UUID): Game?
+
     suspend fun save(game: Game): Game
+
     suspend fun update(game: Game): Game
+
     suspend fun delete(id: UUID): Boolean
+
     suspend fun existsByIdentity(identity: String): Boolean
 
     /**
      * Find game with all related details (provider, aggregator, variant).
      */
     suspend fun findWithDetailsById(id: UUID): GameWithDetails?
+
     suspend fun findWithDetailsByIdentity(identity: String): GameWithDetails?
+
     suspend fun findWithDetailsBySymbol(symbol: String): GameWithDetails?
 
     /**
@@ -131,13 +141,23 @@ data class GameListItem(
  */
 interface GameVariantRepository {
     suspend fun findById(id: UUID): GameVariant?
-    suspend fun findBySymbol(symbol: String): GameVariant?
+
+    suspend fun findBySymbol(symbol: String, aggregator: Aggregator): GameVariant?
+
     suspend fun findByGameId(gameId: UUID): List<GameVariant>
+
     suspend fun findByAggregator(aggregator: Aggregator): List<GameVariant>
+
     suspend fun save(variant: GameVariant): GameVariant
+
+    suspend fun saveAll(variants: List<GameVariant>): List<GameVariant>
+
     suspend fun update(variant: GameVariant): GameVariant
+
     suspend fun delete(id: UUID): Boolean
+
     suspend fun linkToGame(variantId: UUID, gameId: UUID): Boolean
+
     suspend fun findAll(pageable: Pageable): Page<GameVariant>
 }
 

@@ -44,6 +44,14 @@ class ExposedGameRepository : GameRepository {
             ?.toGame()
     }
 
+    override suspend fun findByNameAndProviderId(name: String, providerId: UUID): Game? = newSuspendedTransaction {
+        GameTable
+            .selectAll()
+            .where { GameTable.name eq name and (GameTable.providerId eq providerId) }
+            .singleOrNull()
+            ?.toGame()
+    }
+
     override suspend fun save(game: Game): Game = newSuspendedTransaction {
         val id = GameTable.insertAndGetId {
             it[identity] = game.identity
@@ -251,9 +259,9 @@ class ExposedGameVariantRepository : GameVariantRepository {
             ?.toGameVariant()
     }
 
-    override suspend fun findBySymbol(symbol: String): GameVariant? = newSuspendedTransaction {
+    override suspend fun findBySymbol(symbol: String, aggregator: Aggregator): GameVariant? = newSuspendedTransaction {
         GameVariantTable.selectAll()
-            .where { GameVariantTable.symbol eq symbol }
+            .where { GameVariantTable.symbol eq symbol and (GameVariantTable.aggregator eq aggregator) }
             .singleOrNull()
             ?.toGameVariant()
     }
@@ -271,7 +279,10 @@ class ExposedGameVariantRepository : GameVariantRepository {
     }
 
     override suspend fun save(variant: GameVariant): GameVariant = newSuspendedTransaction {
-        val id = GameVariantTable.insertAndGetId {
+        val row = GameVariantTable.upsertReturning(
+            keys = arrayOf(GameVariantTable.symbol, GameVariantTable.aggregator),
+            onUpdateExclude = listOf(GameVariantTable.createdAt, GameVariantTable.gameId),
+        ) {
             it[gameId] = variant.gameId
             it[symbol] = variant.symbol
             it[name] = variant.name
@@ -282,11 +293,16 @@ class ExposedGameVariantRepository : GameVariantRepository {
             it[jackpotEnable] = variant.jackpotEnable
             it[demoEnable] = variant.demoEnable
             it[bonusBuyEnable] = variant.bonusBuyEnable
-            it[locales] = variant.locales
+            it[locales] = variant.locales.map { l -> l.value }
             it[platforms] = variant.platforms.map { p -> p.name }
             it[playLines] = variant.playLines
-        }
-        variant.copy(id = id.value)
+        }.single()
+
+        variant.copy(id = row[GameVariantTable.id].value, gameId = row[GameVariantTable.gameId]?.value)
+    }
+
+    override suspend fun saveAll(variants: List<GameVariant>): List<GameVariant> = newSuspendedTransaction {
+        variants.map { save(it)}
     }
 
     override suspend fun update(variant: GameVariant): GameVariant = newSuspendedTransaction {
@@ -301,7 +317,7 @@ class ExposedGameVariantRepository : GameVariantRepository {
             it[jackpotEnable] = variant.jackpotEnable
             it[demoEnable] = variant.demoEnable
             it[bonusBuyEnable] = variant.bonusBuyEnable
-            it[locales] = variant.locales
+            it[locales] = variant.locales.map { l -> l.value }
             it[platforms] = variant.platforms.map { p -> p.name }
             it[playLines] = variant.playLines
         }
