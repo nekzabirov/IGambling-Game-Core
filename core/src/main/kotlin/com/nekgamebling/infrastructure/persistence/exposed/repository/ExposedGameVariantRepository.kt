@@ -105,6 +105,7 @@ class ExposedGameVariantRepository : GameVariantRepository {
 
     override suspend fun findAll(pageable: Pageable): Page<GameVariant> = newSuspendedTransaction {
         val totalCount = GameVariantTable.selectAll().count()
+
         val items = GameVariantTable.selectAll()
             .limit(pageable.sizeReal)
             .offset(pageable.offset)

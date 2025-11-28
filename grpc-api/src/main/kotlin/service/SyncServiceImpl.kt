@@ -74,15 +74,14 @@ class SyncServiceImpl(application: Application) : SyncGrpcKt.SyncCoroutineImplBa
             if (request.hasGameIdentity()) {
                 withGameIdentity(request.gameIdentity)
             }
+        }.let {
+            ListVariantResult.newBuilder()
+                .setTotalPage(it.totalPages.toInt())
+                .addAllItems(it.items.map { i -> i.gameVariant }.map { v -> v.toGameVariantProto() })
+                .addAllGames(it.items.map { i -> i.game.game }.toSet().map { g -> g.toGameProto() })
+                .addAllProviders(it.items.map { i -> i.game.provider }.toSet().map { p -> p.toProviderProto() })
+                .build()
         }
-            .let {
-                ListVariantResult.newBuilder()
-                    .setTotalPage(it.totalPages.toInt())
-                    .addAllItems(it.items.map { i -> i.gameVariant }.map { v -> v.toGameVariantProto() })
-                    .addAllGames(it.items.map { i -> i.game.game }.toSet().map { g -> g.toGameProto() })
-                    .addAllProviders(it.items.map { i -> i.game.provider }.toSet().map { p -> p.toProviderProto() })
-                    .build()
-            }
     }
 
     override suspend fun assignProvider(request: AssignProviderCommand): EmptyResult {
