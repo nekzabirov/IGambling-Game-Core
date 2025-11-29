@@ -16,21 +16,9 @@ import java.util.UUID
 /**
  * Exposed implementation of CollectionRepository.
  */
-class ExposedCollectionRepository : CollectionRepository {
+class ExposedCollectionRepository : BaseExposedRepositoryWithIdentity<Collection, CollectionTable>(CollectionTable), CollectionRepository {
 
-    override suspend fun findById(id: UUID): Collection? = newSuspendedTransaction {
-        CollectionTable.selectAll()
-            .where { CollectionTable.id eq id }
-            .singleOrNull()
-            ?.toCollection()
-    }
-
-    override suspend fun findByIdentity(identity: String): Collection? = newSuspendedTransaction {
-        CollectionTable.selectAll()
-            .where { CollectionTable.identity eq identity }
-            .singleOrNull()
-            ?.toCollection()
-    }
+    override fun ResultRow.toEntity(): Collection = toCollection()
 
     override suspend fun save(collection: Collection): Collection = newSuspendedTransaction {
         val id = CollectionTable.insertAndGetId {
@@ -54,18 +42,8 @@ class ExposedCollectionRepository : CollectionRepository {
         collection
     }
 
-    override suspend fun delete(id: UUID): Boolean = newSuspendedTransaction {
-        CollectionTable.deleteWhere { CollectionTable.id eq id } > 0
-    }
-
-    override suspend fun existsByIdentity(identity: String): Boolean = newSuspendedTransaction {
-        CollectionTable.selectAll()
-            .where { CollectionTable.identity eq identity }
-            .count() > 0
-    }
-
     override suspend fun findAll(pageable: Pageable, activeOnly: Boolean): Page<Collection> = newSuspendedTransaction {
-        val baseQuery = CollectionTable.selectAll()
+        val baseQuery = table.selectAll()
             .let { query ->
                 if (activeOnly) query.andWhere { CollectionTable.active eq true }
                 else query
@@ -76,7 +54,7 @@ class ExposedCollectionRepository : CollectionRepository {
             .orderBy(CollectionTable.order to SortOrder.ASC)
             .limit(pageable.sizeReal)
             .offset(pageable.offset)
-            .map { it.toCollection() }
+            .map { it.toEntity() }
 
         Page(
             items = items,
@@ -87,7 +65,6 @@ class ExposedCollectionRepository : CollectionRepository {
     }
 
     override suspend fun addGame(collectionId: UUID, gameId: UUID, order: Int): Boolean = newSuspendedTransaction {
-        // Check if already exists
         val exists = CollectionGameTable.selectAll()
             .where { (CollectionGameTable.categoryId eq collectionId) and (CollectionGameTable.gameId eq gameId) }
             .count() > 0
@@ -134,6 +111,6 @@ class ExposedCollectionRepository : CollectionRepository {
             .innerJoin(CollectionGameTable, { CollectionTable.id }, { CollectionGameTable.categoryId })
             .selectAll()
             .where { CollectionGameTable.gameId eq gameId }
-            .map { it.toCollection() }
+            .map { it.toEntity() }
     }
 }

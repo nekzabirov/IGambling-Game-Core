@@ -23,7 +23,8 @@ class SessionServiceImpl(application: Application) : SessionGrpcKt.SessionCorout
                 playerId = request.playerId,
                 currency = Currency(request.currency),
                 locale = Locale(request.locale),
-                platform = request.platform.toPlatform()
+                platform = request.platform.toPlatform(),
+                loggyUrl = request.lobbyUrl
             )
         ).map { OpenSessionResult.newBuilder().setLaunchUrl(it.launchUrl).build() }
             .getOrElse { throw StatusException(Status.INVALID_ARGUMENT.withDescription(it.message)) }

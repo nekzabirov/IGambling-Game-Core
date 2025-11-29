@@ -6,35 +6,23 @@ import com.nekgamebling.infrastructure.persistence.exposed.mapper.toProvider
 import com.nekgamebling.infrastructure.persistence.exposed.table.ProviderTable
 import com.nekgamebling.shared.value.Page
 import com.nekgamebling.shared.value.Pageable
-import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.ResultRow
+import org.jetbrains.exposed.sql.SortOrder
+import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
+import org.jetbrains.exposed.sql.update
+import org.jetbrains.exposed.sql.upsertReturning
 import java.util.UUID
 
 /**
  * Exposed implementation of ProviderRepository.
  */
-class ExposedProviderRepository : ProviderRepository {
+class ExposedProviderRepository : BaseExposedRepositoryWithIdentity<Provider, ProviderTable>(ProviderTable), ProviderRepository {
 
-    override suspend fun findById(id: UUID): Provider? = newSuspendedTransaction {
-        ProviderTable.selectAll()
-            .where { ProviderTable.id eq id }
-            .singleOrNull()
-            ?.toProvider()
-    }
+    override fun ResultRow.toEntity(): Provider = toProvider()
 
-    override suspend fun findByIdentity(identity: String): Provider? = newSuspendedTransaction {
-        ProviderTable.selectAll()
-            .where { ProviderTable.identity eq identity }
-            .singleOrNull()
-            ?.toProvider()
-    }
-
-    override suspend fun findByAggregatorId(aggregatorId: UUID): List<Provider> = newSuspendedTransaction {
-        ProviderTable.selectAll()
-            .where { ProviderTable.aggregatorId eq aggregatorId }
-            .map { it.toProvider() }
-    }
+    override suspend fun findByAggregatorId(aggregatorId: UUID): List<Provider> =
+        findAllByNullableRef(ProviderTable.aggregatorId, aggregatorId)
 
     override suspend fun save(provider: Provider): Provider = newSuspendedTransaction {
         val row = ProviderTable.upsertReturning(
@@ -71,23 +59,13 @@ class ExposedProviderRepository : ProviderRepository {
         provider
     }
 
-    override suspend fun delete(id: UUID): Boolean = newSuspendedTransaction {
-        ProviderTable.deleteWhere { ProviderTable.id eq id } > 0
-    }
-
-    override suspend fun existsByIdentity(identity: String): Boolean = newSuspendedTransaction {
-        ProviderTable.selectAll()
-            .where { ProviderTable.identity eq identity }
-            .count() > 0
-    }
-
     override suspend fun findAll(pageable: Pageable): Page<Provider> = newSuspendedTransaction {
-        val totalCount = ProviderTable.selectAll().count()
-        val items = ProviderTable.selectAll()
+        val totalCount = table.selectAll().count()
+        val items = table.selectAll()
             .orderBy(ProviderTable.order to SortOrder.ASC)
             .limit(pageable.sizeReal)
             .offset(pageable.offset)
-            .map { it.toProvider() }
+            .map { it.toEntity() }
 
         Page(
             items = items,

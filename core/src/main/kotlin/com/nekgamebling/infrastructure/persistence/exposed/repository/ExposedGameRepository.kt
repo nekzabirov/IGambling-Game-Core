@@ -10,7 +10,6 @@ import com.nekgamebling.infrastructure.persistence.exposed.table.*
 import com.nekgamebling.shared.value.Page
 import com.nekgamebling.shared.value.Pageable
 import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.json.contains
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import java.util.UUID
@@ -18,21 +17,9 @@ import java.util.UUID
 /**
  * Exposed implementation of GameRepository.
  */
-class ExposedGameRepository : GameRepository {
+class ExposedGameRepository : BaseExposedRepositoryWithIdentity<Game, GameTable>(GameTable), GameRepository {
 
-    override suspend fun findById(id: UUID): Game? = newSuspendedTransaction {
-        GameTable.selectAll()
-            .where { GameTable.id eq id }
-            .singleOrNull()
-            ?.toGame()
-    }
-
-    override suspend fun findByIdentity(identity: String): Game? = newSuspendedTransaction {
-        GameTable.selectAll()
-            .where { GameTable.identity eq identity }
-            .singleOrNull()
-            ?.toGame()
-    }
+    override fun ResultRow.toEntity(): Game = toGame()
 
     override suspend fun findBySymbol(symbol: String): Game? = newSuspendedTransaction {
         GameTable
@@ -40,15 +27,14 @@ class ExposedGameRepository : GameRepository {
             .selectAll()
             .where { GameVariantTable.symbol eq symbol }
             .singleOrNull()
-            ?.toGame()
+            ?.toEntity()
     }
 
     override suspend fun findByNameAndProviderId(name: String, providerId: UUID): Game? = newSuspendedTransaction {
-        GameTable
-            .selectAll()
+        table.selectAll()
             .where { GameTable.name eq name and (GameTable.providerId eq providerId) }
             .singleOrNull()
-            ?.toGame()
+            ?.toEntity()
     }
 
     override suspend fun save(game: Game): Game = newSuspendedTransaction {
@@ -79,16 +65,6 @@ class ExposedGameRepository : GameRepository {
         game
     }
 
-    override suspend fun delete(id: UUID): Boolean = newSuspendedTransaction {
-        GameTable.deleteWhere { GameTable.id eq id } > 0
-    }
-
-    override suspend fun existsByIdentity(identity: String): Boolean = newSuspendedTransaction {
-        GameTable.selectAll()
-            .where { GameTable.identity eq identity }
-            .count() > 0
-    }
-
     override suspend fun findWithDetailsById(id: UUID): GameWithDetails? = newSuspendedTransaction {
         buildFullGameQuery()
             .andWhere { GameTable.id eq id }
@@ -111,8 +87,7 @@ class ExposedGameRepository : GameRepository {
     }
 
     override suspend fun findAll(pageable: Pageable, filter: GameFilter): Page<GameListItem> = newSuspendedTransaction {
-        val baseQuery = buildListQuery()
-            .applyFilters(filter)
+        val baseQuery = buildListQuery().applyFilters(filter)
 
         val totalCount = baseQuery.count()
         val totalPages = pageable.getTotalPages(totalCount)
@@ -134,8 +109,7 @@ class ExposedGameRepository : GameRepository {
                     )
                 }
 
-                // Add collection if present
-                row.getOrNull(CollectionTable.id)?.let { collectionId ->
+                row.getOrNull(CollectionTable.id)?.let {
                     val collection = row.toCollection()
                     if (collection !in item.collections) {
                         (item.collections as MutableList).add(collection)
@@ -152,10 +126,10 @@ class ExposedGameRepository : GameRepository {
     }
 
     override suspend fun addTag(gameId: UUID, tag: String): Boolean = newSuspendedTransaction {
-        val game = GameTable.selectAll()
+        val game = table.selectAll()
             .where { GameTable.id eq gameId }
             .singleOrNull()
-            ?.toGame() ?: return@newSuspendedTransaction false
+            ?.toEntity() ?: return@newSuspendedTransaction false
 
         if (tag in game.tags) return@newSuspendedTransaction true
 
@@ -165,10 +139,10 @@ class ExposedGameRepository : GameRepository {
     }
 
     override suspend fun removeTag(gameId: UUID, tag: String): Boolean = newSuspendedTransaction {
-        val game = GameTable.selectAll()
+        val game = table.selectAll()
             .where { GameTable.id eq gameId }
             .singleOrNull()
-            ?.toGame() ?: return@newSuspendedTransaction false
+            ?.toEntity() ?: return@newSuspendedTransaction false
 
         GameTable.update({ GameTable.id eq gameId }) {
             it[tags] = game.tags - tag

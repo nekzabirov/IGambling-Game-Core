@@ -22,7 +22,7 @@ data class OpenSessionCommand(
     val currency: Currency,
     val locale: Locale,
     val platform: Platform,
-    val externalToken: String? = null
+    val loggyUrl: String,
 )
 
 /**
@@ -78,7 +78,7 @@ class OpenSessionUsecase(
             aggregatorId = game.aggregator.id,
             playerId = command.playerId,
             token = token,
-            externalToken = command.externalToken,
+            externalToken = null,
             currency = command.currency,
             locale = command.locale,
             platform = command.platform
@@ -91,11 +91,13 @@ class OpenSessionUsecase(
 
         // Get launch URL from aggregator
         val launchUrl = launchUrlAdapter.getLaunchUrl(
-            aggregator = game.aggregator,
             gameSymbol = game.symbol,
             sessionToken = token,
+            playerId = command.playerId,
             locale = command.locale,
             platform = command.platform,
+            currency = command.currency,
+            lobbyUrl = command.loggyUrl,
             demo = false
         ).getOrElse {
             return Result.failure(it)

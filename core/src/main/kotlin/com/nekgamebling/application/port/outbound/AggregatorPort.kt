@@ -16,11 +16,13 @@ interface AggregatorLaunchUrlPort {
      * Get launch URL for a game.
      */
     suspend fun getLaunchUrl(
-        aggregator: AggregatorInfo,
         gameSymbol: String,
         sessionToken: String,
+        playerId: String,
         locale: Locale,
         platform: Platform,
+        currency: Currency,
+        lobbyUrl: String,
         demo: Boolean
     ): Result<String>
 }

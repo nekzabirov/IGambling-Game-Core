@@ -55,11 +55,13 @@ class DemoGameUsecase(
 
         // Get demo launch URL
         val launchUrl = launchUrlAdapter.getLaunchUrl(
-            aggregator = game.aggregator,
             gameSymbol = game.symbol,
             sessionToken = "demo",
             locale = locale,
             platform = platform,
+            lobbyUrl = lobbyUrl,
+            playerId = "demo",
+            currency = currency,
             demo = true
         ).getOrElse {
             return Result.failure(it)

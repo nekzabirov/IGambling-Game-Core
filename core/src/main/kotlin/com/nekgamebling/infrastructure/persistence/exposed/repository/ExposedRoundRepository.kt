@@ -4,6 +4,7 @@ import com.nekgamebling.domain.session.model.Round
 import com.nekgamebling.domain.session.repository.RoundRepository
 import com.nekgamebling.infrastructure.persistence.exposed.mapper.toRound
 import com.nekgamebling.infrastructure.persistence.exposed.table.RoundTable
+import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.insertAndGetId
 import org.jetbrains.exposed.sql.selectAll
@@ -14,27 +15,18 @@ import java.util.UUID
 /**
  * Exposed implementation of RoundRepository.
  */
-class ExposedRoundRepository : RoundRepository {
+class ExposedRoundRepository : BaseExposedRepository<Round, RoundTable>(RoundTable), RoundRepository {
 
-    override suspend fun findById(id: UUID): Round? = newSuspendedTransaction {
-        RoundTable.selectAll()
-            .where { RoundTable.id eq id }
-            .singleOrNull()
-            ?.toRound()
-    }
+    override fun ResultRow.toEntity(): Round = toRound()
 
     override suspend fun findByExtId(sessionId: UUID, extId: String): Round? = newSuspendedTransaction {
-        RoundTable.selectAll()
+        table.selectAll()
             .where { (RoundTable.sessionId eq sessionId) and (RoundTable.extId eq extId) }
             .singleOrNull()
-            ?.toRound()
+            ?.toEntity()
     }
 
-    override suspend fun findBySessionId(sessionId: UUID): List<Round> = newSuspendedTransaction {
-        RoundTable.selectAll()
-            .where { RoundTable.sessionId eq sessionId }
-            .map { it.toRound() }
-    }
+    override suspend fun findBySessionId(sessionId: UUID): List<Round> = findAllByRef(RoundTable.sessionId, sessionId)
 
     override suspend fun save(round: Round): Round = newSuspendedTransaction {
         val id = RoundTable.insertAndGetId {
@@ -60,10 +52,10 @@ class ExposedRoundRepository : RoundRepository {
     }
 
     override suspend fun findOrCreate(sessionId: UUID, gameId: UUID, extId: String): Round = newSuspendedTransaction {
-        val existing = RoundTable.selectAll()
+        val existing = table.selectAll()
             .where { (RoundTable.sessionId eq sessionId) and (RoundTable.extId eq extId) }
             .singleOrNull()
-            ?.toRound()
+            ?.toEntity()
 
         if (existing != null) return@newSuspendedTransaction existing
 

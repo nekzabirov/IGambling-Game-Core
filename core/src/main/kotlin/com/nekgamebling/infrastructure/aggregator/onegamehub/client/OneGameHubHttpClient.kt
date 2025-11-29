@@ -3,7 +3,11 @@ package com.nekgamebling.infrastructure.aggregator.onegamehub.client
 import com.nekgamebling.domain.common.error.AggregatorError
 import com.nekgamebling.infrastructure.aggregator.onegamehub.OneGameHubConfig
 import com.nekgamebling.infrastructure.aggregator.onegamehub.client.dto.GameDto
+import com.nekgamebling.infrastructure.aggregator.onegamehub.client.dto.GameUrlDto
 import com.nekgamebling.infrastructure.aggregator.onegamehub.client.dto.ResponseDto
+import com.nekgamebling.shared.value.Currency
+import com.nekgamebling.shared.value.Locale
+import com.nekgamebling.shared.value.Platform
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.engine.cio.*
@@ -15,7 +19,7 @@ import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
 
-internal class OneGameHubHttpClient(private val config: OneGameHubConfig)  {
+internal class OneGameHubHttpClient(private val config: OneGameHubConfig) {
     private val client = HttpClient(CIO) {
         install(ContentNegotiation) {
             json(Json {
@@ -45,8 +49,45 @@ internal class OneGameHubHttpClient(private val config: OneGameHubConfig)  {
             setAction("available_games")
         }
 
-        if (!response.status.isSuccess())
-        {
+        if (!response.status.isSuccess()) {
+            return Result.failure(AggregatorError("Failed to fetch games from OneGameHub: ${response.status}"))
+        }
+
+        return Result.success(response.body())
+    }
+
+    suspend fun getLaunchUrl(
+        gameSymbol: String,
+        sessionToken: String,
+        playerId: String,
+        locale: String,
+        platform: Platform,
+        currency: String,
+        lobbyUrl: String,
+        demo: Boolean
+    ): Result<ResponseDto<GameUrlDto>> {
+        val response = client.get(address) {
+            setAction(if (demo) "demo_play" else "real_play")
+
+            parameter("game_id", gameSymbol)
+
+            if (!demo) {
+                parameter("player_id", playerId)
+            }
+
+            parameter("currency", currency)
+            parameter("mobile", if (platform == Platform.MOBILE) "1" else "0")
+            parameter("language", locale)
+
+            if (sessionToken.isNotBlank()) {
+                parameter("extra", sessionToken)
+            }
+
+            parameter("return_url", lobbyUrl)
+            parameter("deposit_url", lobbyUrl)
+        }
+
+        if (!response.status.isSuccess()) {
             return Result.failure(AggregatorError("Failed to fetch games from OneGameHub: ${response.status}"))
         }
 
