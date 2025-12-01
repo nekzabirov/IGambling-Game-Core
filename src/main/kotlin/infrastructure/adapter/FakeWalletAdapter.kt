@@ -14,7 +14,7 @@ class FakeWalletAdapter : WalletPort {
 
     init {
         // Initialize with some test balances
-        setBalance("test-player-1", Currency("USD"), Balance(10000, 500, Currency("USD")))
+        setBalance("test-player-1", Currency("EUR"), Balance(10000, 500, Currency("EUR")))
         setBalance("test-player-1", Currency("EUR"), Balance(8000, 300, Currency("EUR")))
     }
 

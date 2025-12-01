@@ -5,12 +5,19 @@ import infrastructure.api.rest.aggregatorRoute
 import io.grpc.Server
 import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder
 import io.ktor.server.application.*
-import io.ktor.server.routing.route
-import io.ktor.server.routing.routing
+import io.ktor.server.plugins.calllogging.*
+import io.ktor.server.routing.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import org.slf4j.event.Level
 
 fun Application.installApi() {
+    install(CallLogging) {
+        level = Level.INFO
+    }
+
     installRest()
-    //installGrpc()
+    installGrpc()
 }
 
 private fun Application.installGrpc() {
@@ -25,11 +32,15 @@ private fun Application.installGrpc() {
         .build()
         .start()
 
-    server.awaitTermination()
+    launch(Dispatchers.IO) {
+        server.awaitTermination()
+    }
 }
 
-private fun Application.installRest() = routing {
-    route("webhook") {
-        aggregatorRoute()
+private fun Application.installRest() {
+    routing {
+        route("webhook") {
+            aggregatorRoute()
+        }
     }
 }

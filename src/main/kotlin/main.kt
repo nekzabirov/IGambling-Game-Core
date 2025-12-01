@@ -1,8 +1,8 @@
 package com.nekgamebling
 
-import infrastructure.persistence.exposed.ExposedConfig
-import infrastructure.coreModule
 import infrastructure.api.installApi
+import infrastructure.coreModule
+import infrastructure.persistence.exposed.ExposedConfig
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.cio.*
@@ -17,7 +17,7 @@ fun main() {
 
     embeddedServer(
         CIO,
-        port = 8080,
+        port = 80,
         host = "0.0.0.0",
         module = Application::module
     ).start(wait = true)
