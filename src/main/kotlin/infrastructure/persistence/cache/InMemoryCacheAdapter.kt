@@ -1,6 +1,6 @@
 package infrastructure.persistence.cache
 
-import application.port.outbound.CachePort
+import application.port.outbound.CacheAdapter
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.util.concurrent.ConcurrentHashMap
@@ -9,7 +9,7 @@ import kotlin.time.Duration
 /**
  * Thread-safe in-memory cache implementation.
  */
-class InMemoryCacheAdapter : CachePort {
+class InMemoryCacheAdapter : CacheAdapter {
     private data class CacheEntry(
         val value: Any,
         val expiresAt: Long?

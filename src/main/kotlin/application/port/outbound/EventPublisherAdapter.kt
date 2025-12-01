@@ -5,7 +5,7 @@ import application.event.DomainEvent
 /**
  * Port interface for publishing domain events.
  */
-interface EventPublisherPort {
+interface EventPublisherAdapter {
     /**
      * Publish a domain event.
      */

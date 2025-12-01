@@ -1,12 +1,12 @@
 package infrastructure.adapter
 
-import application.port.outbound.CurrencyPort
+import application.port.outbound.CurrencyAdapter
 import shared.value.Currency
 
 /**
  * Base currency adapter with common currency configurations.
  */
-class BaseCurrencyAdapter : CurrencyPort {
+class BaseCurrencyAdapter : CurrencyAdapter {
     private val supportedCurrencies = listOf(
         Currency("USD"),
         Currency("EUR"),

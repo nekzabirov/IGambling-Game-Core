@@ -1,7 +1,7 @@
 package application.usecase.spin
 
 import application.event.SpinPlacedEvent
-import application.port.outbound.EventPublisherPort
+import application.port.outbound.EventPublisherAdapter
 import application.service.GameService
 import application.service.SessionService
 import application.service.SpinCommand
@@ -18,7 +18,7 @@ class PlaceSpinUsecase(
     private val gameService: GameService,
     private val spinService: SpinService,
     private val aggregatorService: AggregatorService,
-    private val eventPublisher: EventPublisherPort
+    private val eventPublisher: EventPublisherAdapter
 ) {
     suspend operator fun invoke(
         token: SessionToken,

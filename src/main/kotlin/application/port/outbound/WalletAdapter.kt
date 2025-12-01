@@ -7,7 +7,7 @@ import shared.value.Currency
  * Port interface for wallet operations.
  * Implementations connect to external wallet service.
  */
-interface WalletPort {
+interface WalletAdapter {
     /**
      * Get player's current balance.
      */

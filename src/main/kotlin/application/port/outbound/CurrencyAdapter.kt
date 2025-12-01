@@ -5,7 +5,7 @@ import shared.value.Currency
 /**
  * Port interface for currency operations.
  */
-interface CurrencyPort {
+interface CurrencyAdapter {
     /**
      * Get list of supported currencies.
      */

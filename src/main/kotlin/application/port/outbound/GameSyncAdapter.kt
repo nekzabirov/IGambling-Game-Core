@@ -7,6 +7,6 @@ import domain.game.model.GameVariant
  * Outbound port for game synchronization.
  * Implementation handles transaction management for complex sync operations.
  */
-interface GameSyncPort {
+interface GameSyncAdapter {
     suspend fun syncGame(variants: List<GameVariant>, aggregatorInfo: AggregatorInfo)
 }

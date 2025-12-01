@@ -1,12 +1,12 @@
 package infrastructure.adapter
 
-import application.port.outbound.PlayerPort
+import application.port.outbound.PlayerAdapter
 
 /**
  * Fake player adapter for development/testing.
  * Replace with real implementation in production.
  */
-class FakePlayerAdapter : PlayerPort {
+class FakePlayerAdapter : PlayerAdapter {
     private val betLimits = mutableMapOf<String, Int>()
 
     fun setBetLimit(playerId: String, limit: Int) {

@@ -1,19 +1,14 @@
 package application.usecase.aggregator
 
-import application.port.outbound.GameSyncPort
+import application.port.outbound.GameSyncAdapter
 import application.port.outbound.AggregatorAdapterRegistry
 import domain.aggregator.repository.AggregatorRepository
 import domain.common.error.AggregatorNotSupportedError
 import domain.common.error.NotFoundError
-import domain.game.model.Game
 import domain.game.model.GameVariant
 import domain.game.repository.GameRepository
 import domain.game.repository.GameVariantRepository
-import domain.provider.model.Provider
 import domain.provider.repository.ProviderRepository
-import shared.extension.toUrlSlug
-import shared.value.ImageMap
-import shared.value.Platform
 import java.util.UUID
 
 /**
@@ -33,7 +28,7 @@ class SyncGameUsecase(
     private val gameRepository: GameRepository,
     private val gameVariantRepository: GameVariantRepository,
     private val aggregatorRegistry: AggregatorAdapterRegistry,
-    private val gameSyncPort: GameSyncPort
+    private val gameSyncAdapter: GameSyncAdapter
 ) {
     suspend operator fun invoke(aggregatorIdentity: String): Result<SyncGameResult> {
         val aggregatorInfo = aggregatorRepository.findByIdentity(aggregatorIdentity)
@@ -42,9 +37,9 @@ class SyncGameUsecase(
         val factory = aggregatorRegistry.getFactory(aggregatorInfo.aggregator)
             ?: return Result.failure(AggregatorNotSupportedError(aggregatorInfo.aggregator.name))
 
-        val gameSyncAdapter = factory.createGameSyncAdapter(aggregatorInfo)
+        val aggregatorAdapter = factory.createGameSyncAdapter(aggregatorInfo)
 
-        val games = gameSyncAdapter.listGames().getOrElse {
+        val games = aggregatorAdapter.listGames().getOrElse {
             return Result.failure(it)
         }
 
@@ -68,7 +63,7 @@ class SyncGameUsecase(
             }
             .let { gameVariantRepository.saveAll(it) }
 
-        gameSyncPort.syncGame(variants, aggregatorInfo)
+        gameSyncAdapter.syncGame(variants, aggregatorInfo)
 
         val gameCount = variants.size
         val providerNames = variants.map { it.providerName }.distinct()

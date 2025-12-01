@@ -12,24 +12,14 @@ import application.usecase.provider.*
 import application.usecase.session.OpenSessionUsecase
 import application.usecase.spin.*
 import com.nekgamebling.application.service.AggregatorService
-import domain.aggregator.repository.AggregatorRepository
-import domain.collection.repository.CollectionRepository
-import domain.game.repository.*
-import domain.provider.repository.ProviderRepository
-import domain.session.repository.RoundRepository
-import domain.session.repository.SessionRepository
-import domain.session.repository.SpinRepository
 import infrastructure.adapter.BaseCurrencyAdapter
 import infrastructure.adapter.FakePlayerAdapter
 import infrastructure.adapter.FakeWalletAdapter
 import infrastructure.aggregator.AggregatorAdapterRegistryImpl
 import infrastructure.aggregator.AggregatorModule
 import infrastructure.aggregator.onegamehub.OneGameHubAdapterFactory
-import infrastructure.persistence.cache.InMemoryCacheAdapter
 import infrastructure.messaging.RabbitMqEventPublisher
 import infrastructure.persistence.DBModule
-import infrastructure.persistence.exposed.adapter.ExposedGameSyncPort
-import infrastructure.persistence.exposed.repository.*
 import io.ktor.server.application.*
 import org.koin.dsl.module
 
@@ -51,10 +41,10 @@ private fun Application.adapterModule() = module {
     // ==========================================
     // Infrastructure - Ports/Adapters
     // ==========================================
-    single<WalletPort> { FakeWalletAdapter() }
-    single<PlayerPort> { FakePlayerAdapter() }
-    single<CurrencyPort> { BaseCurrencyAdapter() }
-    single<EventPublisherPort> { RabbitMqEventPublisher(this@adapterModule) }
+    single<WalletAdapter> { FakeWalletAdapter() }
+    single<PlayerAdapter> { FakePlayerAdapter() }
+    single<CurrencyAdapter> { BaseCurrencyAdapter() }
+    single<EventPublisherAdapter> { RabbitMqEventPublisher(this@adapterModule) }
     // Aggregator Infrastructure - Registry Pattern
     single<AggregatorAdapterRegistry> {
         AggregatorAdapterRegistryImpl().apply {

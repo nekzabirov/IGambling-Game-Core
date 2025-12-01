@@ -1,7 +1,7 @@
 package application.usecase.game
 
 import application.event.GameWonEvent
-import application.port.outbound.EventPublisherPort
+import application.port.outbound.EventPublisherAdapter
 import domain.common.error.NotFoundError
 import domain.game.repository.GameRepository
 import domain.game.repository.GameWonRepository
@@ -13,7 +13,7 @@ import shared.value.Currency
 class AddGameWonUsecase(
     private val gameRepository: GameRepository,
     private val gameWonRepository: GameWonRepository,
-    private val eventPublisher: EventPublisherPort
+    private val eventPublisher: EventPublisherAdapter
 ) {
     suspend operator fun invoke(
         gameIdentity: String,

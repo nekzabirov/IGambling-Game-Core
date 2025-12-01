@@ -1,6 +1,6 @@
 package application.service
 
-import application.port.outbound.CachePort
+import application.port.outbound.CacheAdapter
 import domain.common.error.GameUnavailableError
 import domain.common.error.NotFoundError
 import domain.game.model.Game
@@ -16,7 +16,7 @@ import kotlin.time.Duration.Companion.minutes
  */
 class GameService(
     private val gameRepository: GameRepository,
-    private val cachePort: CachePort
+    private val cacheAdapter: CacheAdapter
 ) {
     companion object {
         private val CACHE_TTL = 5.minutes
@@ -28,7 +28,7 @@ class GameService(
      */
     suspend fun findByIdentity(identity: String): Result<GameWithDetails> {
         // Check cache first
-        cachePort.get<GameWithDetails>("$CACHE_PREFIX$identity")?.let {
+        cacheAdapter.get<GameWithDetails>("$CACHE_PREFIX$identity")?.let {
             return Result.success(it)
         }
 
@@ -36,7 +36,7 @@ class GameService(
             ?: return Result.failure(NotFoundError("Game", identity))
 
         // Cache the result
-        cachePort.save("$CACHE_PREFIX$identity", game, CACHE_TTL)
+        cacheAdapter.save("$CACHE_PREFIX$identity", game, CACHE_TTL)
 
         return Result.success(game)
     }
@@ -47,14 +47,14 @@ class GameService(
     suspend fun findById(id: UUID): Result<GameWithDetails> {
         val cacheKey = "$CACHE_PREFIX$id"
 
-        cachePort.get<GameWithDetails>(cacheKey)?.let {
+        cacheAdapter.get<GameWithDetails>(cacheKey)?.let {
             return Result.success(it)
         }
 
         val game = gameRepository.findWithDetailsById(id)
             ?: return Result.failure(NotFoundError("Game", id.toString()))
 
-        cachePort.save(cacheKey, game, CACHE_TTL)
+        cacheAdapter.save(cacheKey, game, CACHE_TTL)
 
         return Result.success(game)
     }
@@ -65,14 +65,14 @@ class GameService(
     suspend fun findBySymbol(symbol: String, aggregator: Aggregator): Result<Game> {
         val cacheKey = "${CACHE_PREFIX}symbol:$symbol:aggregator:$aggregator"
 
-        cachePort.get<Game>(cacheKey)?.let {
+        cacheAdapter.get<Game>(cacheKey)?.let {
             return Result.success(it)
         }
 
         val game = gameRepository.findBySymbol(symbol, aggregator)
             ?: return Result.failure(GameUnavailableError(symbol))
 
-        cachePort.save(cacheKey, game, CACHE_TTL)
+        cacheAdapter.save(cacheKey, game, CACHE_TTL)
 
         return Result.success(game)
     }
@@ -81,6 +81,6 @@ class GameService(
      * Invalidate cache for a game.
      */
     suspend fun invalidateCache(identity: String) {
-        cachePort.delete("$CACHE_PREFIX$identity")
+        cacheAdapter.delete("$CACHE_PREFIX$identity")
     }
 }

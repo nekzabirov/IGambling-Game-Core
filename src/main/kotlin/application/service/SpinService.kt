@@ -1,11 +1,9 @@
 package application.service
 
-import application.port.outbound.PlayerPort
-import application.port.outbound.WalletPort
+import application.port.outbound.PlayerAdapter
+import application.port.outbound.WalletAdapter
 import domain.common.error.*
 import domain.game.model.Game
-import domain.session.model.BetAmount
-import domain.session.model.Round
 import domain.session.model.Session
 import domain.session.model.Spin
 import domain.session.repository.RoundRepository
@@ -48,8 +46,8 @@ data class SpinCommand(
  * Uses constructor injection for all dependencies.
  */
 class SpinService(
-    private val walletPort: WalletPort,
-    private val playerPort: PlayerPort,
+    private val walletAdapter: WalletAdapter,
+    private val playerAdapter: PlayerAdapter,
     private val roundRepository: RoundRepository,
     private val spinRepository: SpinRepository
 ) {
@@ -83,8 +81,8 @@ class SpinService(
         // Normal mode: use wallet
         // Fetch balance and bet limit in parallel
         val (balance, betLimit) = coroutineScope {
-            val balanceDeferred = async { walletPort.findBalance(session.playerId) }
-            val betLimitDeferred = async { playerPort.findCurrentBetLimit(session.playerId) }
+            val balanceDeferred = async { walletAdapter.findBalance(session.playerId) }
+            val betLimitDeferred = async { playerAdapter.findCurrentBetLimit(session.playerId) }
 
             val balanceResult = balanceDeferred.await().getOrElse {
                 return@coroutineScope Result.failure(it)
@@ -135,7 +133,7 @@ class SpinService(
         spinRepository.save(spin)
 
         // Withdraw from wallet
-        walletPort.withdraw(
+        walletAdapter.withdraw(
             session.playerId,
             spin.id.toString(),
             session.currency,
@@ -204,7 +202,7 @@ class SpinService(
         spinRepository.save(settleSpin)
 
         // Deposit winnings
-        walletPort.deposit(
+        walletAdapter.deposit(
             session.playerId,
             session.id.toString(),
             session.currency,
@@ -249,7 +247,7 @@ class SpinService(
 
         if (!isFreeSpin) {
             // Normal mode: rollback in wallet
-            walletPort.rollback(session.playerId, spin.id.toString())
+            walletAdapter.rollback(session.playerId, spin.id.toString())
         }
 
         return Result.success(Unit)

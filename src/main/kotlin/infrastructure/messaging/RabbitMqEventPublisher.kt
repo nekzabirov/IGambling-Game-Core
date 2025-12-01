@@ -1,19 +1,19 @@
 package infrastructure.messaging
 
 import application.event.DomainEvent
-import application.port.outbound.EventPublisherPort
+import application.port.outbound.EventPublisherAdapter
 import io.ktor.server.application.*
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
 
 /**
- * RabbitMQ implementation of EventPublisherPort.
+ * RabbitMQ implementation of EventPublisherAdapter.
  */
 class RabbitMqEventPublisher(
     private val application: Application,
     private val exchangeName: String = System.getenv("RABBITMQ_EXCHANGE") ?: "game.event"
-) : EventPublisherPort {
+) : EventPublisherAdapter {
     private val logger = LoggerFactory.getLogger(RabbitMqEventPublisher::class.java)
     private val json = Json { encodeDefaults = true }
 

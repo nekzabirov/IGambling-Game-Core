@@ -1,6 +1,6 @@
 package infrastructure.aggregator.onegamehub.handler
 
-import application.port.outbound.WalletPort
+import application.port.outbound.WalletAdapter
 import application.service.SessionService
 import application.usecase.spin.PlaceSpinUsecase
 import application.usecase.spin.SettleSpinUsecase
@@ -26,7 +26,7 @@ import shared.value.SessionToken
 
 class OneGameHubHandler(
     private val sessionService: SessionService,
-    private val walletAdapter: WalletPort,
+    private val walletAdapter: WalletAdapter,
     private val placeSpinUsecase: PlaceSpinUsecase,
     private val settleSpinUsecase: SettleSpinUsecase
 ) {

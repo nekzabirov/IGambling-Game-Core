@@ -1,6 +1,6 @@
 package application.service
 
-import application.port.outbound.CachePort
+import application.port.outbound.CacheAdapter
 import domain.common.error.NotFoundError
 import domain.common.error.SessionInvalidError
 import domain.session.model.Session
@@ -17,7 +17,7 @@ import kotlin.time.Duration.Companion.minutes
  */
 class SessionService(
     private val sessionRepository: SessionRepository,
-    private val cacheAdapter: CachePort
+    private val cacheAdapter: CacheAdapter
 ) {
     private val secureRandom = SecureRandom()
 

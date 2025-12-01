@@ -1,6 +1,6 @@
 package infrastructure.adapter
 
-import application.port.outbound.WalletPort
+import application.port.outbound.WalletAdapter
 import domain.session.model.Balance
 import shared.value.Currency
 import java.util.concurrent.ConcurrentHashMap
@@ -9,7 +9,7 @@ import java.util.concurrent.ConcurrentHashMap
  * Fake wallet adapter for development/testing.
  * Replace with real implementation in production.
  */
-class FakeWalletAdapter : WalletPort {
+class FakeWalletAdapter : WalletAdapter {
     private val balances = ConcurrentHashMap<String, MutableMap<String, Balance>>()
 
     init {

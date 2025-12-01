@@ -5,7 +5,7 @@ import kotlin.time.Duration
 /**
  * Port interface for caching operations.
  */
-interface CachePort {
+interface CacheAdapter {
     /**
      * Get a cached value by key.
      */

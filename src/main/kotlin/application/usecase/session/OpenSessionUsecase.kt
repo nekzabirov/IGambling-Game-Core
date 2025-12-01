@@ -2,7 +2,7 @@ package application.usecase.session
 
 import application.event.SessionOpenedEvent
 import application.port.outbound.AggregatorAdapterRegistry
-import application.port.outbound.EventPublisherPort
+import application.port.outbound.EventPublisherAdapter
 import application.service.GameService
 import application.service.SessionService
 import domain.common.error.AggregatorNotSupportedError
@@ -39,7 +39,7 @@ data class OpenSessionResult(
 class OpenSessionUsecase(
     private val gameService: GameService,
     private val sessionService: SessionService,
-    private val eventPublisher: EventPublisherPort,
+    private val eventPublisher: EventPublisherAdapter,
     private val aggregatorRegistry: AggregatorAdapterRegistry
 ) {
     suspend operator fun invoke(command: OpenSessionCommand): Result<OpenSessionResult> {
