@@ -8,7 +8,6 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 data class SpinSettledEvent(
-    override val gameId: String,
     override val gameIdentity: String,
     override val amount: Int,
     override val currency: Currency,

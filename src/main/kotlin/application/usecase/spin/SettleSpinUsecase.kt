@@ -2,6 +2,7 @@ package application.usecase.spin
 
 import application.event.SpinSettledEvent
 import application.port.outbound.EventPublisherPort
+import application.service.GameService
 import application.service.SessionService
 import application.service.SpinCommand
 import application.service.SpinService
@@ -13,6 +14,7 @@ import shared.value.SessionToken
 class SettleSpinUsecase(
     private val sessionService: SessionService,
     private val spinService: SpinService,
+    private val gameService: GameService,
     private val eventPublisher: EventPublisherPort
 ) {
     suspend operator fun invoke(
@@ -40,11 +42,14 @@ class SettleSpinUsecase(
             return Result.failure(it)
         }
 
+        val game = gameService.findById(session.gameId).getOrElse {
+            return Result.failure(it)
+        }
+
         // Publish event
         eventPublisher.publish(
             SpinSettledEvent(
-                gameId = session.gameId.toString(),
-                gameIdentity = "", // Would need game lookup for identity
+                gameIdentity = game.identity,
                 amount = winAmount,
                 currency = session.currency,
                 playerId = session.playerId,

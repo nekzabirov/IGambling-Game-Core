@@ -8,7 +8,6 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 sealed interface SpinEvent : DomainEvent {
-    val gameId: String
     val gameIdentity: String
     val amount: Int
     val currency: Currency

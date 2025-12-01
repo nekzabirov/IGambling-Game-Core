@@ -64,7 +64,6 @@ class PlaceSpinUsecase(
         // Publish event
         eventPublisher.publish(
             SpinPlacedEvent(
-                gameId = game.id.toString(),
                 gameIdentity = game.identity,
                 amount = amount,
                 currency = session.currency,
