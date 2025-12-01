@@ -1,4 +1,4 @@
-package infrastructure.api.grpc.service
+package com.nekgamebling.infrastructure.api.grpc.service
 
 import com.nekgamebling.application.usecase.session.OpenSessionCommand
 import com.nekgamebling.application.usecase.session.OpenSessionUsecase
@@ -10,7 +10,7 @@ import com.nekzabirov.igambling.proto.service.SessionGrpcKt
 import io.grpc.Status
 import io.grpc.StatusException
 import io.ktor.server.application.*
-import infrastructure.api.grpc.mapper.toPlatform
+import com.nekgamebling.infrastructure.api.grpc.mapper.toPlatform
 import org.koin.ktor.ext.get
 
 class SessionServiceImpl(application: Application) : SessionGrpcKt.SessionCoroutineImplBase() {

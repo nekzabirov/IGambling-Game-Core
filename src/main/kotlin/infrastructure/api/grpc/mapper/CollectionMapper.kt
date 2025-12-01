@@ -1,4 +1,4 @@
-package infrastructure.api.grpc.mapper
+package com.nekgamebling.infrastructure.api.grpc.mapper
 
 import com.nekgamebling.domain.collection.model.Collection
 import com.nekzabirov.igambling.proto.dto.CollectionDto

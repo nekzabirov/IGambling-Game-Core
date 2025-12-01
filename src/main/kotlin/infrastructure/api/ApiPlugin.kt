@@ -1,6 +1,6 @@
-package infrastructure.api
+package com.nekgamebling.infrastructure.api
 
-import infrastructure.api.grpc.service.*
+import com.nekgamebling.infrastructure.api.grpc.service.*
 import io.grpc.Server
 import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder
 import io.ktor.server.application.*

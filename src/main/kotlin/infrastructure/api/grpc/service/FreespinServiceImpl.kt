@@ -1,4 +1,4 @@
-package infrastructure.api.grpc.service
+package com.nekgamebling.infrastructure.api.grpc.service
 
 import com.google.protobuf.ListValue
 import com.google.protobuf.NullValue

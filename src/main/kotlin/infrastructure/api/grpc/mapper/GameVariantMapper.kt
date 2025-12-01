@@ -1,4 +1,4 @@
-package infrastructure.api.grpc.mapper
+package com.nekgamebling.infrastructure.api.grpc.mapper
 
 import com.nekgamebling.domain.game.model.GameVariant
 import com.nekzabirov.igambling.proto.dto.GameVariantDto

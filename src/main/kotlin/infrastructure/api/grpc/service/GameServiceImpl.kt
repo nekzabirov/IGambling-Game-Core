@@ -1,4 +1,4 @@
-package infrastructure.api.grpc.service
+package com.nekgamebling.infrastructure.api.grpc.service
 
 import com.nekgamebling.application.usecase.game.AddGameFavouriteUsecase
 import com.nekgamebling.application.usecase.game.AddGameTagUsecase
@@ -22,11 +22,11 @@ import com.nekzabirov.igambling.proto.service.UpdateGameConfig
 import io.grpc.Status
 import io.grpc.StatusException
 import io.ktor.server.application.*
-import infrastructure.api.grpc.mapper.toCollectionProto
-import infrastructure.api.grpc.mapper.toGameProto
-import infrastructure.api.grpc.mapper.toGameVariantProto
-import infrastructure.api.grpc.mapper.toPlatform
-import infrastructure.api.grpc.mapper.toProviderProto
+import com.nekgamebling.infrastructure.api.grpc.mapper.toCollectionProto
+import com.nekgamebling.infrastructure.api.grpc.mapper.toGameProto
+import com.nekgamebling.infrastructure.api.grpc.mapper.toGameVariantProto
+import com.nekgamebling.infrastructure.api.grpc.mapper.toPlatform
+import com.nekgamebling.infrastructure.api.grpc.mapper.toProviderProto
 import org.koin.ktor.ext.get
 
 class GameServiceImpl(application: Application) : GameGrpcKt.GameCoroutineImplBase() {

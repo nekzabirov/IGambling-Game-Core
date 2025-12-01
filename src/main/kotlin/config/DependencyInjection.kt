@@ -34,6 +34,15 @@ import org.koin.dsl.module
  * All dependencies use constructor injection.
  */
 fun Application.coreModule() = module {
+    includes(
+        repositoryModule,
+        adapterModule(),
+        serviceModule,
+        useCaseModule
+    )
+}
+
+private val repositoryModule = module {
     // ==========================================
     // Infrastructure - Repositories
     // ==========================================
@@ -47,7 +56,9 @@ fun Application.coreModule() = module {
     single<ProviderRepository> { ExposedProviderRepository() }
     single<CollectionRepository> { ExposedCollectionRepository() }
     single<AggregatorRepository> { ExposedAggregatorRepository() }
+}
 
+private fun Application.adapterModule() = module {
     // ==========================================
     // Infrastructure - Ports/Adapters
     // ==========================================
@@ -55,26 +66,27 @@ fun Application.coreModule() = module {
     single<WalletPort> { FakeWalletAdapter() }
     single<PlayerPort> { FakePlayerAdapter() }
     single<CurrencyPort> { BaseCurrencyAdapter() }
-    single<EventPublisherPort> { RabbitMqEventPublisher(this@coreModule) }
+    single<EventPublisherPort> { RabbitMqEventPublisher(this@adapterModule) }
     single<GameSyncPort> { ExposedGameSyncPort() }
-
     // Aggregator Infrastructure - Registry Pattern
     single<AggregatorAdapterRegistry> {
         AggregatorAdapterRegistryImpl().apply {
             // Register all aggregator factories here
             register(OneGameHubAdapterFactory())
-            // Add more factories as needed:
-            // register(AnotherAggregatorFactory())
         }
     }
+}
 
+private val serviceModule = module {
     // ==========================================
     // Application Services
     // ==========================================
     single { GameService(get(), get()) }
     single { SessionService(get()) }
     single { SpinService(get(), get(), get(), get()) }
+}
 
+private val useCaseModule = module {
     // ==========================================
     // Application Use Cases - Game
     // ==========================================

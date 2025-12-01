@@ -1,13 +1,13 @@
+package com.nekgamebling
+
 import com.nekgamebling.config.DatabaseConfig
 import com.nekgamebling.config.coreModule
-import com.nekgamebling.infrastructure.http.aggregatorRoute
-import infrastructure.api.installApi
+import com.nekgamebling.infrastructure.api.installApi
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.cio.*
 import io.ktor.server.engine.*
 import io.ktor.server.plugins.contentnegotiation.*
-import io.ktor.server.routing.*
 import org.koin.ktor.plugin.Koin
 import org.koin.logger.slf4jLogger
 

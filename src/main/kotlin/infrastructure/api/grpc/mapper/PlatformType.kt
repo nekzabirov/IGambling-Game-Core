@@ -1,4 +1,4 @@
-package infrastructure.api.grpc.mapper
+package com.nekgamebling.infrastructure.api.grpc.mapper
 
 import com.nekgamebling.shared.value.Platform
 import com.nekzabirov.igambling.proto.dto.PlatformType

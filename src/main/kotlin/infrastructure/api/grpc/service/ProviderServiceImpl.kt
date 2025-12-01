@@ -1,4 +1,4 @@
-package infrastructure.api.grpc.service
+package com.nekgamebling.infrastructure.api.grpc.service
 
 import com.nekgamebling.application.usecase.provider.ProviderListUsecase
 import com.nekgamebling.application.usecase.provider.UpdateProviderUsecase
@@ -11,8 +11,8 @@ import com.nekzabirov.igambling.proto.service.UpdateProviderConfig
 import io.grpc.Status
 import io.grpc.StatusException
 import io.ktor.server.application.*
-import infrastructure.api.grpc.mapper.toAggregatorProto
-import infrastructure.api.grpc.mapper.toProviderProto
+import com.nekgamebling.infrastructure.api.grpc.mapper.toAggregatorProto
+import com.nekgamebling.infrastructure.api.grpc.mapper.toProviderProto
 import org.koin.ktor.ext.get
 
 class ProviderServiceImpl(application: Application) : ProviderGrpcKt.ProviderCoroutineImplBase() {

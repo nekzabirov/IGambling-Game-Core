@@ -1,4 +1,4 @@
-package infrastructure.api.grpc.service
+package com.nekgamebling.infrastructure.api.grpc.service
 
 import com.nekgamebling.application.usecase.collection.*
 import com.nekgamebling.shared.value.LocaleName
@@ -14,7 +14,7 @@ import com.nekzabirov.igambling.proto.service.UpdateCollectionCommand
 import io.grpc.Status
 import io.grpc.StatusException
 import io.ktor.server.application.Application
-import infrastructure.api.grpc.mapper.toCollectionProto
+import com.nekgamebling.infrastructure.api.grpc.mapper.toCollectionProto
 import org.koin.ktor.ext.get
 
 class CollectionServiceImpl(application: Application) : CollectionGrpcKt.CollectionCoroutineImplBase() {
