@@ -22,5 +22,6 @@ enum class SpinType {
  * Supported game aggregators.
  */
 enum class Aggregator {
-    ONEGAMEHUB
+    ONEGAMEHUB,
+    PRAGMATIC
 }
