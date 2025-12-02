@@ -6,6 +6,7 @@ import domain.common.error.NotFoundError
 import domain.game.repository.GameRepository
 import domain.game.repository.GameWonRepository
 import shared.value.Currency
+import java.math.BigInteger
 
 /**
  * Use case for recording a game win.
@@ -19,7 +20,7 @@ class AddGameWinUsecase(
     suspend operator fun invoke(
         gameIdentity: String,
         playerId: String,
-        amount: Int,
+        amount: BigInteger,
         currency: Currency
     ): Result<Unit> {
         val game = gameRepository.findByIdentity(gameIdentity)

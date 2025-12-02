@@ -2,6 +2,7 @@ package application.port.outbound
 
 import domain.session.model.Balance
 import shared.value.Currency
+import java.math.BigInteger
 
 /**
  * Port interface for wallet operations.
@@ -20,8 +21,8 @@ interface WalletAdapter {
         playerId: String,
         transactionId: String,
         currency: Currency,
-        realAmount: Int,
-        bonusAmount: Int
+        realAmount: BigInteger,
+        bonusAmount: BigInteger
     ): Result<Unit>
 
     /**
@@ -31,8 +32,8 @@ interface WalletAdapter {
         playerId: String,
         transactionId: String,
         currency: Currency,
-        realAmount: Int,
-        bonusAmount: Int
+        realAmount: BigInteger,
+        bonusAmount: BigInteger
     ): Result<Unit>
 
     /**

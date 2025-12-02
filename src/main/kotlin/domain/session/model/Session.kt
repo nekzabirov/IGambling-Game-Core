@@ -46,9 +46,9 @@ data class Spin(
     val id: UUID = UUID.randomUUID(),
     val roundId: UUID,
     val type: shared.value.SpinType,
-    val amount: Int,
-    val realAmount: Int,
-    val bonusAmount: Int,
+    val amount: BigInteger,
+    val realAmount: BigInteger,
+    val bonusAmount: BigInteger,
     val extId: String,
     val referenceId: UUID? = null,
     val freeSpinId: String? = null
@@ -58,11 +58,11 @@ data class Spin(
  * Bet amount breakdown.
  */
 data class BetAmount(
-    val real: Int,
-    val bonus: Int,
+    val real: BigInteger,
+    val bonus: BigInteger,
     val currency: Currency
 ) {
-    val total: Int get() = real + bonus
+    val total: BigInteger get() = real + bonus
 }
 
 /**

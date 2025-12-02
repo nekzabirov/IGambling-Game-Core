@@ -34,7 +34,7 @@ class SettleSpinUsecase(
         val command = SpinCommand(
             extRoundId = extRoundId,
             transactionId = transactionId,
-            amount = winAmount.toInt(),
+            amount = winAmount,
             freeSpinId = freeSpinId
         )
 
@@ -51,7 +51,7 @@ class SettleSpinUsecase(
         eventPublisher.publish(
             SpinSettledEvent(
                 gameIdentity = game.identity,
-                amount = winAmount.toInt(),
+                amount = winAmount,
                 currency = session.currency,
                 playerId = session.playerId,
                 freeSpinId = freeSpinId,

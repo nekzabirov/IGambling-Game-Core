@@ -1,7 +1,9 @@
 package application.event
 
 import shared.value.Currency
+import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
+import java.math.BigInteger
 
 /**
  * Event emitted when a spin is rolled back.
@@ -9,7 +11,8 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class SpinRolledBackEvent(
     override val gameIdentity: String,
-    override val amount: Int,
+    @Contextual
+    override val amount: BigInteger,
     override val currency: Currency,
     override val playerId: String,
     override val freeSpinId: String? = null,

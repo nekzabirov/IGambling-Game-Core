@@ -34,9 +34,9 @@ class ExposedSpinRepository : BaseExposedRepository<Spin, SpinTable>(SpinTable),
         val id = SpinTable.insertAndGetId {
             it[roundId] = spin.roundId
             it[type] = spin.type
-            it[amount] = spin.amount
-            it[realAmount] = spin.realAmount
-            it[bonusAmount] = spin.bonusAmount
+            it[amount] = spin.amount.toLong()
+            it[realAmount] = spin.realAmount.toLong()
+            it[bonusAmount] = spin.bonusAmount.toLong()
             it[extId] = spin.extId
             it[referenceId] = spin.referenceId
             it[freeSpinId] = spin.freeSpinId

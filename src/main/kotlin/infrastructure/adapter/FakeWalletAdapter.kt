@@ -3,6 +3,7 @@ package infrastructure.adapter
 import application.port.outbound.WalletAdapter
 import domain.session.model.Balance
 import shared.value.Currency
+import java.math.BigInteger
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -14,8 +15,8 @@ class FakeWalletAdapter : WalletAdapter {
 
     init {
         // Initialize with some test balances
-        setBalance("test-player-1", Currency("EUR"), Balance(10000, 500, Currency("EUR")))
-        setBalance("test-player-1", Currency("EUR"), Balance(8000, 300, Currency("EUR")))
+        setBalance("test-player-1", Currency("EUR"), Balance(BigInteger.valueOf(10000), BigInteger.valueOf(500), Currency("EUR")))
+        setBalance("test-player-1", Currency("EUR"), Balance(BigInteger.valueOf(8000), BigInteger.valueOf(300), Currency("EUR")))
     }
 
     fun setBalance(playerId: String, currency: Currency, balance: Balance) {
@@ -26,7 +27,7 @@ class FakeWalletAdapter : WalletAdapter {
         // Return a default balance if not found
         val playerBalances = balances[playerId]
         val balance = playerBalances?.values?.firstOrNull()
-            ?: Balance(10000, 500, Currency("USD"))
+            ?: Balance(BigInteger.valueOf(10000), BigInteger.valueOf(500), Currency("USD"))
 
         return Result.success(balance)
     }
@@ -35,12 +36,12 @@ class FakeWalletAdapter : WalletAdapter {
         playerId: String,
         transactionId: String,
         currency: Currency,
-        realAmount: Int,
-        bonusAmount: Int
+        realAmount: BigInteger,
+        bonusAmount: BigInteger
     ): Result<Unit> {
         val playerBalances = balances.getOrPut(playerId) { mutableMapOf() }
         val current = playerBalances[currency.value]
-            ?: Balance(10000, 500, currency)
+            ?: Balance(BigInteger.valueOf(10000), BigInteger.valueOf(500), currency)
 
         val newBalance = Balance(
             real = current.real - realAmount,
@@ -48,7 +49,7 @@ class FakeWalletAdapter : WalletAdapter {
             currency = currency
         )
 
-        if (newBalance.real < 0 || newBalance.bonus < 0) {
+        if (newBalance.real < BigInteger.ZERO || newBalance.bonus < BigInteger.ZERO) {
             return Result.failure(IllegalStateException("Insufficient balance"))
         }
 
@@ -60,12 +61,12 @@ class FakeWalletAdapter : WalletAdapter {
         playerId: String,
         transactionId: String,
         currency: Currency,
-        realAmount: Int,
-        bonusAmount: Int
+        realAmount: BigInteger,
+        bonusAmount: BigInteger
     ): Result<Unit> {
         val playerBalances = balances.getOrPut(playerId) { mutableMapOf() }
         val current = playerBalances[currency.value]
-            ?: Balance(0, 0, currency)
+            ?: Balance(BigInteger.ZERO, BigInteger.ZERO, currency)
 
         playerBalances[currency.value] = Balance(
             real = current.real + realAmount,

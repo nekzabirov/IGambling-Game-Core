@@ -1,5 +1,7 @@
 package domain.common.error
 
+import java.math.BigInteger
+
 /**
  * Base sealed class for all domain errors.
  * Using sealed class allows exhaustive when expressions and type-safe error handling.
@@ -40,8 +42,8 @@ data class ValidationError(
  */
 data class InsufficientBalanceError(
     val playerId: String,
-    val required: Int,
-    val available: Int,
+    val required: BigInteger,
+    val available: BigInteger,
     override val cause: Throwable? = null
 ) : DomainError("Insufficient balance for player $playerId: required $required, available $available") {
     override val code: String = "INSUFFICIENT_BALANCE"
@@ -52,8 +54,8 @@ data class InsufficientBalanceError(
  */
 data class BetLimitExceededError(
     val playerId: String,
-    val betAmount: Int,
-    val limit: Int,
+    val betAmount: BigInteger,
+    val limit: BigInteger,
     override val cause: Throwable? = null
 ) : DomainError("Bet limit exceeded for player $playerId: bet $betAmount, limit $limit") {
     override val code: String = "BET_LIMIT_EXCEEDED"

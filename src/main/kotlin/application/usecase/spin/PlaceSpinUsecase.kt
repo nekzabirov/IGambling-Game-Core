@@ -53,7 +53,7 @@ class PlaceSpinUsecase(
         val command = SpinCommand(
             extRoundId = extRoundId,
             transactionId = transactionId,
-            amount = amount.toInt(),
+            amount = amount,
             freeSpinId = freeSpinId
         )
 
@@ -66,7 +66,7 @@ class PlaceSpinUsecase(
         eventPublisher.publish(
             SpinPlacedEvent(
                 gameIdentity = game.identity,
-                amount = amount.toInt(),
+                amount = amount,
                 currency = session.currency,
                 playerId = session.playerId,
                 freeSpinId = freeSpinId

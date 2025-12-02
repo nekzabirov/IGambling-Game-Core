@@ -26,7 +26,7 @@ data class SpinCommand(
     class Builder {
         private var extRoundId: String = ""
         private var transactionId: String = ""
-        private var amount: BigInteger = 0
+        private var amount: BigInteger = BigInteger.ZERO
         private var freeSpinId: String? = null
 
         fun extRoundId(value: String) = apply { extRoundId = value }
@@ -69,8 +69,8 @@ class SpinService(
                 roundId = round.id,
                 type = SpinType.PLACE,
                 amount = command.amount,
-                realAmount = 0,
-                bonusAmount = 0,
+                realAmount = BigInteger.ZERO,
+                bonusAmount = BigInteger.ZERO,
                 extId = command.transactionId,
                 freeSpinId = command.freeSpinId
             )
@@ -94,7 +94,7 @@ class SpinService(
 
             // Adjust balance if bonus bet is disabled
             val adjustedBalance = if (!game.bonusBetEnable) {
-                balanceResult.copy(bonus = 0.toBigInteger())
+                balanceResult.copy(bonus = BigInteger.ZERO)
             } else {
                 balanceResult
             }
@@ -169,8 +169,8 @@ class SpinService(
                 roundId = round.id,
                 type = SpinType.SETTLE,
                 amount = command.amount,
-                realAmount = 0,
-                bonusAmount = 0,
+                realAmount = BigInteger.ZERO,
+                bonusAmount = BigInteger.ZERO,
                 extId = command.transactionId,
                 referenceId = placeSpin.id,
                 freeSpinId = command.freeSpinId
@@ -182,11 +182,11 @@ class SpinService(
 
         // Normal mode: use wallet
         // Determine if bonus was used
-        val isBonusUsed = (placeSpin.bonusAmount) > 0
+        val isBonusUsed = placeSpin.bonusAmount > BigInteger.ZERO
 
         // Calculate win amounts
-        val realAmount = if (isBonusUsed) 0 else command.amount
-        val bonusAmount = if (isBonusUsed) command.amount else 0
+        val realAmount = if (isBonusUsed) BigInteger.ZERO else command.amount
+        val bonusAmount = if (isBonusUsed) command.amount else BigInteger.ZERO
 
         // Create settle spin
         val settleSpin = Spin(
@@ -236,9 +236,9 @@ class SpinService(
             id = UUID.randomUUID(),
             roundId = round.id,
             type = SpinType.ROLLBACK,
-            amount = 0,
-            realAmount = 0,
-            bonusAmount = 0,
+            amount = BigInteger.ZERO,
+            realAmount = BigInteger.ZERO,
+            bonusAmount = BigInteger.ZERO,
             extId = command.transactionId,
             referenceId = spin.id,
             freeSpinId = command.freeSpinId
