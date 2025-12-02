@@ -4,6 +4,7 @@ import application.port.outbound.AggregatorLaunchUrlPort
 import domain.aggregator.model.AggregatorInfo
 import infrastructure.aggregator.pragmatic.model.PragmaticConfig
 import infrastructure.aggregator.pragmatic.client.PragmaticHttpClient
+import infrastructure.aggregator.pragmatic.client.dto.LaunchUrlRequestDto
 import shared.value.Currency
 import shared.value.Locale
 import shared.value.Platform
@@ -28,6 +29,17 @@ class PragmaticLaunchUrlAdapter(
         lobbyUrl: String,
         demo: Boolean
     ): Result<String> {
-        TODO("Not implemented: Get launch URL from Pragmatic")
+        val payload = LaunchUrlRequestDto(
+            gameSymbol = gameSymbol,
+            sessionToken = sessionToken,
+            playerId = playerId,
+            locale = locale.value,
+            platform = platform,
+            currency = currency.value,
+            lobbyUrl = lobbyUrl,
+            demo = demo
+        )
+
+        return client.getLaunchUrl(payload)
     }
 }
