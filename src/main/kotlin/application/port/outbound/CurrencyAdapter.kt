@@ -1,28 +1,14 @@
 package application.port.outbound
 
 import shared.value.Currency
+import java.math.BigDecimal
+import java.math.BigInteger
 
 /**
  * Port interface for currency operations.
  */
 interface CurrencyAdapter {
-    /**
-     * Get list of supported currencies.
-     */
-    suspend fun getSupportedCurrencies(): List<Currency>
+    suspend fun convertToSystem(amount: BigDecimal, currency: Currency): BigInteger
 
-    /**
-     * Check if a currency is supported.
-     */
-    suspend fun isSupported(currency: Currency): Boolean
-
-    /**
-     * Get minimum bet amount for a currency.
-     */
-    suspend fun getMinBetAmount(currency: Currency): Int
-
-    /**
-     * Get maximum bet amount for a currency.
-     */
-    suspend fun getMaxBetAmount(currency: Currency): Int
+    suspend fun convertFromSystem(amount: BigInteger, currency: Currency): BigDecimal
 }

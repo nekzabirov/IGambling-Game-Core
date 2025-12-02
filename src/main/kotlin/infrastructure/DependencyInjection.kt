@@ -14,7 +14,7 @@ import application.usecase.spin.*
 import com.nekgamebling.application.service.AggregatorService
 import com.nekgamebling.application.handler.HandlerModule
 import com.nekgamebling.infrastructure.messaging.messagingModule
-import infrastructure.adapter.BaseCurrencyAdapter
+import infrastructure.adapter.UnitCurrencyAdapter
 import infrastructure.adapter.FakePlayerAdapter
 import infrastructure.adapter.FakeWalletAdapter
 import infrastructure.aggregator.AggregatorAdapterRegistryImpl
@@ -46,7 +46,7 @@ private val adapterModule = module {
     // ==========================================
     single<WalletAdapter> { FakeWalletAdapter() }
     single<PlayerAdapter> { FakePlayerAdapter() }
-    single<CurrencyAdapter> { BaseCurrencyAdapter() }
+    single<CurrencyAdapter> { UnitCurrencyAdapter() }
     // Aggregator Infrastructure - Registry Pattern
     single<AggregatorAdapterRegistry> {
         AggregatorAdapterRegistryImpl().apply {
