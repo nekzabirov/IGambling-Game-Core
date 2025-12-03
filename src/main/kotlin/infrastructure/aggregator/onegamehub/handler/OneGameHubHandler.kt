@@ -2,6 +2,7 @@ package infrastructure.aggregator.onegamehub.handler
 
 import application.port.outbound.WalletAdapter
 import application.service.SessionService
+import application.service.SpinService
 import application.usecase.spin.PlaceSpinUsecase
 import application.usecase.spin.SettleSpinUsecase
 import com.nekgamebling.infrastructure.aggregator.onegamehub.adapter.OneGameHubCurrencyAdapter
@@ -30,7 +31,8 @@ class OneGameHubHandler(
     private val walletAdapter: WalletAdapter,
     private val placeSpinUsecase: PlaceSpinUsecase,
     private val settleSpinUsecase: SettleSpinUsecase,
-    private val providerCurrencyAdapter: OneGameHubCurrencyAdapter
+    private val providerCurrencyAdapter: OneGameHubCurrencyAdapter,
+    private val spinService: SpinService
 ) {
     suspend fun balance(token: SessionToken): OneGameHubResponse {
         val session = sessionService.findByToken(token = token).getOrElse {
@@ -72,6 +74,12 @@ class OneGameHubHandler(
             winAmount = providerCurrencyAdapter.convertProviderToSystem(payload.amount, session.currency)
         ).getOrElse {
             return it.toErrorResponse
+        }
+
+        if (payload.finishRound) {
+            spinService.closeRound(session, payload.roundId).getOrElse {
+                return it.toErrorResponse
+            }
         }
 
         return returnSuccess(session)

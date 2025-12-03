@@ -11,5 +11,7 @@ data class OneGameHubBetDto(
 
     val freeSpinId: String?,
 
-    val amount: BigInteger
+    val amount: BigInteger,
+
+    val finishRound: Boolean = false
 )

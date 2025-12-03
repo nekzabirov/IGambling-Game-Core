@@ -49,7 +49,8 @@ internal fun Route.oneGameHubWebhookRoute() {
                 roundId = call.parameters.roundId,
                 transactionId = call.parameters.transactionId,
                 freeSpinId = call.parameters.freespinId,
-                amount = call.parameters.amount
+                amount = call.parameters.amount,
+                finishRound = call.parameters.isRoundEnd
             ))
 
             else -> OneGameHubResponse.Error.UNEXPECTED_ERROR
