@@ -1,7 +1,6 @@
-package infrastructure.api.rest
+package api.rest
 
 import infrastructure.aggregator.onegamehub.handler.oneGameHubWebhookRoute
-import infrastructure.aggregator.pateplay.handler.pateplayWebhookRoute
 import io.ktor.server.routing.*
 
 /**
@@ -9,5 +8,5 @@ import io.ktor.server.routing.*
  */
 fun Route.aggregatorRoute() = route("/{aggregatorIdentity}") {
     oneGameHubWebhookRoute()
-    pateplayWebhookRoute()
+    // TODO: Add pateplayWebhookRoute() when handler is implemented
 }
