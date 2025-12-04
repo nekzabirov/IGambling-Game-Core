@@ -221,8 +221,6 @@ class SpinService(
      * If freeSpinId is provided, skip wallet operations (freespin mode).
      */
     suspend fun rollback(session: Session, command: SpinCommand): Result<Unit> {
-        val isFreeSpin = command.freeSpinId != null
-
         // Find the round
         val round = roundRepository.findByExtId(session.id, command.extRoundId)
             ?: return Result.failure(RoundNotFoundError(command.extRoundId))
@@ -230,6 +228,8 @@ class SpinService(
         // Find the spin to rollback
         val spin = spinRepository.findByRoundId(round.id).firstOrNull()
             ?: return Result.failure(RoundNotFoundError(command.extRoundId))
+
+        val isFreeSpin = spin.freeSpinId != null
 
         // Create rollback spin
         val rollbackSpin = Spin(

@@ -100,7 +100,9 @@ private fun Route.jackpotWin(handler: PragmaticHandler) = get("jackpotWin.html")
 }
 
 private fun Route.refund(handler: PragmaticHandler) = get("refund.html") {
+    val sessionToken = SessionToken(call.sessionToken!!)
 
+    call.respond(handler.refund(sessionToken, call.roundId!!, call.reference!!))
 }
 
 private fun Route.endRound(handler: PragmaticHandler) = get("endRound.html") {

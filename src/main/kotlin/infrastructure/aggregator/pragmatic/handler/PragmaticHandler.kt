@@ -131,6 +131,20 @@ class PragmaticHandler(
         return balance(sessionToken)
     }
 
+    suspend fun refund(sessionToken: SessionToken, roundId: String, transactionId: String): PragmaticResponse {
+        val session = sessionService.findByToken(sessionToken).getOrElse {
+            return it.toErrorResponse()
+        }
+
+        rollbackUsecase(sessionToken, roundId, transactionId).getOrElse {
+            return it.toErrorResponse()
+        }
+
+        return balance(
+            sessionToken = sessionToken
+        )
+    }
+
     suspend fun adjustment(
         sessionToken: SessionToken,
         roundId: String,

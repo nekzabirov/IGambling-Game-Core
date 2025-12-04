@@ -1,25 +1,20 @@
 package com.nekgamebling.application.usecase.spin
 
-import application.port.outbound.EventPublisherAdapter
 import application.service.GameService
 import application.service.SessionService
 import application.service.SpinCommand
 import application.service.SpinService
-import com.nekgamebling.application.service.AggregatorService
 import shared.value.SessionToken
 
 class RollbackUsecase(
     private val sessionService: SessionService,
     private val gameService: GameService,
-    private val spinService: SpinService,
-    private val aggregatorService: AggregatorService,
-    private val eventPublisher: EventPublisherAdapter
+    private val spinService: SpinService
 ) {
     suspend operator fun invoke(
         token: SessionToken,
         extRoundId: String,
         transactionId: String,
-        freeSpinId: String?
     ): Result<Unit> {
         // Find session
         val session = sessionService.findByToken(token).getOrElse {
@@ -30,8 +25,7 @@ class RollbackUsecase(
         val command = SpinCommand(
             extRoundId = extRoundId,
             transactionId = transactionId,
-            amount = 0.toBigInteger(),
-            freeSpinId = freeSpinId
+            amount = 0.toBigInteger()
         )
 
         // Place spin

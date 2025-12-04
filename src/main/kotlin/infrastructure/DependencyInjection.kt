@@ -18,9 +18,7 @@ import com.nekgamebling.infrastructure.messaging.messagingModule
 import infrastructure.adapter.UnitCurrencyAdapter
 import infrastructure.adapter.FakePlayerAdapter
 import infrastructure.adapter.FakeWalletAdapter
-import infrastructure.aggregator.AggregatorAdapterRegistryImpl
 import infrastructure.aggregator.AggregatorModule
-import infrastructure.aggregator.onegamehub.OneGameHubAdapterFactory
 import infrastructure.persistence.DBModule
 import io.ktor.server.application.*
 import org.koin.dsl.module
@@ -86,7 +84,7 @@ private val useCaseModule = module {
     factory { GetPresetUsecase(get(), get()) }
     factory { CreateFreespinUsecase(get(), get()) }
     factory { CancelFreespinUsecase(get(), get()) }
-    factory { RollbackUsecase(get(), get(), get(), get(), get()) }
+    factory { RollbackUsecase(get(), get(), get()) }
 
     // ==========================================
     // Application Use Cases - Collection
