@@ -4,6 +4,7 @@ import application.service.GameService
 import application.service.SessionService
 import application.service.SpinCommand
 import application.service.SpinService
+import domain.session.model.Session
 import shared.value.SessionToken
 
 class RollbackUsecase(
@@ -12,15 +13,10 @@ class RollbackUsecase(
     private val spinService: SpinService
 ) {
     suspend operator fun invoke(
-        token: SessionToken,
+        session: Session,
         extRoundId: String,
         transactionId: String,
     ): Result<Unit> {
-        // Find session
-        val session = sessionService.findByToken(token).getOrElse {
-            return Result.failure(it)
-        }
-
         // Create spin command
         val command = SpinCommand(
             extRoundId = extRoundId,

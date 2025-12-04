@@ -136,7 +136,7 @@ class PragmaticHandler(
             return it.toErrorResponse()
         }
 
-        rollbackUsecase(sessionToken, roundId, transactionId).getOrElse {
+        rollbackUsecase(session, roundId, transactionId).getOrElse {
             return it.toErrorResponse()
         }
 

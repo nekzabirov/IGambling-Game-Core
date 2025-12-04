@@ -5,6 +5,7 @@ import application.service.SessionService
 import application.service.SpinService
 import application.usecase.spin.PlaceSpinUsecase
 import application.usecase.spin.SettleSpinUsecase
+import com.nekgamebling.application.usecase.spin.RollbackUsecase
 import com.nekgamebling.infrastructure.aggregator.onegamehub.adapter.OneGameHubCurrencyAdapter
 import com.nekgamebling.infrastructure.aggregator.onegamehub.handler.dto.OneGameHubBetDto
 import domain.common.error.AggregatorError
@@ -32,7 +33,8 @@ class OneGameHubHandler(
     private val placeSpinUsecase: PlaceSpinUsecase,
     private val settleSpinUsecase: SettleSpinUsecase,
     private val providerCurrencyAdapter: OneGameHubCurrencyAdapter,
-    private val spinService: SpinService
+    private val spinService: SpinService,
+    private val rollbackUsecase: RollbackUsecase
 ) {
     suspend fun balance(token: SessionToken): OneGameHubResponse {
         val session = sessionService.findByToken(token = token).getOrElse {
@@ -80,6 +82,18 @@ class OneGameHubHandler(
             spinService.closeRound(session, payload.roundId).getOrElse {
                 return it.toErrorResponse
             }
+        }
+
+        return returnSuccess(session)
+    }
+
+    suspend fun cancel(token: SessionToken, roundId: String, transactionId: String): OneGameHubResponse {
+        val session = sessionService.findByToken(token = token).getOrElse {
+            return it.toErrorResponse
+        }
+
+        rollbackUsecase(session, roundId, transactionId).getOrElse {
+            return it.toErrorResponse
         }
 
         return returnSuccess(session)
