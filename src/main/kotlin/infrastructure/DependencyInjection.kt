@@ -13,6 +13,7 @@ import application.usecase.session.OpenSessionUsecase
 import application.usecase.spin.*
 import com.nekgamebling.application.service.AggregatorService
 import com.nekgamebling.application.handler.HandlerModule
+import com.nekgamebling.application.usecase.spin.RollbackUsecase
 import com.nekgamebling.infrastructure.messaging.messagingModule
 import infrastructure.adapter.UnitCurrencyAdapter
 import infrastructure.adapter.FakePlayerAdapter
@@ -85,6 +86,7 @@ private val useCaseModule = module {
     factory { GetPresetUsecase(get(), get()) }
     factory { CreateFreespinUsecase(get(), get()) }
     factory { CancelFreespinUsecase(get(), get()) }
+    factory { RollbackUsecase(get(), get(), get(), get(), get()) }
 
     // ==========================================
     // Application Use Cases - Collection

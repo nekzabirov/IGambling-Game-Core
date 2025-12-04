@@ -7,7 +7,7 @@ import org.koin.dsl.module
 internal val OneGameHubModule = module {
     single { OneGameHubCurrencyAdapter(get()) }
 
-    factory { OneGameHubHandler(get(), get(), get(), get(), get()) }
+    factory { OneGameHubHandler(get(), get(), get(), get(), get(), get()) }
 
     factory { OneGameHubAdapterFactory(get()) }
 }

@@ -6,6 +6,7 @@ import application.service.SessionService
 import application.service.SpinService
 import application.usecase.spin.PlaceSpinUsecase
 import application.usecase.spin.SettleSpinUsecase
+import com.nekgamebling.application.usecase.spin.RollbackUsecase
 import com.nekgamebling.infrastructure.aggregator.pragmatic.handler.dto.PragmaticBetPayload
 import com.nekgamebling.infrastructure.aggregator.pragmatic.handler.dto.PragmaticResponse
 import infrastructure.aggregator.pragmatic.adapter.PragmaticCurrencyAdapter
@@ -19,7 +20,8 @@ class PragmaticHandler(
     private val placeSpinUsecase: PlaceSpinUsecase,
     private val settleSpinUsecase: SettleSpinUsecase,
     private val spinService: SpinService,
-    private val gameService: GameService
+    private val gameService: GameService,
+    private val rollbackUsecase: RollbackUsecase
 ) {
 
     suspend fun authenticate(sessionToken: SessionToken): PragmaticResponse {
