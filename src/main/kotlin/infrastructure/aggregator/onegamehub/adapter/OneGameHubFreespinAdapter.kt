@@ -5,6 +5,7 @@ import com.nekgamebling.infrastructure.aggregator.onegamehub.adapter.OneGameHubC
 import domain.aggregator.model.AggregatorInfo
 import domain.common.error.AggregatorError
 import infrastructure.aggregator.onegamehub.model.OneGameHubConfig
+import infrastructure.aggregator.shared.FreespinPresetValidator
 import infrastructure.aggregator.onegamehub.client.OneGameHubHttpClient
 import infrastructure.aggregator.onegamehub.client.dto.CancelFreespinDto
 import infrastructure.aggregator.onegamehub.client.dto.CreateFreespinDto
@@ -53,34 +54,13 @@ class OneGameHubFreespinAdapter(
             return Result.failure(it)
         }
 
-        var quantity: Int = 0
-        var betAmount: Int = 0
-        var lines: Int = 0
-
-        for (entry in mainPreset) {
-            val key = entry.key
-            val value = entry.value as Map<*, *>
-
-            val valNum = if (presetValue.containsKey(key))
-                presetValue[key]!!
-            else if (value.containsKey("default"))
-                value["default"]!! as Int
-            else
-                return Result.failure(AggregatorError("Missing quantity"))
-
-            if (value.containsKey("minimal") && valNum < value["minimal"] as Int) {
-                return Result.failure(AggregatorError("$key too small"))
-            } else if (value.containsKey("maximum") && valNum > value["maximum"] as Int) {
-                return Result.failure(AggregatorError("$key too large"))
-            }
-
-            when (key) {
-                "quantity" -> quantity = valNum
-                "betAmount" -> betAmount = valNum
-                "lines" -> lines = valNum
-            }
-
+        val validatedValues = FreespinPresetValidator.validate(presetValue, mainPreset).getOrElse {
+            return Result.failure(it)
         }
+
+        val quantity = validatedValues["quantity"] ?: 0
+        val betAmount = validatedValues["betAmount"] ?: 0
+        val lines = validatedValues["lines"] ?: 0
 
         val response = client.createFreespin(
             CreateFreespinDto(

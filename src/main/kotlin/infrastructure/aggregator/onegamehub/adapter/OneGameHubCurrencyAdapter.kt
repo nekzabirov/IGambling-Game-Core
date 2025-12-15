@@ -4,6 +4,7 @@ import application.port.outbound.CurrencyAdapter
 import shared.value.Currency
 import java.math.BigDecimal
 import java.math.BigInteger
+import java.math.RoundingMode
 
 class OneGameHubCurrencyAdapter(private val currencyAdapter: CurrencyAdapter) {
     suspend fun convertSystemToProvider(amount: BigInteger, currency: Currency): BigInteger {
@@ -13,7 +14,7 @@ class OneGameHubCurrencyAdapter(private val currencyAdapter: CurrencyAdapter) {
     }
 
     suspend fun convertProviderToSystem(amount: BigInteger, currency: Currency): BigInteger {
-        val original = amount.toBigDecimal() / BigDecimal("100")
+        val original = amount.toBigDecimal().divide(BigDecimal("100"), 2, RoundingMode.HALF_UP)
 
         return currencyAdapter.convertToSystem(original, currency)
     }

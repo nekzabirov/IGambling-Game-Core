@@ -5,16 +5,16 @@ import application.port.outbound.AggregatorFreespinPort
 import application.port.outbound.AggregatorGameSyncPort
 import application.port.outbound.AggregatorLaunchUrlPort
 import domain.aggregator.model.AggregatorInfo
-import infrastructure.aggregator.pragmatic.adapter.PragmaticCurrencyAdapter
 import infrastructure.aggregator.pragmatic.adapter.PragmaticFreespinAdapter
 import infrastructure.aggregator.pragmatic.adapter.PragmaticGameSyncAdapter
 import infrastructure.aggregator.pragmatic.adapter.PragmaticLaunchUrlAdapter
+import infrastructure.aggregator.shared.ProviderCurrencyAdapter
 import shared.value.Aggregator
 
 /**
  * Factory for creating Pragmatic aggregator adapters.
  */
-class PragmaticAdapterFactory(private val providerCurrencyAdapter: PragmaticCurrencyAdapter) : AggregatorAdapterFactory {
+class PragmaticAdapterFactory(private val providerCurrencyAdapter: ProviderCurrencyAdapter) : AggregatorAdapterFactory {
 
     override fun supports(aggregator: Aggregator): Boolean {
         return aggregator == Aggregator.PRAGMATIC

@@ -7,6 +7,8 @@ import infrastructure.aggregator.pateplay.client.PateplayHttpClient
 import infrastructure.aggregator.pateplay.client.dto.CancelFreespinRequestDto
 import infrastructure.aggregator.pateplay.client.dto.CreateFreespinRequestDto
 import infrastructure.aggregator.pateplay.model.PateplayConfig
+import infrastructure.aggregator.shared.FreespinPresetValidator
+import infrastructure.aggregator.shared.ProviderCurrencyAdapter
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
@@ -17,7 +19,7 @@ import shared.value.Currency
  */
 class PateplayFreespinAdapter(
     aggregatorInfo: AggregatorInfo,
-    private val providerCurrencyAdapter: PateplayCurrencyAdapter
+    private val providerCurrencyAdapter: ProviderCurrencyAdapter
 ) : AggregatorFreespinPort {
 
     private val config = PateplayConfig(aggregatorInfo.config)
@@ -49,31 +51,12 @@ class PateplayFreespinAdapter(
             return Result.failure(it)
         }
 
-        var rounds = 0
-        var stake = 0
-
-        for (entry in mainPreset) {
-            val key = entry.key
-            val value = entry.value as Map<*, *>
-
-            val valNum = if (presetValue.containsKey(key))
-                presetValue[key]!!
-            else if (value.containsKey("default"))
-                value["default"]!! as Int
-            else
-                return Result.failure(AggregatorError("Missing required preset value: $key"))
-
-            if (value.containsKey("minimal") && valNum < value["minimal"] as Int) {
-                return Result.failure(AggregatorError("$key value too small: $valNum < ${value["minimal"]}"))
-            } else if (value.containsKey("maximum") && valNum > value["maximum"] as Int) {
-                return Result.failure(AggregatorError("$key value too large: $valNum > ${value["maximum"]}"))
-            }
-
-            when (key) {
-                "rounds" -> rounds = valNum
-                "stake" -> stake = valNum
-            }
+        val validatedValues = FreespinPresetValidator.validate(presetValue, mainPreset).getOrElse {
+            return Result.failure(it)
         }
+
+        val rounds = validatedValues["rounds"] ?: 0
+        val stake = validatedValues["stake"] ?: 0
 
         // Convert stake from system format to provider format (real currency units as string)
         val stakeDecimal = providerCurrencyAdapter.convertSystemToProvider(

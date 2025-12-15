@@ -9,13 +9,13 @@ import application.usecase.spin.SettleSpinUsecase
 import com.nekgamebling.application.usecase.spin.RollbackUsecase
 import com.nekgamebling.infrastructure.aggregator.pragmatic.handler.dto.PragmaticBetPayload
 import com.nekgamebling.infrastructure.aggregator.pragmatic.handler.dto.PragmaticResponse
-import infrastructure.aggregator.pragmatic.adapter.PragmaticCurrencyAdapter
+import infrastructure.aggregator.shared.ProviderCurrencyAdapter
 import shared.value.SessionToken
 
 class PragmaticHandler(
     private val sessionService: SessionService,
     private val walletAdapter: WalletAdapter,
-    private val currencyAdapter: PragmaticCurrencyAdapter,
+    private val currencyAdapter: ProviderCurrencyAdapter,
     private val placeSpinUsecase: PlaceSpinUsecase,
     private val settleSpinUsecase: SettleSpinUsecase,
     private val rollbackUsecase: RollbackUsecase,
@@ -157,7 +157,7 @@ class PragmaticHandler(
             return it.toErrorResponse()
         }
 
-        if (realAmount < 0.toBigInteger()) {
+        if (realAmount < java.math.BigInteger.ZERO) {
             val betAmount = realAmount.abs()
 
             placeSpinUsecase(

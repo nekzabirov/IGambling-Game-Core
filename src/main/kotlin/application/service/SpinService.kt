@@ -129,17 +129,15 @@ class SpinService(
             realAmount = betRealAmount,
             bonusAmount = betBonusAmount,
             extId = command.transactionId
-        )
-
-        spinRepository.save(spin)
+        ).let { spinRepository.save(it) }
 
         // Withdraw from wallet
         walletAdapter.withdraw(
-            session.playerId,
-            spin.id.toString(),
-            session.currency,
-            betRealAmount,
-            betBonusAmount
+            playerId = session.playerId,
+            transactionId = spin.id.toString(),
+            currency = session.currency,
+            realAmount = betRealAmount,
+            bonusAmount = betBonusAmount
         ).getOrElse {
             return Result.failure(it)
         }
@@ -198,17 +196,15 @@ class SpinService(
             bonusAmount = bonusAmount,
             extId = command.transactionId,
             referenceId = placeSpin.id
-        )
-
-        spinRepository.save(settleSpin)
+        ).let { spinRepository.save(it) }
 
         // Deposit winnings
         walletAdapter.deposit(
-            session.playerId,
-            session.id.toString(),
-            session.currency,
-            realAmount,
-            bonusAmount
+            playerId = session.playerId,
+            transactionId = settleSpin.id.toString(),
+            currency = session.currency,
+            realAmount = realAmount,
+            bonusAmount = bonusAmount
         ).getOrElse {
             return Result.failure(it)
         }

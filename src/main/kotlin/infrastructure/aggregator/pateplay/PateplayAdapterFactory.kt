@@ -5,16 +5,16 @@ import application.port.outbound.AggregatorFreespinPort
 import application.port.outbound.AggregatorGameSyncPort
 import application.port.outbound.AggregatorLaunchUrlPort
 import domain.aggregator.model.AggregatorInfo
-import infrastructure.aggregator.pateplay.adapter.PateplayCurrencyAdapter
 import infrastructure.aggregator.pateplay.adapter.PateplayFreespinAdapter
 import infrastructure.aggregator.pateplay.adapter.PateplayGameSyncAdapter
 import infrastructure.aggregator.pateplay.adapter.PateplayLaunchUrlAdapter
+import infrastructure.aggregator.shared.ProviderCurrencyAdapter
 import shared.value.Aggregator
 
 /**
  * Factory for creating Pateplay aggregator adapters.
  */
-class PateplayAdapterFactory(private val providerCurrencyAdapter: PateplayCurrencyAdapter) : AggregatorAdapterFactory {
+class PateplayAdapterFactory(private val providerCurrencyAdapter: ProviderCurrencyAdapter) : AggregatorAdapterFactory {
 
     override fun supports(aggregator: Aggregator): Boolean {
         return aggregator == Aggregator.PATEPLAY

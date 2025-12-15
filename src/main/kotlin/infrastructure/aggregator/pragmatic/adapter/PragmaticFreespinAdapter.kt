@@ -2,12 +2,13 @@ package infrastructure.aggregator.pragmatic.adapter
 
 import application.port.outbound.AggregatorFreespinPort
 import domain.aggregator.model.AggregatorInfo
-import domain.common.error.AggregatorError
 import infrastructure.aggregator.pragmatic.client.PragmaticHttpClient
 import infrastructure.aggregator.pragmatic.client.dto.CreateFreespinDto
 import infrastructure.aggregator.pragmatic.client.dto.FreespinBetValueDto
 import infrastructure.aggregator.pragmatic.client.dto.FreespinGameDto
 import infrastructure.aggregator.pragmatic.model.PragmaticConfig
+import infrastructure.aggregator.shared.FreespinPresetValidator
+import infrastructure.aggregator.shared.ProviderCurrencyAdapter
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
@@ -18,7 +19,7 @@ import shared.value.Currency
  */
 class PragmaticFreespinAdapter(
     aggregatorInfo: AggregatorInfo,
-    private val providerCurrencyAdapter: PragmaticCurrencyAdapter
+    private val providerCurrencyAdapter: ProviderCurrencyAdapter
 ) : AggregatorFreespinPort {
 
     private val client = PragmaticHttpClient(PragmaticConfig(aggregatorInfo.config))
@@ -49,31 +50,12 @@ class PragmaticFreespinAdapter(
             return Result.failure(it)
         }
 
-        var rounds = 0
-        var totalBet = 0
-
-        for (entry in mainPreset) {
-            val key = entry.key
-            val value = entry.value as Map<*, *>
-
-            val valNum = if (presetValue.containsKey(key))
-                presetValue[key]!!
-            else if (value.containsKey("default"))
-                value["default"]!! as Int
-            else
-                return Result.failure(AggregatorError("Missing required preset value: $key"))
-
-            if (value.containsKey("minimal") && valNum < value["minimal"] as Int) {
-                return Result.failure(AggregatorError("$key value too small: $valNum < ${value["minimal"]}"))
-            } else if (value.containsKey("maximum") && valNum > value["maximum"] as Int) {
-                return Result.failure(AggregatorError("$key value too large: $valNum > ${value["maximum"]}"))
-            }
-
-            when (key) {
-                "rounds" -> rounds = valNum
-                "totalBet" -> totalBet = valNum
-            }
+        val validatedValues = FreespinPresetValidator.validate(presetValue, mainPreset).getOrElse {
+            return Result.failure(it)
         }
+
+        val rounds = validatedValues["rounds"] ?: 0
+        val totalBet = validatedValues["totalBet"] ?: 0
 
         // Convert totalBet from system format to provider format (real currency units)
         val totalBetDecimal = providerCurrencyAdapter.convertSystemToProvider(
