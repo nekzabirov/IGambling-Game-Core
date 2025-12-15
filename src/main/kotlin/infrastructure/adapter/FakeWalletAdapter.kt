@@ -11,25 +11,14 @@ import java.util.concurrent.ConcurrentHashMap
  * Replace with real implementation in production.
  */
 class FakeWalletAdapter : WalletAdapter {
-    private val balances = ConcurrentHashMap<String, MutableMap<String, Balance>>()
-
-    init {
-        // Initialize with some test balances
-        setBalance("test-player-1", Currency("EUR"), Balance(BigInteger.valueOf(10000), BigInteger.valueOf(500), Currency("EUR")))
-        setBalance("test-player-1", Currency("EUR"), Balance(BigInteger.valueOf(8000), BigInteger.valueOf(300), Currency("EUR")))
-    }
-
-    fun setBalance(playerId: String, currency: Currency, balance: Balance) {
-        balances.getOrPut(playerId) { mutableMapOf() }[currency.value] = balance
+    companion object {
+        private var realAmount = 10000.toBigInteger()
+        private var bonusAmount = 1000.toBigInteger()
+        private val currency = Currency("EUR")
     }
 
     override suspend fun findBalance(playerId: String): Result<Balance> {
-        // Return a default balance if not found
-        val playerBalances = balances[playerId]
-        val balance = playerBalances?.values?.firstOrNull()
-            ?: Balance(BigInteger.valueOf(10000), BigInteger.valueOf(500), Currency("USD"))
-
-        return Result.success(balance)
+        return Balance(realAmount, bonusAmount, currency).let { Result.success(it) }
     }
 
     override suspend fun withdraw(
@@ -39,21 +28,8 @@ class FakeWalletAdapter : WalletAdapter {
         realAmount: BigInteger,
         bonusAmount: BigInteger
     ): Result<Unit> {
-        val playerBalances = balances.getOrPut(playerId) { mutableMapOf() }
-        val current = playerBalances[currency.value]
-            ?: Balance(BigInteger.valueOf(10000), BigInteger.valueOf(500), currency)
-
-        val newBalance = Balance(
-            real = current.real - realAmount,
-            bonus = current.bonus - bonusAmount,
-            currency = currency
-        )
-
-        if (newBalance.real < BigInteger.ZERO || newBalance.bonus < BigInteger.ZERO) {
-            return Result.failure(IllegalStateException("Insufficient balance"))
-        }
-
-        playerBalances[currency.value] = newBalance
+        FakeWalletAdapter.realAmount -= realAmount
+        FakeWalletAdapter.bonusAmount -= bonusAmount
         return Result.success(Unit)
     }
 
@@ -64,21 +40,13 @@ class FakeWalletAdapter : WalletAdapter {
         realAmount: BigInteger,
         bonusAmount: BigInteger
     ): Result<Unit> {
-        val playerBalances = balances.getOrPut(playerId) { mutableMapOf() }
-        val current = playerBalances[currency.value]
-            ?: Balance(BigInteger.ZERO, BigInteger.ZERO, currency)
-
-        playerBalances[currency.value] = Balance(
-            real = current.real + realAmount,
-            bonus = current.bonus + bonusAmount,
-            currency = currency
-        )
-
+        FakeWalletAdapter.realAmount += realAmount
+        FakeWalletAdapter.bonusAmount += bonusAmount
         return Result.success(Unit)
     }
 
     override suspend fun rollback(playerId: String, transactionId: String): Result<Unit> {
-        // In a real implementation, this would reverse the transaction
         return Result.success(Unit)
     }
+
 }
