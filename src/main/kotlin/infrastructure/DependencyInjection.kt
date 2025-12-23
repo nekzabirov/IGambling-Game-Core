@@ -82,6 +82,7 @@ private val useCaseModule = module {
     // ==========================================
     factory { PlaceSpinUsecase(get(), get(), get(), get()) }
     factory { SettleSpinUsecase(get(), get(), get()) }
+    factory { EndSpinUsecase(get(), get(), get()) }
     factory { GetPresetUsecase(get(), get()) }
     factory { CreateFreespinUsecase(get(), get()) }
     factory { CancelFreespinUsecase(get(), get()) }

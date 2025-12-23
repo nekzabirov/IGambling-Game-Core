@@ -3,7 +3,7 @@ package com.nekgamebling.infrastructure.aggregator.pragmatic.handler
 import application.port.outbound.WalletAdapter
 import application.service.GameService
 import application.service.SessionService
-import application.service.SpinService
+import application.usecase.spin.EndSpinUsecase
 import application.usecase.spin.PlaceSpinUsecase
 import application.usecase.spin.SettleSpinUsecase
 import com.nekgamebling.application.usecase.spin.RollbackUsecase
@@ -18,8 +18,8 @@ class PragmaticHandler(
     private val currencyAdapter: ProviderCurrencyAdapter,
     private val placeSpinUsecase: PlaceSpinUsecase,
     private val settleSpinUsecase: SettleSpinUsecase,
+    private val endSpinUsecase: EndSpinUsecase,
     private val rollbackUsecase: RollbackUsecase,
-    private val spinService: SpinService,
     private val gameService: GameService
 ) {
 
@@ -116,7 +116,11 @@ class PragmaticHandler(
             return it.toErrorResponse()
         }
 
-        spinService.closeRound(session, roundId).getOrElse {
+        endSpinUsecase(
+            session = session,
+            extRoundId = roundId,
+            freeSpinId = null
+        ).getOrElse {
             return it.toErrorResponse()
         }
 

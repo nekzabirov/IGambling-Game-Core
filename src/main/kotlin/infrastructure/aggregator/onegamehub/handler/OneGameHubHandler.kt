@@ -2,6 +2,7 @@ package infrastructure.aggregator.onegamehub.handler
 
 import application.port.outbound.WalletAdapter
 import application.service.SessionService
+import application.usecase.spin.EndSpinUsecase
 import application.usecase.spin.PlaceSpinUsecase
 import application.usecase.spin.SettleSpinUsecase
 import com.nekgamebling.application.usecase.spin.RollbackUsecase
@@ -23,6 +24,7 @@ class OneGameHubHandler(
     private val currencyAdapter: OneGameHubCurrencyAdapter,
     private val placeSpinUsecase: PlaceSpinUsecase,
     private val settleSpinUsecase: SettleSpinUsecase,
+    private val endSpinUsecase: EndSpinUsecase,
     private val rollbackUsecase: RollbackUsecase
 ) {
     suspend fun balance(token: SessionToken): OneGameHubResponse {
@@ -62,10 +64,19 @@ class OneGameHubHandler(
             extRoundId = payload.roundId,
             transactionId = payload.transactionId,
             freeSpinId = payload.freeSpinId,
-            winAmount = currencyAdapter.convertProviderToSystem(payload.amount, session.currency),
-            finishRound = payload.finishRound
+            winAmount = currencyAdapter.convertProviderToSystem(payload.amount, session.currency)
         ).getOrElse {
             return it.toErrorResponse
+        }
+
+        if (payload.finishRound) {
+            endSpinUsecase(
+                session = session,
+                extRoundId = payload.roundId,
+                freeSpinId = payload.freeSpinId
+            ).getOrElse {
+                return it.toErrorResponse
+            }
         }
 
         return returnSuccess(session)
