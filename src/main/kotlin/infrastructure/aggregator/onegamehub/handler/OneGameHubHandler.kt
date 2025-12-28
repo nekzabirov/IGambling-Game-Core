@@ -1,10 +1,12 @@
 package infrastructure.aggregator.onegamehub.handler
 
 import application.port.outbound.WalletAdapter
+import application.saga.spin.PlaceSpinContext
+import application.saga.spin.PlaceSpinSaga
+import application.saga.spin.SettleSpinContext
+import application.saga.spin.SettleSpinSaga
 import application.service.SessionService
 import application.usecase.spin.EndSpinUsecase
-import application.usecase.spin.PlaceSpinUsecase
-import application.usecase.spin.SettleSpinUsecase
 import application.usecase.spin.RollbackUsecase
 import infrastructure.aggregator.onegamehub.adapter.OneGameHubCurrencyAdapter
 import infrastructure.aggregator.onegamehub.handler.dto.OneGameHubBetDto
@@ -22,8 +24,8 @@ class OneGameHubHandler(
     private val sessionService: SessionService,
     private val walletAdapter: WalletAdapter,
     private val currencyAdapter: OneGameHubCurrencyAdapter,
-    private val placeSpinUsecase: PlaceSpinUsecase,
-    private val settleSpinUsecase: SettleSpinUsecase,
+    private val placeSpinSaga: PlaceSpinSaga,
+    private val settleSpinSaga: SettleSpinSaga,
     private val endSpinUsecase: EndSpinUsecase,
     private val rollbackUsecase: RollbackUsecase
 ) {
@@ -40,14 +42,16 @@ class OneGameHubHandler(
             return it.toErrorResponse
         }
 
-        placeSpinUsecase(
+        val context = PlaceSpinContext(
             session = session,
             gameSymbol = payload.gameSymbol,
             extRoundId = payload.roundId,
             transactionId = payload.transactionId,
             freeSpinId = payload.freeSpinId,
             amount = currencyAdapter.convertProviderToSystem(payload.amount, session.currency)
-        ).getOrElse {
+        )
+
+        placeSpinSaga.execute(context).getOrElse {
             return it.toErrorResponse
         }
 
@@ -59,13 +63,15 @@ class OneGameHubHandler(
             return it.toErrorResponse
         }
 
-        settleSpinUsecase(
+        val context = SettleSpinContext(
             session = session,
             extRoundId = payload.roundId,
             transactionId = payload.transactionId,
             freeSpinId = payload.freeSpinId,
             winAmount = currencyAdapter.convertProviderToSystem(payload.amount, session.currency)
-        ).getOrElse {
+        )
+
+        settleSpinSaga.execute(context).getOrElse {
             return it.toErrorResponse
         }
 

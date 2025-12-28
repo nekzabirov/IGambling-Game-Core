@@ -1,11 +1,13 @@
 package infrastructure.aggregator.pragmatic.handler
 
 import application.port.outbound.WalletAdapter
+import application.saga.spin.PlaceSpinContext
+import application.saga.spin.PlaceSpinSaga
+import application.saga.spin.SettleSpinContext
+import application.saga.spin.SettleSpinSaga
 import application.service.GameService
 import application.service.SessionService
 import application.usecase.spin.EndSpinUsecase
-import application.usecase.spin.PlaceSpinUsecase
-import application.usecase.spin.SettleSpinUsecase
 import application.usecase.spin.RollbackUsecase
 import infrastructure.aggregator.pragmatic.handler.dto.PragmaticBetPayload
 import infrastructure.aggregator.pragmatic.handler.dto.PragmaticResponse
@@ -16,8 +18,8 @@ class PragmaticHandler(
     private val sessionService: SessionService,
     private val walletAdapter: WalletAdapter,
     private val currencyAdapter: ProviderCurrencyAdapter,
-    private val placeSpinUsecase: PlaceSpinUsecase,
-    private val settleSpinUsecase: SettleSpinUsecase,
+    private val placeSpinSaga: PlaceSpinSaga,
+    private val settleSpinSaga: SettleSpinSaga,
     private val endSpinUsecase: EndSpinUsecase,
     private val rollbackUsecase: RollbackUsecase,
     private val gameService: GameService
@@ -56,14 +58,16 @@ class PragmaticHandler(
 
         val betAmount = currencyAdapter.convertProviderToSystem(payload.amount.toBigDecimal(), balance.currency)
 
-        placeSpinUsecase(
+        val context = PlaceSpinContext(
             session = session,
             gameSymbol = payload.gameId,
             extRoundId = payload.roundId,
             transactionId = payload.reference,
             freeSpinId = payload.bonusCode,
             amount = betAmount
-        ).getOrElse {
+        )
+
+        placeSpinSaga.execute(context).getOrElse {
             return it.toErrorResponse()
         }
 
@@ -89,13 +93,15 @@ class PragmaticHandler(
 
         val totalAmount = payload.amount.toBigDecimal() + payload.promoWinAmount.toBigDecimal()
 
-        settleSpinUsecase(
+        val context = SettleSpinContext(
             session = session,
             extRoundId = payload.roundId,
             transactionId = payload.reference,
             freeSpinId = payload.bonusCode,
             winAmount = currencyAdapter.convertProviderToSystem(totalAmount, session.currency)
-        ).getOrElse {
+        )
+
+        settleSpinSaga.execute(context).getOrElse {
             return it.toErrorResponse()
         }
 
@@ -164,24 +170,28 @@ class PragmaticHandler(
         if (realAmount < java.math.BigInteger.ZERO) {
             val betAmount = realAmount.abs()
 
-            placeSpinUsecase(
+            val context = PlaceSpinContext(
                 session = session,
                 gameSymbol = game.symbol,
                 extRoundId = roundId,
                 transactionId = reference,
                 freeSpinId = null,
                 amount = betAmount
-            ).getOrElse {
+            )
+
+            placeSpinSaga.execute(context).getOrElse {
                 return it.toErrorResponse()
             }
         } else {
-            settleSpinUsecase(
+            val context = SettleSpinContext(
                 session = session,
                 extRoundId = roundId,
                 transactionId = reference,
                 freeSpinId = null,
                 winAmount = realAmount
-            ).getOrElse {
+            )
+
+            settleSpinSaga.execute(context).getOrElse {
                 return it.toErrorResponse()
             }
         }

@@ -2,6 +2,8 @@ package infrastructure
 
 import application.usecase.spin.GetPresetUsecase
 import application.port.outbound.*
+import application.saga.spin.PlaceSpinSaga
+import application.saga.spin.SettleSpinSaga
 import application.service.GameService
 import application.service.SessionService
 import application.service.SpinService
@@ -32,6 +34,7 @@ fun Application.coreModule() = module {
         adapterModule,
         serviceModule,
         useCaseModule,
+        sagaModule,
         AggregatorModule,
         messagingModule(this@coreModule)
     )
@@ -111,6 +114,14 @@ private val useCaseModule = module {
     factory { ListAllActiveAggregatorUsecase(get()) }
     factory { ListGameVariantsUsecase(get()) }
     factory { SyncGameUsecase(get(), get(), get(), get(), get(), get()) }
+}
+
+private val sagaModule = module {
+    // ==========================================
+    // Application Sagas - Distributed Transactions
+    // ==========================================
+    factory { PlaceSpinSaga(get(), get(), get(), get(), get(), get(), get()) }
+    factory { SettleSpinSaga(get(), get(), get(), get(), get()) }
 }
 
 /**
