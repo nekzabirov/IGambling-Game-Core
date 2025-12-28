@@ -21,6 +21,8 @@ service Sync {
   rpc AssignProvider(AssignProviderCommand) returns (EmptyResult);
 
   rpc ListVariants(ListVariantsCommand) returns (ListVariantResult);
+
+  rpc SyncGame(SyncGameCommand) returns (SyncGameResult);
 }
 
 message AddAggregatorCommand {
@@ -83,4 +85,14 @@ message ListAggregatorResult {
   repeated AggregatorDto items = 1;
 
   int32 total_page = 2;
+}
+
+message SyncGameCommand {
+  string aggregator_identity = 1;
+}
+
+message SyncGameResult {
+  int32 game_count = 1;
+
+  int32 provider_count = 2;
 }

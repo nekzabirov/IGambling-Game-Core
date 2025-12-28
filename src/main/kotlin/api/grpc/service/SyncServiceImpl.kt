@@ -3,6 +3,7 @@ package infrastructure.api.grpc.service
 import application.usecase.aggregator.AddAggregatorUsecase
 import application.usecase.aggregator.ListAggregatorUsecase
 import application.usecase.aggregator.ListGameVariantsUsecase
+import application.usecase.aggregator.SyncGameUsecase
 import application.usecase.provider.AssignProviderToAggregatorUsecase
 import domain.aggregator.model.AggregatorInfo
 import shared.value.Aggregator
@@ -14,7 +15,9 @@ import com.nekzabirov.igambling.proto.service.ListAggregatorCommand
 import com.nekzabirov.igambling.proto.service.ListAggregatorResult
 import com.nekzabirov.igambling.proto.service.ListVariantResult
 import com.nekzabirov.igambling.proto.service.ListVariantsCommand
+import com.nekzabirov.igambling.proto.service.SyncGameCommand
 import com.nekzabirov.igambling.proto.service.SyncGrpcKt
+import com.nekzabirov.igambling.proto.service.SyncGameResult as SyncGameResultProto
 import io.grpc.Status
 import io.grpc.StatusException
 import io.ktor.server.application.*
@@ -30,6 +33,7 @@ class SyncServiceImpl(application: Application) : SyncGrpcKt.SyncCoroutineImplBa
     private val listAggregatorUsecase = application.get<ListAggregatorUsecase>()
     private val listGameVariantsUsecase = application.get<ListGameVariantsUsecase>()
     private val assignProviderToAggregatorUsecase = application.get<AssignProviderToAggregatorUsecase>()
+    private val syncGameUsecase = application.get<SyncGameUsecase>()
 
     override suspend fun addAggregator(request: AddAggregatorCommand): EmptyResult {
         val type = Aggregator.valueOf(request.type)
@@ -91,5 +95,16 @@ class SyncServiceImpl(application: Application) : SyncGrpcKt.SyncCoroutineImplBa
         ).getOrElse { throw StatusException(Status.INVALID_ARGUMENT.withDescription(it.message)) }
 
         return EmptyResult.getDefaultInstance()
+    }
+
+    override suspend fun syncGame(request: SyncGameCommand): SyncGameResultProto {
+        return syncGameUsecase(request.aggregatorIdentity)
+            .map { result ->
+                SyncGameResultProto.newBuilder()
+                    .setGameCount(result.gameCount)
+                    .setProviderCount(result.providerCount)
+                    .build()
+            }
+            .getOrElse { throw StatusException(Status.INVALID_ARGUMENT.withDescription(it.message)) }
     }
 }
