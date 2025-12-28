@@ -5,8 +5,8 @@ import domain.aggregator.model.AggregatorGame
 import domain.aggregator.model.AggregatorInfo
 import infrastructure.aggregator.pragmatic.client.PragmaticHttpClient
 import infrastructure.aggregator.pragmatic.model.PragmaticConfig
-import shared.value.Locale
-import shared.value.Platform
+import domain.common.value.Locale
+import domain.common.value.Platform
 
 /**
  * Pragmatic implementation for syncing games.

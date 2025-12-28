@@ -1,4 +1,4 @@
-package com.nekgamebling.shared
+package shared
 
 import org.slf4j.LoggerFactory
 

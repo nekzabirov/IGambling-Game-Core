@@ -1,6 +1,6 @@
-package com.nekgamebling.infrastructure.aggregator.pragmatic.handler
+package infrastructure.aggregator.pragmatic.handler
 
-import com.nekgamebling.infrastructure.aggregator.pragmatic.handler.dto.PragmaticBetPayload
+import infrastructure.aggregator.pragmatic.handler.dto.PragmaticBetPayload
 import io.ktor.server.response.respond
 import io.ktor.server.routing.*
 import org.koin.ktor.ext.inject

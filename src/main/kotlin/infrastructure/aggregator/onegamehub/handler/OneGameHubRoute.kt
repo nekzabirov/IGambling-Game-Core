@@ -1,6 +1,6 @@
 package infrastructure.aggregator.onegamehub.handler
 
-import com.nekgamebling.infrastructure.aggregator.onegamehub.handler.dto.OneGameHubBetDto
+import infrastructure.aggregator.onegamehub.handler.dto.OneGameHubBetDto
 import infrastructure.aggregator.onegamehub.handler.dto.OneGameHubResponse
 import io.ktor.http.*
 import io.ktor.server.response.*

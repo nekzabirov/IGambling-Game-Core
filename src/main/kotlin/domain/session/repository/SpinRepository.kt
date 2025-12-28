@@ -1,7 +1,7 @@
 package domain.session.repository
 
 import domain.session.model.Spin
-import shared.value.SpinType
+import domain.common.value.SpinType
 import java.util.UUID
 
 /**

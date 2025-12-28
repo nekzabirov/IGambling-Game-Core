@@ -1,6 +1,6 @@
 package infrastructure.aggregator.pragmatic
 
-import com.nekgamebling.infrastructure.aggregator.pragmatic.handler.PragmaticHandler
+import infrastructure.aggregator.pragmatic.handler.PragmaticHandler
 import org.koin.dsl.module
 
 internal val PragmaticModule = module {

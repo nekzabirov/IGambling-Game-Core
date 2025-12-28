@@ -10,6 +10,7 @@ import org.jetbrains.exposed.sql.insertAndGetId
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.sql.update
+import org.jetbrains.exposed.sql.upsertReturning
 import java.util.UUID
 
 /**
@@ -51,27 +52,25 @@ class ExposedRoundRepository : BaseExposedRepository<Round, RoundTable>(RoundTab
         } > 0
     }
 
+    /**
+     * Find or create a round using atomic upsert.
+     * Uses unique constraint on (sessionId, extId) for conflict resolution.
+     *
+     * Optimized: Single query instead of SELECT + INSERT (2 queries).
+     * Also eliminates race condition where two concurrent requests
+     * could both see no existing round and both try to insert.
+     */
     override suspend fun findOrCreate(sessionId: UUID, gameId: UUID, extId: String): Round = newSuspendedTransaction {
-        val existing = table.selectAll()
-            .where { (RoundTable.sessionId eq sessionId) and (RoundTable.extId eq extId) }
-            .singleOrNull()
-            ?.toEntity()
-
-        if (existing != null) return@newSuspendedTransaction existing
-
-        val id = RoundTable.insertAndGetId {
+        val row = RoundTable.upsertReturning(
+            keys = arrayOf(RoundTable.sessionId, RoundTable.extId),
+            onUpdateExclude = listOf(RoundTable.id, RoundTable.gameId, RoundTable.finished)
+        ) {
             it[RoundTable.sessionId] = sessionId
             it[RoundTable.gameId] = gameId
             it[RoundTable.extId] = extId
             it[finished] = false
-        }
+        }.single()
 
-        Round(
-            id = id.value,
-            sessionId = sessionId,
-            gameId = gameId,
-            extId = extId,
-            finished = false
-        )
+        row.toRound()
     }
 }

@@ -9,7 +9,7 @@ import infrastructure.aggregator.pragmatic.adapter.PragmaticFreespinAdapter
 import infrastructure.aggregator.pragmatic.adapter.PragmaticGameSyncAdapter
 import infrastructure.aggregator.pragmatic.adapter.PragmaticLaunchUrlAdapter
 import infrastructure.aggregator.shared.ProviderCurrencyAdapter
-import shared.value.Aggregator
+import domain.common.value.Aggregator
 
 /**
  * Factory for creating Pragmatic aggregator adapters.

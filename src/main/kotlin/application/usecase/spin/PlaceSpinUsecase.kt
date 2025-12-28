@@ -1,11 +1,11 @@
 package application.usecase.spin
 
-import application.event.SpinPlacedEvent
+import domain.common.event.SpinPlacedEvent
 import application.port.outbound.EventPublisherAdapter
 import application.service.GameService
 import application.service.SpinCommand
 import application.service.SpinService
-import com.nekgamebling.application.service.AggregatorService
+import application.service.AggregatorService
 import domain.common.error.GameUnavailableError
 import domain.session.model.Session
 import java.math.BigInteger

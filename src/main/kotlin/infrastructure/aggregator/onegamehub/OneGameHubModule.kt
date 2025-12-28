@@ -1,6 +1,6 @@
 package infrastructure.aggregator.onegamehub
 
-import com.nekgamebling.infrastructure.aggregator.onegamehub.adapter.OneGameHubCurrencyAdapter
+import infrastructure.aggregator.onegamehub.adapter.OneGameHubCurrencyAdapter
 import infrastructure.aggregator.onegamehub.handler.OneGameHubHandler
 import org.koin.dsl.module
 

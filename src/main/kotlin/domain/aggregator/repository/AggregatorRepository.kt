@@ -1,7 +1,7 @@
 package domain.aggregator.repository
 
 import domain.aggregator.model.AggregatorInfo
-import shared.value.Aggregator
+import domain.common.value.Aggregator
 import shared.value.Page
 import shared.value.Pageable
 import java.util.UUID

@@ -2,10 +2,10 @@ package application.port.outbound
 
 import domain.aggregator.model.AggregatorGame
 import domain.aggregator.model.AggregatorInfo
-import shared.value.Aggregator
+import domain.common.value.Aggregator
 import shared.value.Currency
-import shared.value.Locale
-import shared.value.Platform
+import domain.common.value.Locale
+import domain.common.value.Platform
 import kotlinx.datetime.LocalDateTime
 
 /**

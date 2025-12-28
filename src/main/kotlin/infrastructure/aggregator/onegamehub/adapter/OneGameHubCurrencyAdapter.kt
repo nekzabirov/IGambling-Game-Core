@@ -1,4 +1,4 @@
-package com.nekgamebling.infrastructure.aggregator.onegamehub.adapter
+package infrastructure.aggregator.onegamehub.adapter
 
 import application.port.outbound.CurrencyAdapter
 import shared.value.Currency

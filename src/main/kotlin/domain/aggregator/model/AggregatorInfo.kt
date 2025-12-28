@@ -1,9 +1,9 @@
 package domain.aggregator.model
 
 import shared.serializer.UUIDSerializer
-import shared.value.Aggregator
-import shared.value.Locale
-import shared.value.Platform
+import domain.common.value.Aggregator
+import domain.common.value.Locale
+import domain.common.value.Platform
 import kotlinx.serialization.Serializable
 import java.util.UUID
 

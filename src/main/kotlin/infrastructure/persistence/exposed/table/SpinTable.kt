@@ -1,6 +1,6 @@
 package infrastructure.persistence.exposed.table
 
-import shared.value.SpinType
+import domain.common.value.SpinType
 
 object SpinTable : BaseTable("spins") {
     val roundId = reference("round_id", RoundTable.id).nullable()

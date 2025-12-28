@@ -1,4 +1,4 @@
-package com.nekgamebling.infrastructure.aggregator.pragmatic.handler.dto
+package infrastructure.aggregator.pragmatic.handler.dto
 
 import kotlinx.serialization.Serializable
 

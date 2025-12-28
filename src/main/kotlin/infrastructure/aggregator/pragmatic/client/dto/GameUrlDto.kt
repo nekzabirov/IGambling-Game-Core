@@ -1,6 +1,6 @@
 package infrastructure.aggregator.pragmatic.client.dto
 
-import shared.value.Platform
+import domain.common.value.Platform
 
 /**
  * DTO for requesting game launch URL from Pragmatic Play API.

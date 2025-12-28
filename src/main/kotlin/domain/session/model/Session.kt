@@ -1,8 +1,8 @@
 package domain.session.model
 
 import shared.value.Currency
-import shared.value.Locale
-import shared.value.Platform
+import domain.common.value.Locale
+import domain.common.value.Platform
 import java.math.BigInteger
 import java.util.UUID
 
@@ -45,7 +45,7 @@ data class Round(
 data class Spin(
     val id: UUID = UUID.randomUUID(),
     val roundId: UUID,
-    val type: shared.value.SpinType,
+    val type: domain.common.value.SpinType,
     val amount: BigInteger,
     val realAmount: BigInteger,
     val bonusAmount: BigInteger,

@@ -1,7 +1,7 @@
-package com.nekgamebling.infrastructure.messaging
+package infrastructure.messaging
 
 import application.port.outbound.EventPublisherAdapter
-import com.nekgamebling.infrastructure.messaging.consumer.consumeSpinSettled
+import infrastructure.messaging.consumer.consumeSpinSettled
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.RabbitMQ
 import io.ktor.server.application.Application
 import io.ktor.server.application.install

@@ -4,7 +4,7 @@ import domain.aggregator.model.AggregatorInfo
 import domain.aggregator.repository.AggregatorRepository
 import infrastructure.persistence.exposed.mapper.toAggregatorInfo
 import infrastructure.persistence.exposed.table.AggregatorInfoTable
-import shared.value.Aggregator
+import domain.common.value.Aggregator
 import shared.value.Page
 import shared.value.Pageable
 import org.jetbrains.exposed.sql.ResultRow

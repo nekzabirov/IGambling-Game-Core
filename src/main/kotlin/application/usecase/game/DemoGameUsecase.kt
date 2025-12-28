@@ -5,8 +5,8 @@ import application.service.GameService
 import domain.common.error.AggregatorNotSupportedError
 import domain.common.error.ValidationError
 import shared.value.Currency
-import shared.value.Locale
-import shared.value.Platform
+import domain.common.value.Locale
+import domain.common.value.Platform
 
 /**
  * Result of demo game operation.

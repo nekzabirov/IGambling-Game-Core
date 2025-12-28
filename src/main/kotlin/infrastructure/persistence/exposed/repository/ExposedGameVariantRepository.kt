@@ -10,7 +10,7 @@ import infrastructure.persistence.exposed.mapper.toProvider
 import infrastructure.persistence.exposed.table.GameTable
 import infrastructure.persistence.exposed.table.GameVariantTable
 import infrastructure.persistence.exposed.table.ProviderTable
-import shared.value.Aggregator
+import domain.common.value.Aggregator
 import shared.value.Page
 import shared.value.Pageable
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq

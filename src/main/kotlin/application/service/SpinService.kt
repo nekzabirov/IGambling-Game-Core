@@ -8,7 +8,7 @@ import domain.session.model.Session
 import domain.session.model.Spin
 import domain.session.repository.RoundRepository
 import domain.session.repository.SpinRepository
-import shared.value.SpinType
+import domain.common.value.SpinType
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import java.math.BigInteger

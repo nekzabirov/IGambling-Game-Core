@@ -1,6 +1,6 @@
 package domain.game.repository
 
-import shared.value.Platform
+import domain.common.value.Platform
 
 /**
  * Filter criteria for game queries.

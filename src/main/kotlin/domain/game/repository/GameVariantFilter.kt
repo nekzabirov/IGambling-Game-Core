@@ -1,6 +1,6 @@
 package domain.game.repository
 
-import shared.value.Aggregator
+import domain.common.value.Aggregator
 
 /**
  * Filter criteria for game variant queries.

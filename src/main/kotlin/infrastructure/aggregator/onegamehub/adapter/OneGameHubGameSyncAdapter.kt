@@ -6,8 +6,8 @@ import domain.aggregator.model.AggregatorInfo
 import domain.common.error.AggregatorError
 import infrastructure.aggregator.onegamehub.model.OneGameHubConfig
 import infrastructure.aggregator.onegamehub.client.OneGameHubHttpClient
-import shared.value.Locale
-import shared.value.Platform
+import domain.common.value.Locale
+import domain.common.value.Platform
 
 /**
  * OneGameHub implementation for syncing games.

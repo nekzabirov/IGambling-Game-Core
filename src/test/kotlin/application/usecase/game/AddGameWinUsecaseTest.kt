@@ -1,6 +1,6 @@
 package application.usecase.game
 
-import application.event.GameWonEvent
+import domain.common.event.GameWonEvent
 import application.port.outbound.EventPublisherAdapter
 import domain.common.error.NotFoundError
 import domain.game.model.Game
@@ -12,6 +12,7 @@ import io.mockk.mockk
 import io.mockk.slot
 import kotlinx.coroutines.test.runTest
 import shared.value.Currency
+import java.math.BigInteger
 import java.util.UUID
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -35,7 +36,7 @@ class AddGameWinUsecaseTest {
             providerId = UUID.randomUUID()
         )
         val playerId = "player-123"
-        val amount = 1000
+        val amount = 1000.toBigInteger()
         val currency = Currency("EUR")
 
         val eventSlot = slot<GameWonEvent>()
@@ -70,7 +71,7 @@ class AddGameWinUsecaseTest {
         val result = usecase(
             gameIdentity = "non-existent",
             playerId = "player-123",
-            amount = 1000,
+            amount = 1000.toBigInteger(),
             currency = Currency("EUR")
         )
 
@@ -91,17 +92,17 @@ class AddGameWinUsecaseTest {
         )
 
         coEvery { gameRepository.findByIdentity("test-game") } returns game
-        coEvery { gameWonRepository.save(gameId, any(), 0, any()) } returns true
+        coEvery { gameWonRepository.save(gameId, any(), BigInteger.ZERO, any()) } returns true
         coEvery { eventPublisher.publish(any()) } returns Unit
 
         val result = usecase(
             gameIdentity = "test-game",
             playerId = "player-123",
-            amount = 0,
+            amount = BigInteger.ZERO,
             currency = Currency("USD")
         )
 
         assertTrue(result.isSuccess)
-        coVerify(exactly = 1) { gameWonRepository.save(gameId, "player-123", 0, "USD") }
+        coVerify(exactly = 1) { gameWonRepository.save(gameId, "player-123", BigInteger.ZERO, "USD") }
     }
 }

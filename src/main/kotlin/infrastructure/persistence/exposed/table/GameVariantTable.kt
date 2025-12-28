@@ -1,6 +1,6 @@
 package infrastructure.persistence.exposed.table
 
-import shared.value.Aggregator
+import domain.common.value.Aggregator
 
 object GameVariantTable : BaseTable("game_variants") {
     val gameId = reference("game_id", GameTable.id).nullable()

@@ -1,4 +1,4 @@
-package com.nekgamebling.infrastructure.aggregator.pragmatic.handler
+package infrastructure.aggregator.pragmatic.handler
 
 import application.port.outbound.WalletAdapter
 import application.service.GameService
@@ -6,9 +6,9 @@ import application.service.SessionService
 import application.usecase.spin.EndSpinUsecase
 import application.usecase.spin.PlaceSpinUsecase
 import application.usecase.spin.SettleSpinUsecase
-import com.nekgamebling.application.usecase.spin.RollbackUsecase
-import com.nekgamebling.infrastructure.aggregator.pragmatic.handler.dto.PragmaticBetPayload
-import com.nekgamebling.infrastructure.aggregator.pragmatic.handler.dto.PragmaticResponse
+import application.usecase.spin.RollbackUsecase
+import infrastructure.aggregator.pragmatic.handler.dto.PragmaticBetPayload
+import infrastructure.aggregator.pragmatic.handler.dto.PragmaticResponse
 import infrastructure.aggregator.shared.ProviderCurrencyAdapter
 import shared.value.SessionToken
 

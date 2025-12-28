@@ -4,8 +4,8 @@ import application.port.outbound.AggregatorGameSyncPort
 import domain.aggregator.model.AggregatorGame
 import domain.aggregator.model.AggregatorInfo
 import infrastructure.aggregator.pateplay.model.PateplayConfig
-import shared.value.Locale
-import shared.value.Platform
+import domain.common.value.Locale
+import domain.common.value.Platform
 
 /**
  * Pateplay implementation for syncing games.

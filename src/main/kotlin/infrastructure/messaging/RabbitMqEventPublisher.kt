@@ -1,6 +1,6 @@
-package com.nekgamebling.infrastructure.messaging
+package infrastructure.messaging
 
-import application.event.DomainEvent
+import domain.common.event.IntegrationEvent
 import application.port.outbound.EventPublisherAdapter
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.basicPublish
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.rabbitmq
@@ -18,7 +18,7 @@ class RabbitMqEventPublisher(
 
     private val logger = LoggerFactory.getLogger(RabbitMqEventPublisher::class.java)
 
-    override suspend fun publish(event: DomainEvent) {
+    override suspend fun publish(event: IntegrationEvent) {
         logger.info("Publishing event [${event.routingKey}]: $event")
 
         application.rabbitmq {

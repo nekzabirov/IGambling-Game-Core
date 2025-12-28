@@ -11,8 +11,8 @@ import domain.session.model.Session
 import domain.session.model.Spin
 import infrastructure.persistence.exposed.table.*
 import shared.value.Currency
-import shared.value.Locale
-import shared.value.Platform
+import domain.common.value.Locale
+import domain.common.value.Platform
 import org.jetbrains.exposed.sql.ResultRow
 
 /**

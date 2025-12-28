@@ -11,7 +11,7 @@ import infrastructure.aggregator.pragmatic.client.dto.GameUrlResponseDto
 import infrastructure.aggregator.pragmatic.client.dto.GamesResponseDto
 import infrastructure.aggregator.pragmatic.client.dto.LaunchUrlRequestDto
 import infrastructure.aggregator.pragmatic.client.dto.ResponseDto
-import shared.value.Platform
+import domain.common.value.Platform
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.engine.cio.*

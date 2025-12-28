@@ -1,5 +1,6 @@
 package shared.value
 
+import domain.common.value.Locale
 import kotlinx.serialization.Serializable
 
 /**
@@ -10,17 +11,6 @@ import kotlinx.serialization.Serializable
 value class Currency(val value: String) {
     init {
         require(value.isNotBlank()) { "Currency code cannot be blank" }
-    }
-}
-
-/**
- * Locale value object representing a locale code (e.g., "en", "de").
- */
-@Serializable
-@JvmInline
-value class Locale(val value: String) {
-    init {
-        require(value.isNotBlank()) { "Locale code cannot be blank" }
     }
 }
 

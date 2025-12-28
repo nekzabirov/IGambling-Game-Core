@@ -1,15 +1,13 @@
 package application.usecase.spin
 
-import application.event.SpinPlacedEvent
-import application.event.SpinSettledEvent
+import domain.common.event.SpinPlacedEvent
+import domain.common.event.SpinSettledEvent
 import application.port.outbound.EventPublisherAdapter
 import application.service.GameService
-import application.service.SessionService
 import application.service.SpinService
-import com.nekgamebling.application.service.AggregatorService
+import application.service.AggregatorService
 import domain.aggregator.model.AggregatorInfo
 import domain.common.error.NotFoundError
-import domain.common.error.SessionInvalidError
 import domain.game.model.Game
 import domain.game.model.GameWithDetails
 import domain.provider.model.Provider
@@ -19,12 +17,12 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import io.mockk.slot
 import kotlinx.coroutines.test.runTest
-import shared.value.Aggregator
+import domain.common.value.Aggregator
 import shared.value.Currency
 import shared.value.ImageMap
-import shared.value.Locale
-import shared.value.Platform
-import shared.value.SessionToken
+import domain.common.value.Locale
+import domain.common.value.Platform
+import java.math.BigInteger
 import java.util.UUID
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -33,19 +31,17 @@ import kotlin.test.assertTrue
 
 class PlaceSpinUsecaseTest {
 
-    private val sessionService: SessionService = mockk()
     private val gameService: GameService = mockk()
     private val spinService: SpinService = mockk()
     private val aggregatorService: AggregatorService = mockk()
     private val eventPublisher: EventPublisherAdapter = mockk(relaxed = true)
-    private val usecase = PlaceSpinUsecase(sessionService, gameService, spinService, aggregatorService, eventPublisher)
+    private val usecase = PlaceSpinUsecase(gameService, spinService, aggregatorService, eventPublisher)
 
     @Test
     fun `invoke places spin successfully`() = runTest {
         val sessionId = UUID.randomUUID()
         val gameId = UUID.randomUUID()
         val aggregatorId = UUID.randomUUID()
-        val token = SessionToken("test-token")
 
         val session = createSession(sessionId, gameId, aggregatorId)
         val game = createGame(gameId)
@@ -53,19 +49,18 @@ class PlaceSpinUsecaseTest {
 
         val eventSlot = slot<SpinPlacedEvent>()
 
-        coEvery { sessionService.findByToken(token) } returns Result.success(session)
         coEvery { aggregatorService.findById(aggregatorId) } returns Result.success(aggregator)
         coEvery { gameService.findBySymbol("game-symbol", Aggregator.ONEGAMEHUB) } returns Result.success(game)
         coEvery { spinService.place(session, game, any()) } returns Result.success(Unit)
         coEvery { eventPublisher.publish(capture(eventSlot)) } returns Unit
 
         val result = usecase(
-            token = token,
+            session = session,
             gameSymbol = "game-symbol",
             extRoundId = "round-123",
             transactionId = "tx-123",
             freeSpinId = null,
-            amount = 100
+            amount = 100.toBigInteger()
         )
 
         assertTrue(result.isSuccess)
@@ -74,28 +69,8 @@ class PlaceSpinUsecaseTest {
 
         val event = eventSlot.captured
         assertEquals("test-game", event.gameIdentity)
-        assertEquals(100, event.amount)
+        assertEquals(100.toBigInteger(), event.amount)
         assertEquals("player-123", event.playerId)
-    }
-
-    @Test
-    fun `invoke returns failure when session not found`() = runTest {
-        val token = SessionToken("invalid-token")
-
-        coEvery { sessionService.findByToken(token) } returns Result.failure(SessionInvalidError("invalid-token"))
-
-        val result = usecase(
-            token = token,
-            gameSymbol = "game-symbol",
-            extRoundId = "round-123",
-            transactionId = "tx-123",
-            freeSpinId = null,
-            amount = 100
-        )
-
-        assertTrue(result.isFailure)
-        assertIs<SessionInvalidError>(result.exceptionOrNull())
-        coVerify(exactly = 0) { eventPublisher.publish(any()) }
     }
 
     @Test
@@ -103,22 +78,20 @@ class PlaceSpinUsecaseTest {
         val sessionId = UUID.randomUUID()
         val gameId = UUID.randomUUID()
         val aggregatorId = UUID.randomUUID()
-        val token = SessionToken("test-token")
 
         val session = createSession(sessionId, gameId, aggregatorId)
         val aggregator = createAggregatorInfo(aggregatorId)
 
-        coEvery { sessionService.findByToken(token) } returns Result.success(session)
         coEvery { aggregatorService.findById(aggregatorId) } returns Result.success(aggregator)
         coEvery { gameService.findBySymbol("unknown-symbol", Aggregator.ONEGAMEHUB) } returns Result.failure(NotFoundError("Game", "unknown-symbol"))
 
         val result = usecase(
-            token = token,
+            session = session,
             gameSymbol = "unknown-symbol",
             extRoundId = "round-123",
             transactionId = "tx-123",
             freeSpinId = null,
-            amount = 100
+            amount = 100.toBigInteger()
         )
 
         assertTrue(result.isFailure)
@@ -130,7 +103,6 @@ class PlaceSpinUsecaseTest {
         val sessionId = UUID.randomUUID()
         val gameId = UUID.randomUUID()
         val aggregatorId = UUID.randomUUID()
-        val token = SessionToken("test-token")
         val freeSpinId = "freespin-123"
 
         val session = createSession(sessionId, gameId, aggregatorId)
@@ -139,19 +111,18 @@ class PlaceSpinUsecaseTest {
 
         val eventSlot = slot<SpinPlacedEvent>()
 
-        coEvery { sessionService.findByToken(token) } returns Result.success(session)
         coEvery { aggregatorService.findById(aggregatorId) } returns Result.success(aggregator)
         coEvery { gameService.findBySymbol("game-symbol", Aggregator.ONEGAMEHUB) } returns Result.success(game)
         coEvery { spinService.place(session, game, any()) } returns Result.success(Unit)
         coEvery { eventPublisher.publish(capture(eventSlot)) } returns Unit
 
         val result = usecase(
-            token = token,
+            session = session,
             gameSymbol = "game-symbol",
             extRoundId = "round-123",
             transactionId = "tx-123",
             freeSpinId = freeSpinId,
-            amount = 0
+            amount = BigInteger.ZERO
         )
 
         assertTrue(result.isSuccess)
@@ -191,35 +162,32 @@ class PlaceSpinUsecaseTest {
 
 class SettleSpinUsecaseTest {
 
-    private val sessionService: SessionService = mockk()
     private val spinService: SpinService = mockk()
     private val gameService: GameService = mockk()
     private val eventPublisher: EventPublisherAdapter = mockk(relaxed = true)
-    private val usecase = SettleSpinUsecase(sessionService, spinService, gameService, eventPublisher)
+    private val usecase = SettleSpinUsecase(spinService, gameService, eventPublisher)
 
     @Test
     fun `invoke settles spin successfully`() = runTest {
         val sessionId = UUID.randomUUID()
         val gameId = UUID.randomUUID()
         val aggregatorId = UUID.randomUUID()
-        val token = SessionToken("test-token")
 
         val session = createSession(sessionId, gameId, aggregatorId)
         val gameWithDetails = createGameWithDetails(gameId, aggregatorId)
 
         val eventSlot = slot<SpinSettledEvent>()
 
-        coEvery { sessionService.findByToken(token) } returns Result.success(session)
         coEvery { spinService.settle(session, "round-123", any()) } returns Result.success(Unit)
         coEvery { gameService.findById(gameId) } returns Result.success(gameWithDetails)
         coEvery { eventPublisher.publish(capture(eventSlot)) } returns Unit
 
         val result = usecase(
-            token = token,
+            session = session,
             extRoundId = "round-123",
             transactionId = "tx-456",
             freeSpinId = null,
-            winAmount = 500
+            winAmount = 500.toBigInteger()
         )
 
         assertTrue(result.isSuccess)
@@ -228,26 +196,27 @@ class SettleSpinUsecaseTest {
 
         val event = eventSlot.captured
         assertEquals("test-game", event.gameIdentity)
-        assertEquals(500, event.amount)
+        assertEquals(500.toBigInteger(), event.amount)
         assertEquals("player-123", event.playerId)
     }
 
     @Test
-    fun `invoke returns failure when session not found`() = runTest {
-        val token = SessionToken("invalid-token")
+    fun `invoke returns success for zero win amount`() = runTest {
+        val sessionId = UUID.randomUUID()
+        val gameId = UUID.randomUUID()
+        val aggregatorId = UUID.randomUUID()
 
-        coEvery { sessionService.findByToken(token) } returns Result.failure(SessionInvalidError("invalid-token"))
+        val session = createSession(sessionId, gameId, aggregatorId)
 
         val result = usecase(
-            token = token,
+            session = session,
             extRoundId = "round-123",
             transactionId = "tx-456",
             freeSpinId = null,
-            winAmount = 500
+            winAmount = BigInteger.ZERO
         )
 
-        assertTrue(result.isFailure)
-        assertIs<SessionInvalidError>(result.exceptionOrNull())
+        assertTrue(result.isSuccess)
         coVerify(exactly = 0) { eventPublisher.publish(any()) }
     }
 
@@ -256,7 +225,6 @@ class SettleSpinUsecaseTest {
         val sessionId = UUID.randomUUID()
         val gameId = UUID.randomUUID()
         val aggregatorId = UUID.randomUUID()
-        val token = SessionToken("test-token")
         val freeSpinId = "freespin-123"
 
         val session = createSession(sessionId, gameId, aggregatorId)
@@ -264,24 +232,23 @@ class SettleSpinUsecaseTest {
 
         val eventSlot = slot<SpinSettledEvent>()
 
-        coEvery { sessionService.findByToken(token) } returns Result.success(session)
         coEvery { spinService.settle(session, "round-123", any()) } returns Result.success(Unit)
         coEvery { gameService.findById(gameId) } returns Result.success(gameWithDetails)
         coEvery { eventPublisher.publish(capture(eventSlot)) } returns Unit
 
         val result = usecase(
-            token = token,
+            session = session,
             extRoundId = "round-123",
             transactionId = "tx-456",
             freeSpinId = freeSpinId,
-            winAmount = 1000
+            winAmount = 1000.toBigInteger()
         )
 
         assertTrue(result.isSuccess)
 
         val event = eventSlot.captured
         assertEquals(freeSpinId, event.freeSpinId)
-        assertEquals(1000, event.amount)
+        assertEquals(1000.toBigInteger(), event.amount)
     }
 
     private fun createSession(sessionId: UUID, gameId: UUID, aggregatorId: UUID) = Session(

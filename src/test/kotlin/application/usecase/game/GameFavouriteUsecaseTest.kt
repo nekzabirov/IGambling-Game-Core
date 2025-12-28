@@ -1,7 +1,7 @@
 package application.usecase.game
 
-import application.event.GameFavouriteAddedEvent
-import application.event.GameFavouriteRemovedEvent
+import domain.common.event.GameFavouriteAddedEvent
+import domain.common.event.GameFavouriteRemovedEvent
 import application.port.outbound.EventPublisherAdapter
 import domain.common.error.NotFoundError
 import domain.game.model.Game

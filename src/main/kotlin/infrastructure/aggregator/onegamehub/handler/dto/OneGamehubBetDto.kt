@@ -1,4 +1,4 @@
-package com.nekgamebling.infrastructure.aggregator.onegamehub.handler.dto
+package infrastructure.aggregator.onegamehub.handler.dto
 
 import java.math.BigInteger
 

@@ -24,17 +24,51 @@ import infrastructure.persistence.exposed.repository.ExposedProviderRepository
 import infrastructure.persistence.exposed.repository.ExposedRoundRepository
 import infrastructure.persistence.exposed.repository.ExposedSessionRepository
 import infrastructure.persistence.exposed.repository.ExposedSpinRepository
+import infrastructure.persistence.exposed.repository.ExposedGameQueryRepository
+import application.query.game.GameQueryRepository
+import org.jetbrains.exposed.sql.Database
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
+/**
+ * Database configuration from environment variables.
+ */
+data class DatabaseEnvConfig(
+    val jdbcUrl: String = System.getenv("DB_URL") ?: "jdbc:h2:mem:test;DB_CLOSE_DELAY=-1",
+    val username: String = System.getenv("DB_USER") ?: "",
+    val password: String = System.getenv("DB_PASSWORD") ?: "",
+    val poolProfile: String = System.getenv("DB_POOL_PROFILE") ?: "development"
+)
+
 val DBModule = module {
+    databaseModule()
     repositoryModule()
     cacheModule()
 }
 
+/**
+ * Configure database with HikariCP connection pool.
+ */
+private fun Module.databaseModule() {
+    single<Database> {
+        val envConfig = DatabaseEnvConfig()
+        val poolConfig = when (envConfig.poolProfile.lowercase()) {
+            "production" -> DatabasePoolConfig.production()
+            "high-throughput" -> DatabasePoolConfig.highThroughput()
+            else -> DatabasePoolConfig.development()
+        }
+        DatabaseConfig.configure(
+            jdbcUrl = envConfig.jdbcUrl,
+            username = envConfig.username,
+            password = envConfig.password,
+            config = poolConfig
+        )
+    }
+}
+
 private fun Module.repositoryModule() {
     // ==========================================
-    // Infrastructure - Repositories
+    // Infrastructure - Repositories (Write)
     // ==========================================
     single<GameRepository> { ExposedGameRepository() }
     single<GameVariantRepository> { ExposedGameVariantRepository() }
@@ -46,6 +80,11 @@ private fun Module.repositoryModule() {
     single<ProviderRepository> { ExposedProviderRepository() }
     single<CollectionRepository> { ExposedCollectionRepository() }
     single<AggregatorRepository> { ExposedAggregatorRepository() }
+
+    // ==========================================
+    // Infrastructure - Query Repositories (Read)
+    // ==========================================
+    single<GameQueryRepository> { ExposedGameQueryRepository() }
 
     single<GameSyncAdapter> { ExposedGameSyncAdapter() }
 }

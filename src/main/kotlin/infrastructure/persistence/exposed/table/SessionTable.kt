@@ -1,6 +1,6 @@
 package infrastructure.persistence.exposed.table
 
-import shared.value.Platform
+import domain.common.value.Platform
 
 object SessionTable : BaseTable("sessions") {
     val gameId = reference("game_id", GameTable.id)

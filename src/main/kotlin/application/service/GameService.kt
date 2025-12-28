@@ -6,7 +6,8 @@ import domain.common.error.NotFoundError
 import domain.game.model.Game
 import domain.game.model.GameWithDetails
 import domain.game.repository.GameRepository
-import shared.value.Aggregator
+import infrastructure.persistence.cache.CachingRepository
+import domain.common.value.Aggregator
 import java.util.UUID
 import kotlin.time.Duration.Companion.minutes
 
@@ -16,71 +17,60 @@ import kotlin.time.Duration.Companion.minutes
  */
 class GameService(
     private val gameRepository: GameRepository,
-    private val cacheAdapter: CacheAdapter
+    cacheAdapter: CacheAdapter
 ) {
     companion object {
         private val CACHE_TTL = 5.minutes
         private const val CACHE_PREFIX = "game:"
+        private const val CACHE_PREFIX_SYMBOL = "game:symbol:"
     }
+
+    private val detailsCache = CachingRepository<GameWithDetails>(
+        cacheAdapter = cacheAdapter,
+        cachePrefix = CACHE_PREFIX,
+        ttl = CACHE_TTL
+    )
+
+    private val gameCache = CachingRepository<Game>(
+        cacheAdapter = cacheAdapter,
+        cachePrefix = CACHE_PREFIX_SYMBOL,
+        ttl = CACHE_TTL
+    )
 
     /**
      * Find game by identity with caching.
      */
-    suspend fun findByIdentity(identity: String): Result<GameWithDetails> {
-        // Check cache first
-        cacheAdapter.get<GameWithDetails>("$CACHE_PREFIX$identity")?.let {
-            return Result.success(it)
-        }
-
-        val game = gameRepository.findWithDetailsByIdentity(identity)
-            ?: return Result.failure(NotFoundError("Game", identity))
-
-        // Cache the result
-        cacheAdapter.save("$CACHE_PREFIX$identity", game, CACHE_TTL)
-
-        return Result.success(game)
-    }
+    suspend fun findByIdentity(identity: String): Result<GameWithDetails> =
+        detailsCache.getOrLoadResult(
+            key = identity,
+            notFoundError = { NotFoundError("Game", identity) },
+            loader = { gameRepository.findWithDetailsByIdentity(identity) }
+        )
 
     /**
      * Find game by ID.
      */
-    suspend fun findById(id: UUID): Result<GameWithDetails> {
-        val cacheKey = "$CACHE_PREFIX$id"
-
-        cacheAdapter.get<GameWithDetails>(cacheKey)?.let {
-            return Result.success(it)
-        }
-
-        val game = gameRepository.findWithDetailsById(id)
-            ?: return Result.failure(NotFoundError("Game", id.toString()))
-
-        cacheAdapter.save(cacheKey, game, CACHE_TTL)
-
-        return Result.success(game)
-    }
+    suspend fun findById(id: UUID): Result<GameWithDetails> =
+        detailsCache.getOrLoadResult(
+            key = id.toString(),
+            notFoundError = { NotFoundError("Game", id.toString()) },
+            loader = { gameRepository.findWithDetailsById(id) }
+        )
 
     /**
      * Find game by symbol with caching.
      */
-    suspend fun findBySymbol(symbol: String, aggregator: Aggregator): Result<Game> {
-        val cacheKey = "${CACHE_PREFIX}symbol:$symbol:aggregator:$aggregator"
-
-        cacheAdapter.get<Game>(cacheKey)?.let {
-            return Result.success(it)
-        }
-
-        val game = gameRepository.findBySymbol(symbol, aggregator)
-            ?: return Result.failure(GameUnavailableError(symbol))
-
-        cacheAdapter.save(cacheKey, game, CACHE_TTL)
-
-        return Result.success(game)
-    }
+    suspend fun findBySymbol(symbol: String, aggregator: Aggregator): Result<Game> =
+        gameCache.getOrLoadResult(
+            key = "$symbol:aggregator:$aggregator",
+            notFoundError = { GameUnavailableError(symbol) },
+            loader = { gameRepository.findBySymbol(symbol, aggregator) }
+        )
 
     /**
      * Invalidate cache for a game.
      */
     suspend fun invalidateCache(identity: String) {
-        cacheAdapter.delete("$CACHE_PREFIX$identity")
+        detailsCache.invalidate(identity)
     }
 }

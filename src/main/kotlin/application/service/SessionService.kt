@@ -5,6 +5,7 @@ import domain.common.error.NotFoundError
 import domain.common.error.SessionInvalidError
 import domain.session.model.Session
 import domain.session.repository.SessionRepository
+import infrastructure.persistence.cache.CachingRepository
 import shared.value.SessionToken
 import java.security.SecureRandom
 import java.util.Base64
@@ -17,9 +18,27 @@ import kotlin.time.Duration.Companion.minutes
  */
 class SessionService(
     private val sessionRepository: SessionRepository,
-    private val cacheAdapter: CacheAdapter
+    cacheAdapter: CacheAdapter
 ) {
+    companion object {
+        private val CACHE_TTL = 5.minutes
+        private const val CACHE_PREFIX_TOKEN = "session:token:"
+        private const val CACHE_PREFIX_ID = "session:id:"
+    }
+
     private val secureRandom = SecureRandom()
+
+    private val tokenCache = CachingRepository<Session>(
+        cacheAdapter = cacheAdapter,
+        cachePrefix = CACHE_PREFIX_TOKEN,
+        ttl = CACHE_TTL
+    )
+
+    private val idCache = CachingRepository<Session>(
+        cacheAdapter = cacheAdapter,
+        cachePrefix = CACHE_PREFIX_ID,
+        ttl = CACHE_TTL
+    )
 
     /**
      * Generate a secure session token.
@@ -33,41 +52,39 @@ class SessionService(
     /**
      * Find session by token.
      */
-    suspend fun findByToken(token: SessionToken): Result<Session> {
-        val cacheKey = "$CACHE_PREFIX:token=$token"
-
-        cacheAdapter.get<Session>(cacheKey)?.let {
-            return Result.success(it)
-        }
-
-        val session = sessionRepository.findByToken(token.value)
-            ?: return Result.failure(SessionInvalidError(token.value))
-
-        cacheAdapter.save(cacheKey, session, CACHE_TTL)
-
-        return Result.success(session)
-    }
+    suspend fun findByToken(token: SessionToken): Result<Session> =
+        tokenCache.getOrLoadResult(
+            key = token.value,
+            notFoundError = { SessionInvalidError(token.value) },
+            loader = { sessionRepository.findByToken(token.value) }
+        )
 
     /**
      * Find session by ID.
      */
-    suspend fun findById(id: UUID): Result<Session> {
-        val session = sessionRepository.findById(id)
-            ?: return Result.failure(NotFoundError("Session", id.toString()))
-
-        return Result.success(session)
-    }
+    suspend fun findById(id: UUID): Result<Session> =
+        idCache.getOrLoadResult(
+            key = id.toString(),
+            notFoundError = { NotFoundError("Session", id.toString()) },
+            loader = { sessionRepository.findById(id) }
+        )
 
     /**
      * Create a new session.
      */
     suspend fun createSession(session: Session): Result<Session> {
         val savedSession = sessionRepository.save(session)
+        // Cache the new session
+        tokenCache.update(savedSession.token, savedSession)
+        idCache.update(savedSession.id.toString(), savedSession)
         return Result.success(savedSession)
     }
 
-    companion object {
-        private val CACHE_TTL = 5.minutes
-        private const val CACHE_PREFIX = "session:"
+    /**
+     * Invalidate cache for a session.
+     */
+    suspend fun invalidateCache(session: Session) {
+        tokenCache.invalidate(session.token)
+        idCache.invalidate(session.id.toString())
     }
 }

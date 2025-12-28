@@ -1,20 +1,20 @@
 package application.port.outbound
 
-import application.event.DomainEvent
+import domain.common.event.IntegrationEvent
 
 /**
- * Port interface for publishing domain events.
+ * Port interface for publishing integration events to message queues.
  */
 interface EventPublisherAdapter {
     /**
-     * Publish a domain event.
+     * Publish an integration event.
      */
-    suspend fun publish(event: DomainEvent)
+    suspend fun publish(event: IntegrationEvent)
 
     /**
-     * Publish multiple domain events.
+     * Publish multiple integration events.
      */
-    suspend fun publishAll(events: List<DomainEvent>) {
+    suspend fun publishAll(events: List<IntegrationEvent>) {
         events.forEach { publish(it) }
     }
 }

@@ -12,7 +12,7 @@ import shared.value.Pageable
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.json.contains
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
-import shared.value.Aggregator
+import domain.common.value.Aggregator
 import java.util.UUID
 
 /**
@@ -92,42 +92,96 @@ class ExposedGameRepository : BaseExposedRepositoryWithIdentity<Game, GameTable>
     }
 
     override suspend fun findAll(pageable: Pageable, filter: GameFilter): Page<GameListItem> = newSuspendedTransaction {
-        val baseQuery = buildListQuery().applyFilters(filter)
+        // Optimized 3-query approach to avoid N+1 and cartesian explosion
 
-        val totalCount = baseQuery.count()
+        // Query 1: Count distinct game IDs
+        val countQuery = buildBaseQueryForIds().applyFilters(filter)
+        val totalCount = countQuery.withDistinct().count()
+
+        if (totalCount == 0L) {
+            return@newSuspendedTransaction Page.empty()
+        }
+
         val totalPages = pageable.getTotalPages(totalCount)
 
-        val gameMap = linkedMapOf<UUID, GameListItem>()
-
-        baseQuery
-            .orderBy(CollectionGameTable.order to SortOrder.ASC)
+        // Get paginated game IDs
+        val gameIds = buildBaseQueryForIds()
+            .applyFilters(filter)
+            .withDistinct()
+            .orderBy(GameTable.name to SortOrder.ASC)
             .limit(pageable.sizeReal)
             .offset(pageable.offset)
+            .map { it[GameTable.id].value }
+
+        if (gameIds.isEmpty()) {
+            return@newSuspendedTransaction Page.empty()
+        }
+
+        // Query 2: Fetch games with details (no collections)
+        val gamesMap = linkedMapOf<UUID, GameListItem>()
+        buildBaseQuery()
+            .andWhere { GameTable.id inList gameIds }
             .forEach { row ->
                 val gameId = row[GameTable.id].value
-                val item = gameMap.getOrPut(gameId) {
-                    GameListItem(
+                if (!gamesMap.containsKey(gameId)) {
+                    gamesMap[gameId] = GameListItem(
                         game = row.toGame(),
                         variant = row.toGameVariant(),
                         provider = row.toProvider(),
-                        collections = mutableListOf()
+                        collections = linkedSetOf()  // Use Set for O(1) contains
                     )
-                }
-
-                row.getOrNull(CollectionTable.id)?.let {
-                    val collection = row.toCollection()
-                    if (collection !in item.collections) {
-                        (item.collections as MutableList).add(collection)
-                    }
                 }
             }
 
+        // Query 3: Batch-load collections for these games
+        val collectionsMap = CollectionGameTable
+            .innerJoin(CollectionTable, { CollectionGameTable.categoryId }, { CollectionTable.id })
+            .selectAll()
+            .where { CollectionGameTable.gameId inList gameIds }
+            .orderBy(CollectionGameTable.order to SortOrder.ASC)
+            .groupBy { it[CollectionGameTable.gameId].value }
+            .mapValues { (_, rows) -> rows.map { it.toCollection() } }
+
+        // Merge collections into games (O(1) lookup)
+        collectionsMap.forEach { (gameId, collections) ->
+            gamesMap[gameId]?.collections?.addAll(collections)
+        }
+
+        // Maintain order from gameIds
+        val orderedItems = gameIds.mapNotNull { gamesMap[it] }
+
         Page(
-            items = gameMap.values.toList(),
+            items = orderedItems,
             totalPages = totalPages,
             totalItems = totalCount,
             currentPage = pageable.pageReal
         )
+    }
+
+    /**
+     * Base query without collection joins (for counting and game fetching).
+     */
+    private fun buildBaseQuery(): Query {
+        return GameTable
+            .innerJoin(ProviderTable, { ProviderTable.id }, { GameTable.providerId })
+            .innerJoin(AggregatorInfoTable, { AggregatorInfoTable.id }, { ProviderTable.aggregatorId })
+            .innerJoin(GameVariantTable, { GameVariantTable.gameId }, { GameTable.id }) {
+                GameVariantTable.aggregator eq AggregatorInfoTable.aggregator
+            }
+            .selectAll()
+    }
+
+    /**
+     * Base query selecting only game IDs for pagination/counting.
+     */
+    private fun buildBaseQueryForIds(): Query {
+        return GameTable
+            .innerJoin(ProviderTable, { ProviderTable.id }, { GameTable.providerId })
+            .innerJoin(AggregatorInfoTable, { AggregatorInfoTable.id }, { ProviderTable.aggregatorId })
+            .innerJoin(GameVariantTable, { GameVariantTable.gameId }, { GameTable.id }) {
+                GameVariantTable.aggregator eq AggregatorInfoTable.aggregator
+            }
+            .select(GameTable.id, GameTable.name)
     }
 
     override suspend fun addTag(gameId: UUID, tag: String): Boolean = newSuspendedTransaction {
@@ -211,16 +265,25 @@ class ExposedGameRepository : BaseExposedRepositoryWithIdentity<Game, GameTable>
             andWhere { ProviderTable.identity inList filter.providerIdentities }
         }
 
+        // Use subquery for collection filter (no longer joining CollectionTable)
         if (filter.collectionIdentities.isNotEmpty()) {
-            andWhere { CollectionTable.identity inList filter.collectionIdentities }
+            val gameIdsInCollections = CollectionGameTable
+                .innerJoin(CollectionTable, { CollectionGameTable.categoryId }, { CollectionTable.id })
+                .select(CollectionGameTable.gameId)
+                .where { CollectionTable.identity inList filter.collectionIdentities }
+            andWhere { GameTable.id inSubQuery gameIdsInCollections }
         }
 
         if (filter.tags.isNotEmpty()) {
             andWhere { GameTable.tags.contains(filter.tags) }
         }
 
+        // Use subquery for favourite filter (no longer joining GameFavouriteTable)
         filter.playerId?.let { playerId ->
-            andWhere { GameFavouriteTable.playerId eq playerId }
+            val favouriteGameIds = GameFavouriteTable
+                .select(GameFavouriteTable.gameId)
+                .where { GameFavouriteTable.playerId eq playerId }
+            andWhere { GameTable.id inSubQuery favouriteGameIds }
         }
     }
 }

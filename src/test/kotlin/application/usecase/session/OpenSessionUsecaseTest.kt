@@ -1,6 +1,6 @@
 package application.usecase.session
 
-import application.event.SessionOpenedEvent
+import domain.common.event.SessionOpenedEvent
 import application.port.outbound.AggregatorAdapterFactory
 import application.port.outbound.AggregatorAdapterRegistry
 import application.port.outbound.EventPublisherAdapter
@@ -20,11 +20,11 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
 import kotlinx.coroutines.test.runTest
-import shared.value.Aggregator
+import domain.common.value.Aggregator
 import shared.value.Currency
 import shared.value.ImageMap
-import shared.value.Locale
-import shared.value.Platform
+import domain.common.value.Locale
+import domain.common.value.Platform
 import java.util.UUID
 import kotlin.test.Test
 import kotlin.test.assertEquals

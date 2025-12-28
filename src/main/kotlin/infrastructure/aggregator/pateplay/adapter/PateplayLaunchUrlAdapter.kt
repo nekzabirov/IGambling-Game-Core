@@ -6,8 +6,8 @@ import domain.common.error.AggregatorError
 import infrastructure.aggregator.pateplay.model.PateplayConfig
 import io.ktor.http.*
 import shared.value.Currency
-import shared.value.Locale
-import shared.value.Platform
+import domain.common.value.Locale
+import domain.common.value.Platform
 
 /**
  * Pateplay implementation for getting game launch URLs.

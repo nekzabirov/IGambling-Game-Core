@@ -5,7 +5,7 @@ import application.port.outbound.AggregatorAdapterRegistry
 import infrastructure.aggregator.onegamehub.OneGameHubAdapterFactory
 import infrastructure.aggregator.pateplay.PateplayAdapterFactory
 import infrastructure.aggregator.pragmatic.PragmaticAdapterFactory
-import shared.value.Aggregator
+import domain.common.value.Aggregator
 
 /**
  * Default implementation of AggregatorAdapterRegistry.

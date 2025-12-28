@@ -2,7 +2,7 @@ package domain.game.repository
 
 import domain.game.model.Game
 import domain.game.model.GameWithDetails
-import shared.value.Aggregator
+import domain.common.value.Aggregator
 import shared.value.Page
 import shared.value.Pageable
 import java.util.UUID

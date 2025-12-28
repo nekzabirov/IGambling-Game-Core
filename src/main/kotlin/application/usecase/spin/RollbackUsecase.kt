@@ -1,4 +1,4 @@
-package com.nekgamebling.application.usecase.spin
+package application.usecase.spin
 
 import application.service.GameService
 import application.service.SessionService

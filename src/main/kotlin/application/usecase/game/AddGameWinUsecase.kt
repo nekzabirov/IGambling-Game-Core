@@ -1,6 +1,6 @@
 package application.usecase.game
 
-import application.event.GameWonEvent
+import domain.common.event.GameWonEvent
 import application.port.outbound.EventPublisherAdapter
 import domain.common.error.NotFoundError
 import domain.game.repository.GameRepository

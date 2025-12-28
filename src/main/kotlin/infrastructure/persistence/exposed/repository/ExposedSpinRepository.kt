@@ -4,7 +4,7 @@ import domain.session.model.Spin
 import domain.session.repository.SpinRepository
 import infrastructure.persistence.exposed.mapper.toSpin
 import infrastructure.persistence.exposed.table.SpinTable
-import shared.value.SpinType
+import domain.common.value.SpinType
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.insertAndGetId

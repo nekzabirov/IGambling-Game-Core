@@ -5,9 +5,9 @@ import application.service.SessionService
 import application.usecase.spin.EndSpinUsecase
 import application.usecase.spin.PlaceSpinUsecase
 import application.usecase.spin.SettleSpinUsecase
-import com.nekgamebling.application.usecase.spin.RollbackUsecase
-import com.nekgamebling.infrastructure.aggregator.onegamehub.adapter.OneGameHubCurrencyAdapter
-import com.nekgamebling.infrastructure.aggregator.onegamehub.handler.dto.OneGameHubBetDto
+import application.usecase.spin.RollbackUsecase
+import infrastructure.aggregator.onegamehub.adapter.OneGameHubCurrencyAdapter
+import infrastructure.aggregator.onegamehub.handler.dto.OneGameHubBetDto
 import domain.common.error.BetLimitExceededError
 import domain.common.error.DomainError
 import domain.common.error.GameUnavailableError

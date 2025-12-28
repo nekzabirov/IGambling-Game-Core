@@ -2,7 +2,7 @@ package application.usecase.aggregator
 
 import domain.aggregator.model.AggregatorInfo
 import domain.aggregator.repository.AggregatorRepository
-import shared.value.Aggregator
+import domain.common.value.Aggregator
 import shared.value.Page
 import shared.value.Pageable
 

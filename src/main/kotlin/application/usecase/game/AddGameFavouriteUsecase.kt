@@ -1,6 +1,6 @@
 package application.usecase.game
 
-import application.event.GameFavouriteAddedEvent
+import domain.common.event.GameFavouriteAddedEvent
 import application.port.outbound.EventPublisherAdapter
 import domain.common.error.NotFoundError
 import domain.game.repository.GameFavouriteRepository

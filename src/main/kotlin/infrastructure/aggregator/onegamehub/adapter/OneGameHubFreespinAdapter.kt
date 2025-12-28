@@ -1,7 +1,7 @@
 package infrastructure.aggregator.onegamehub.adapter
 
 import application.port.outbound.AggregatorFreespinPort
-import com.nekgamebling.infrastructure.aggregator.onegamehub.adapter.OneGameHubCurrencyAdapter
+import infrastructure.aggregator.onegamehub.adapter.OneGameHubCurrencyAdapter
 import domain.aggregator.model.AggregatorInfo
 import domain.common.error.AggregatorError
 import infrastructure.aggregator.onegamehub.model.OneGameHubConfig

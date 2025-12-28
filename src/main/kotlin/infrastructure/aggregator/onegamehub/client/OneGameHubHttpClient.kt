@@ -8,8 +8,8 @@ import infrastructure.aggregator.onegamehub.client.dto.GameDto
 import infrastructure.aggregator.onegamehub.client.dto.GameUrlDto
 import infrastructure.aggregator.onegamehub.client.dto.ResponseDto
 import shared.value.Currency
-import shared.value.Locale
-import shared.value.Platform
+import domain.common.value.Locale
+import domain.common.value.Platform
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.engine.cio.*

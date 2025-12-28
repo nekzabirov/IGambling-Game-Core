@@ -1,7 +1,7 @@
-package com.nekgamebling.infrastructure.messaging.consumer
+package infrastructure.messaging.consumer
 
-import application.event.SpinSettledEvent
-import application.port.inbound.SpinSettledEventHandler
+import domain.common.event.SpinSettledEvent
+import application.usecase.game.AddGameWinUsecase
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.*
 import io.ktor.server.application.*
 import kotlinx.serialization.json.Json
@@ -14,10 +14,9 @@ private val json = Json { ignoreUnknownKeys = true }
 
 /**
  * Configures RabbitMQ consumer for SpinSettledEvent messages.
- * Dispatches events to all registered SpinSettledEventHandler implementations.
  */
 fun Application.consumeSpinSettled(exchangeName: String) = rabbitmq {
-    val handlers = getKoin().get<List<SpinSettledEventHandler>>()
+    val addGameWinUsecase = getKoin().get<AddGameWinUsecase>()
 
     queueBind {
         queue = SPIN_EVENTS_QUEUE
@@ -44,7 +43,15 @@ fun Application.consumeSpinSettled(exchangeName: String) = rabbitmq {
             val event = json.decodeFromString<SpinSettledEvent>(message.body)
             log.info("SpinSettledEvent received: $event")
 
-            handlers.forEach { handler -> handler.handle(event) }
+            // Skip free spins
+            if (event.freeSpinId == null) {
+                addGameWinUsecase(
+                    gameIdentity = event.gameIdentity,
+                    playerId = event.playerId,
+                    amount = event.amount,
+                    currency = event.currency
+                )
+            }
         }
     }
 }

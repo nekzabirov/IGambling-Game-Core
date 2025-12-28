@@ -4,12 +4,12 @@ import application.port.outbound.AggregatorAdapterFactory
 import application.port.outbound.AggregatorFreespinPort
 import application.port.outbound.AggregatorGameSyncPort
 import application.port.outbound.AggregatorLaunchUrlPort
-import com.nekgamebling.infrastructure.aggregator.onegamehub.adapter.OneGameHubCurrencyAdapter
+import infrastructure.aggregator.onegamehub.adapter.OneGameHubCurrencyAdapter
 import domain.aggregator.model.AggregatorInfo
 import infrastructure.aggregator.onegamehub.adapter.OneGameHubFreespinAdapter
 import infrastructure.aggregator.onegamehub.adapter.OneGameHubGameSyncAdapter
 import infrastructure.aggregator.onegamehub.adapter.OneGameHubLaunchUrlAdapter
-import shared.value.Aggregator
+import domain.common.value.Aggregator
 
 /**
  * Factory for creating OneGameHub aggregator adapters.

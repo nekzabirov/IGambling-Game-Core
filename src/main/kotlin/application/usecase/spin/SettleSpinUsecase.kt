@@ -1,6 +1,6 @@
 package application.usecase.spin
 
-import application.event.SpinSettledEvent
+import domain.common.event.SpinSettledEvent
 import application.port.outbound.EventPublisherAdapter
 import application.service.GameService
 import application.service.SpinCommand

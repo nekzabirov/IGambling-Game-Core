@@ -9,7 +9,7 @@ import infrastructure.aggregator.pateplay.adapter.PateplayFreespinAdapter
 import infrastructure.aggregator.pateplay.adapter.PateplayGameSyncAdapter
 import infrastructure.aggregator.pateplay.adapter.PateplayLaunchUrlAdapter
 import infrastructure.aggregator.shared.ProviderCurrencyAdapter
-import shared.value.Aggregator
+import domain.common.value.Aggregator
 
 /**
  * Factory for creating Pateplay aggregator adapters.

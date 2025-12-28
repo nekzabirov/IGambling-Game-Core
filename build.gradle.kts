@@ -35,6 +35,7 @@ dependencies {
     implementation(libs.bundles.exposed)
     implementation(libs.h2)
     implementation(libs.postgresql)
+    implementation(libs.hikaricp)
 
     // Dependency Injection - Koin
     implementation(libs.bundles.koin)
