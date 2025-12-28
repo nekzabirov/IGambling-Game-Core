@@ -1,4 +1,4 @@
-package application.saga.spin
+package application.saga.spin.place
 
 import application.saga.BaseSagaContext
 import domain.game.model.Game
@@ -7,10 +7,10 @@ import domain.session.model.Round
 import domain.session.model.Session
 import domain.session.model.Spin
 import java.math.BigInteger
-import java.util.UUID
 
 /**
- * Context for PlaceSpin saga holding all intermediate state.
+ * Context for PlaceSpin saga.
+ * Holds all data needed during saga execution.
  */
 class PlaceSpinContext(
     val session: Session,
@@ -34,11 +34,7 @@ class PlaceSpinContext(
     val isFreeSpin: Boolean get() = freeSpinId != null
 
     companion object {
-        const val KEY_GAME = "game"
-        const val KEY_ROUND = "round"
-        const val KEY_SPIN = "spin"
-        const val KEY_BALANCE = "balance"
-        const val KEY_WALLET_TX_COMPLETED = "wallet_tx_completed"
         const val KEY_ROUND_CREATED = "round_created"
+        const val KEY_WALLET_TX_COMPLETED = "wallet_tx_completed"
     }
 }

@@ -46,3 +46,18 @@ data class SpinEndEvent(
 ) : SpinIntegrationEvent {
     override val routingKey: String = "spin.end"
 }
+
+/**
+ * Event emitted when a spin is rolled back (refunded).
+ */
+@Serializable
+data class SpinRollbackEvent(
+    val gameIdentity: String,
+    val playerId: String,
+    @Serializable(with = BigIntegerSerializer::class)
+    val refundAmount: BigInteger,
+    val currency: Currency,
+    val freeSpinId: String? = null,
+) : SpinIntegrationEvent {
+    override val routingKey: String = "spin.rollback"
+}

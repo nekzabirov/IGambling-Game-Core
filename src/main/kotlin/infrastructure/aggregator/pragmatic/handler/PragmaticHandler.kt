@@ -1,14 +1,16 @@
 package infrastructure.aggregator.pragmatic.handler
 
 import application.port.outbound.WalletAdapter
-import application.saga.spin.PlaceSpinContext
-import application.saga.spin.PlaceSpinSaga
-import application.saga.spin.SettleSpinContext
-import application.saga.spin.SettleSpinSaga
+import application.saga.spin.end.EndSpinContext
+import application.saga.spin.end.EndSpinSaga
+import application.saga.spin.place.PlaceSpinContext
+import application.saga.spin.place.PlaceSpinSaga
+import application.saga.spin.rollback.RollbackSpinContext
+import application.saga.spin.rollback.RollbackSpinSaga
+import application.saga.spin.settle.SettleSpinContext
+import application.saga.spin.settle.SettleSpinSaga
 import application.service.GameService
 import application.service.SessionService
-import application.usecase.spin.EndSpinUsecase
-import application.usecase.spin.RollbackUsecase
 import infrastructure.aggregator.pragmatic.handler.dto.PragmaticBetPayload
 import infrastructure.aggregator.pragmatic.handler.dto.PragmaticResponse
 import infrastructure.aggregator.shared.ProviderCurrencyAdapter
@@ -20,8 +22,8 @@ class PragmaticHandler(
     private val currencyAdapter: ProviderCurrencyAdapter,
     private val placeSpinSaga: PlaceSpinSaga,
     private val settleSpinSaga: SettleSpinSaga,
-    private val endSpinUsecase: EndSpinUsecase,
-    private val rollbackUsecase: RollbackUsecase,
+    private val endSpinSaga: EndSpinSaga,
+    private val rollbackSpinSaga: RollbackSpinSaga,
     private val gameService: GameService
 ) {
 
@@ -122,11 +124,13 @@ class PragmaticHandler(
             return it.toErrorResponse()
         }
 
-        endSpinUsecase(
+        val context = EndSpinContext(
             session = session,
             extRoundId = roundId,
             freeSpinId = null
-        ).getOrElse {
+        )
+
+        endSpinSaga.execute(context).getOrElse {
             return it.toErrorResponse()
         }
 
@@ -138,11 +142,13 @@ class PragmaticHandler(
             return it.toErrorResponse()
         }
 
-        rollbackUsecase(
+        val context = RollbackSpinContext(
             session = session,
             extRoundId = roundId,
             transactionId = transactionId
-        ).getOrElse {
+        )
+
+        rollbackSpinSaga.execute(context).getOrElse {
             return it.toErrorResponse()
         }
 

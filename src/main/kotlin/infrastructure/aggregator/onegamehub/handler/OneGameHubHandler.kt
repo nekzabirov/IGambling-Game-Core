@@ -1,13 +1,15 @@
 package infrastructure.aggregator.onegamehub.handler
 
 import application.port.outbound.WalletAdapter
-import application.saga.spin.PlaceSpinContext
-import application.saga.spin.PlaceSpinSaga
-import application.saga.spin.SettleSpinContext
-import application.saga.spin.SettleSpinSaga
+import application.saga.spin.end.EndSpinContext
+import application.saga.spin.end.EndSpinSaga
+import application.saga.spin.place.PlaceSpinContext
+import application.saga.spin.place.PlaceSpinSaga
+import application.saga.spin.rollback.RollbackSpinContext
+import application.saga.spin.rollback.RollbackSpinSaga
+import application.saga.spin.settle.SettleSpinContext
+import application.saga.spin.settle.SettleSpinSaga
 import application.service.SessionService
-import application.usecase.spin.EndSpinUsecase
-import application.usecase.spin.RollbackUsecase
 import infrastructure.aggregator.onegamehub.adapter.OneGameHubCurrencyAdapter
 import infrastructure.aggregator.onegamehub.handler.dto.OneGameHubBetDto
 import domain.common.error.BetLimitExceededError
@@ -26,8 +28,8 @@ class OneGameHubHandler(
     private val currencyAdapter: OneGameHubCurrencyAdapter,
     private val placeSpinSaga: PlaceSpinSaga,
     private val settleSpinSaga: SettleSpinSaga,
-    private val endSpinUsecase: EndSpinUsecase,
-    private val rollbackUsecase: RollbackUsecase
+    private val endSpinSaga: EndSpinSaga,
+    private val rollbackSpinSaga: RollbackSpinSaga
 ) {
     suspend fun balance(token: SessionToken): OneGameHubResponse {
         val session = sessionService.findByToken(token).getOrElse {
@@ -76,11 +78,12 @@ class OneGameHubHandler(
         }
 
         if (payload.finishRound) {
-            endSpinUsecase(
+            val endContext = EndSpinContext(
                 session = session,
                 extRoundId = payload.roundId,
                 freeSpinId = payload.freeSpinId
-            ).getOrElse {
+            )
+            endSpinSaga.execute(endContext).getOrElse {
                 return it.toErrorResponse
             }
         }
@@ -93,11 +96,13 @@ class OneGameHubHandler(
             return it.toErrorResponse
         }
 
-        rollbackUsecase(
+        val context = RollbackSpinContext(
             session = session,
             extRoundId = roundId,
             transactionId = transactionId
-        ).getOrElse {
+        )
+
+        rollbackSpinSaga.execute(context).getOrElse {
             return it.toErrorResponse
         }
 

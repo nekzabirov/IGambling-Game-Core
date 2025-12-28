@@ -11,14 +11,15 @@ A private, open-source Kotlin service for iGambling operations, providing unifie
 1. [Architecture Overview](#architecture-overview)
 2. [Technology Stack](#technology-stack)
 3. [Use Cases](#use-cases)
-4. [gRPC API Documentation](#grpc-api-documentation)
-5. [Supported Aggregators](#supported-aggregators)
-6. [Integrating a New Aggregator](#integrating-a-new-aggregator)
-7. [Custom Adapters (Required)](#custom-adapters-required)
-8. [Event System](#event-system)
-9. [How the Service Works](#how-the-service-works)
-10. [Configuration](#configuration)
-11. [Error Handling](#error-handling)
+4. [Saga Pattern](#saga-pattern)
+5. [gRPC API Documentation](#grpc-api-documentation)
+6. [Supported Aggregators](#supported-aggregators)
+7. [Integrating a New Aggregator](#integrating-a-new-aggregator)
+8. [Custom Adapters (Required)](#custom-adapters-required)
+9. [Event System](#event-system)
+10. [How the Service Works](#how-the-service-works)
+11. [Configuration](#configuration)
+12. [Error Handling](#error-handling)
 
 ---
 
@@ -74,12 +75,20 @@ The service follows **Hexagonal Architecture** (Ports & Adapters) with clean sep
 |----------|-------------|
 | `OpenSessionUsecase` | Opens a new game session, generates token, gets launch URL from aggregator |
 
-### Spin (Betting) Operations
+### Spin (Betting) Operations - Sagas
+
+All spin operations use the **Saga Pattern** for distributed transactions with automatic compensation on failure.
+
+| Saga | Steps | Description |
+|------|-------|-------------|
+| `PlaceSpinSaga` | 6 | Places a bet: validates game → creates round → validates balance → withdraws from wallet → saves spin → publishes event |
+| `SettleSpinSaga` | 6 | Settles win: finds round → finds place spin → calculates amounts → deposits to wallet → saves settle spin → publishes event |
+| `EndSpinSaga` | 3 | Closes round: finds round → marks as finished → publishes event |
+| `RollbackSpinSaga` | 5 | Refunds bet: finds round → finds original spin → refunds to wallet → saves rollback spin → publishes event |
+
+### Freespin Use Cases
 | Use Case | Description |
 |----------|-------------|
-| `PlaceSpinUsecase` | Places a bet, withdraws from wallet, creates spin record |
-| `SettleSpinUsecase` | Settles spin outcome (win/loss), deposits winnings |
-| `RollbackUsecase` | Rolls back a transaction, refunds the bet amount |
 | `GetPresetUsecase` | Gets freespin preset configuration from aggregator |
 | `CreateFreespinUsecase` | Creates a freespin bonus for a player |
 | `CancelFreespinUsecase` | Cancels an active freespin |
@@ -121,6 +130,188 @@ The service follows **Hexagonal Architecture** (Ports & Adapters) with clean sep
 | `ListAllActiveAggregatorUsecase` | Lists all active aggregators |
 | `ListGameVariantsUsecase` | Lists game variants from aggregators |
 | `SyncGameUsecase` | Syncs games from aggregator to local DB |
+
+---
+
+## Saga Pattern
+
+The service uses the **Saga Pattern** for all spin (betting) operations to ensure data consistency across distributed transactions. Each saga orchestrates a sequence of steps with automatic compensation (rollback) on failure.
+
+### Why Sagas?
+
+Traditional database transactions don't work when you need to coordinate multiple services (wallet, database, event publishing). Sagas solve this by:
+
+1. **Atomic Execution** - All steps succeed or all are compensated
+2. **Automatic Rollback** - If any step fails, previous steps are undone
+3. **Idempotency** - Safe to retry failed operations
+4. **Audit Trail** - Full history of operations and compensations
+
+### Saga Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         SagaOrchestrator                                 │
+│  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐       │
+│  │ Step 1  │──│ Step 2  │──│ Step 3  │──│ Step 4  │──│ Step 5  │       │
+│  │Validate │  │ Round   │  │ Wallet  │  │  Save   │  │ Publish │       │
+│  └─────────┘  └─────────┘  └─────────┘  └─────────┘  └─────────┘       │
+│       │            │            │            │            │             │
+│       ▼            ▼            ▼            ▼            ▼             │
+│  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐                    │
+│  │Compensate│ │Compensate│ │Compensate│ │Compensate│  (on failure)     │
+│  └─────────┘  └─────────┘  └─────────┘  └─────────┘                    │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### Available Sagas
+
+#### PlaceSpinSaga (Bet Placement)
+
+Places a bet with wallet withdrawal and spin record creation.
+
+| Step | Name | Compensation |
+|------|------|--------------|
+| 1 | `ValidateGameStep` | None (validation only) |
+| 2 | `FindOrCreateRoundStep` | Mark round cancelled |
+| 3 | `ValidateBalanceStep` | None (validation only) |
+| 4 | `WalletWithdrawStep` | Refund to wallet |
+| 5 | `SavePlaceSpinStep` | Create rollback spin record |
+| 6 | `PublishSpinPlacedEventStep` | None (fire-and-forget) |
+
+**Critical**: Wallet withdrawal happens BEFORE saving the spin to prevent orphan records.
+
+#### SettleSpinSaga (Win Settlement)
+
+Settles a winning spin with wallet deposit.
+
+| Step | Name | Compensation |
+|------|------|--------------|
+| 1 | `FindRoundStep` | None (read only) |
+| 2 | `FindPlaceSpinStep` | None (read only) |
+| 3 | `CalculateWinAmountsStep` | None (calculation only) |
+| 4 | `WalletDepositStep` | Withdraw winnings back |
+| 5 | `SaveSettleSpinStep` | Create rollback spin record |
+| 6 | `PublishSpinSettledEventStep` | None (fire-and-forget) |
+
+#### EndSpinSaga (Round Closing)
+
+Closes/finishes a round.
+
+| Step | Name | Compensation |
+|------|------|--------------|
+| 1 | `FindRoundStep` | None (read only) |
+| 2 | `CloseRoundStep` | None (closing is final) |
+| 3 | `PublishSpinEndEventStep` | None (fire-and-forget) |
+
+#### RollbackSpinSaga (Bet Refund)
+
+Refunds a previously placed bet.
+
+| Step | Name | Compensation |
+|------|------|--------------|
+| 1 | `FindRoundStep` | None (read only) |
+| 2 | `FindOriginalSpinStep` | None (read only) |
+| 3 | `WalletRefundStep` | Withdraw refund back |
+| 4 | `SaveRollbackSpinStep` | None (audit record) |
+| 5 | `PublishRollbackEventStep` | None (fire-and-forget) |
+
+### Saga Package Structure
+
+```
+application/saga/
+├── SagaOrchestrator.kt      # Core orchestration logic
+├── SagaStep.kt              # Step interface
+├── SagaContext.kt           # Base context class
+├── SagaState.kt             # State tracking
+├── RetryPolicy.kt           # Retry configuration
+│
+└── spin/
+    ├── place/               # PlaceSpinSaga
+    │   ├── PlaceSpinContext.kt
+    │   ├── PlaceSpinSaga.kt
+    │   └── step/
+    │       ├── ValidateGameStep.kt
+    │       ├── FindOrCreateRoundStep.kt
+    │       ├── ValidateBalanceStep.kt
+    │       ├── WalletWithdrawStep.kt
+    │       ├── SavePlaceSpinStep.kt
+    │       └── PublishSpinPlacedEventStep.kt
+    │
+    ├── settle/              # SettleSpinSaga
+    │   ├── SettleSpinContext.kt
+    │   ├── SettleSpinSaga.kt
+    │   └── step/
+    │
+    ├── end/                 # EndSpinSaga
+    │   ├── EndSpinContext.kt
+    │   ├── EndSpinSaga.kt
+    │   └── step/
+    │
+    └── rollback/            # RollbackSpinSaga
+        ├── RollbackSpinContext.kt
+        ├── RollbackSpinSaga.kt
+        └── step/
+```
+
+### Using Sagas in Handlers
+
+```kotlin
+class YourHandler(
+    private val placeSpinSaga: PlaceSpinSaga,
+    private val settleSpinSaga: SettleSpinSaga,
+    private val endSpinSaga: EndSpinSaga,
+    private val rollbackSpinSaga: RollbackSpinSaga
+) {
+    suspend fun bet(session: Session, payload: BetPayload): Response {
+        val context = PlaceSpinContext(
+            session = session,
+            gameSymbol = payload.gameSymbol,
+            extRoundId = payload.roundId,
+            transactionId = payload.transactionId,
+            freeSpinId = payload.freeSpinId,
+            amount = payload.amount
+        )
+
+        // Execute saga - automatic rollback on failure
+        placeSpinSaga.execute(context).getOrElse {
+            return errorResponse(it)
+        }
+
+        return successResponse()
+    }
+}
+```
+
+### Creating a Custom Saga Step
+
+```kotlin
+class MyCustomStep(
+    private val someService: SomeService
+) : SagaStep<MyContext> {
+
+    override val stepId = "my_custom_step"
+    override val stepName = "My Custom Step"
+    override val requiresCompensation = true
+
+    override suspend fun execute(context: MyContext): Result<Unit> {
+        // Do something
+        someService.doSomething(context.data).getOrElse {
+            return Result.failure(it)
+        }
+
+        // Store state for compensation
+        context.put("my_state_key", someValue)
+        return Result.success(Unit)
+    }
+
+    override suspend fun compensate(context: MyContext): Result<Unit> {
+        // Undo the operation
+        val savedState = context.get<String>("my_state_key") ?: return Result.success(Unit)
+        someService.undoSomething(savedState)
+        return Result.success(Unit)
+    }
+}
+```
 
 ---
 
@@ -453,20 +644,62 @@ class YourAggregatorAdapterFactory : AggregatorAdapterFactory {
 
 ### Step 5: Implement Callback Handler
 
-Aggregators send callbacks for betting operations. Create a handler:
+Aggregators send callbacks for betting operations. Create a handler using Sagas for atomic transactions:
 
 ```kotlin
 class YourAggregatorHandler(
     private val sessionService: SessionService,
     private val walletAdapter: WalletAdapter,
-    private val placeSpinUsecase: PlaceSpinUsecase,
-    private val settleSpinUsecase: SettleSpinUsecase,
-    private val rollbackUsecase: RollbackUsecase
+    private val placeSpinSaga: PlaceSpinSaga,
+    private val settleSpinSaga: SettleSpinSaga,
+    private val endSpinSaga: EndSpinSaga,
+    private val rollbackSpinSaga: RollbackSpinSaga
 ) {
     suspend fun balance(token: SessionToken): YourResponse { ... }
-    suspend fun bet(token: SessionToken, payload: BetPayload): YourResponse { ... }
-    suspend fun win(token: SessionToken, payload: WinPayload): YourResponse { ... }
-    suspend fun refund(token: SessionToken, transactionId: String): YourResponse { ... }
+
+    suspend fun bet(token: SessionToken, payload: BetPayload): YourResponse {
+        val session = sessionService.findByToken(token).getOrElse { return errorResponse(it) }
+
+        val context = PlaceSpinContext(
+            session = session,
+            gameSymbol = payload.gameSymbol,
+            extRoundId = payload.roundId,
+            transactionId = payload.transactionId,
+            freeSpinId = payload.freeSpinId,
+            amount = payload.amount
+        )
+
+        placeSpinSaga.execute(context).getOrElse { return errorResponse(it) }
+        return successResponse(session)
+    }
+
+    suspend fun win(token: SessionToken, payload: WinPayload): YourResponse {
+        val session = sessionService.findByToken(token).getOrElse { return errorResponse(it) }
+
+        val context = SettleSpinContext(
+            session = session,
+            extRoundId = payload.roundId,
+            transactionId = payload.transactionId,
+            freeSpinId = payload.freeSpinId,
+            winAmount = payload.amount
+        )
+
+        settleSpinSaga.execute(context).getOrElse { return errorResponse(it) }
+        return successResponse(session)
+    }
+
+    suspend fun refund(token: SessionToken, roundId: String, transactionId: String): YourResponse {
+        val session = sessionService.findByToken(token).getOrElse { return errorResponse(it) }
+
+        val context = RollbackSpinContext(
+            session = session,
+            extRoundId = roundId,
+            transactionId = transactionId
+        )
+
+        rollbackSpinSaga.execute(context).getOrElse { return errorResponse(it) }
+        return successResponse(session)
+    }
 }
 ```
 
@@ -620,6 +853,8 @@ The service publishes domain events via RabbitMQ. Subscribe to these events for 
 |-------|-------------|-------------|
 | `SpinPlacedEvent` | `spin.placed` | Bet was placed |
 | `SpinSettledEvent` | `spin.settled` | Spin result settled (win/loss) |
+| `SpinEndEvent` | `spin.end` | Round was closed |
+| `SpinRollbackEvent` | `spin.rollback` | Bet was refunded |
 | `SessionOpenedEvent` | `session.opened` | New session created |
 | `GameFavouriteAddedEvent` | `game.favourite.added` | Game added to favorites |
 | `GameFavouriteRemovedEvent` | `game.favourite.removed` | Game removed from favorites |
@@ -636,6 +871,26 @@ data class SpinPlacedEvent(
     val playerId: String,
     val freeSpinId: String?,
     val timestamp: Long
+)
+```
+
+**SpinEndEvent:**
+```kotlin
+data class SpinEndEvent(
+    val gameIdentity: String,
+    val playerId: String,
+    val freeSpinId: String?
+)
+```
+
+**SpinRollbackEvent:**
+```kotlin
+data class SpinRollbackEvent(
+    val gameIdentity: String,
+    val playerId: String,
+    val refundAmount: BigInteger,
+    val currency: Currency,
+    val freeSpinId: String?
 )
 ```
 

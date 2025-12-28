@@ -2,8 +2,10 @@ package infrastructure
 
 import application.usecase.spin.GetPresetUsecase
 import application.port.outbound.*
-import application.saga.spin.PlaceSpinSaga
-import application.saga.spin.SettleSpinSaga
+import application.saga.spin.end.EndSpinSaga
+import application.saga.spin.place.PlaceSpinSaga
+import application.saga.spin.rollback.RollbackSpinSaga
+import application.saga.spin.settle.SettleSpinSaga
 import application.service.GameService
 import application.service.SessionService
 import application.service.SpinService
@@ -14,7 +16,6 @@ import application.usecase.provider.*
 import application.usecase.session.OpenSessionUsecase
 import application.usecase.spin.*
 import application.service.AggregatorService
-import application.usecase.spin.RollbackUsecase
 import infrastructure.messaging.messagingModule
 import infrastructure.external.UnitCurrencyAdapter
 import infrastructure.external.turbo.TurboPlayerAdapter
@@ -81,13 +82,9 @@ private val useCaseModule = module {
     // ==========================================
     // Application Use Cases - Spin
     // ==========================================
-    factory { PlaceSpinUsecase(get(), get(), get(), get()) }
-    factory { SettleSpinUsecase(get(), get(), get()) }
-    factory { EndSpinUsecase(get(), get(), get()) }
     factory { GetPresetUsecase(get(), get()) }
     factory { CreateFreespinUsecase(get(), get()) }
     factory { CancelFreespinUsecase(get(), get()) }
-    factory { RollbackUsecase(get(), get(), get()) }
 
     // ==========================================
     // Application Use Cases - Collection
@@ -122,6 +119,8 @@ private val sagaModule = module {
     // ==========================================
     factory { PlaceSpinSaga(get(), get(), get(), get(), get(), get(), get()) }
     factory { SettleSpinSaga(get(), get(), get(), get(), get()) }
+    factory { EndSpinSaga(get(), get(), get()) }
+    factory { RollbackSpinSaga(get(), get(), get(), get(), get()) }
 }
 
 /**
