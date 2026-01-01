@@ -89,6 +89,7 @@ The service ships with mock adapters. For production, implement:
 - `WalletAdapter` - balance queries, withdrawals, deposits, rollbacks
 - `PlayerAdapter` - bet limit retrieval
 - `CacheAdapter` - session caching
+- `FileAdapter` - file storage operations (S3 implementation provided in `infrastructure/external/s3/`)
 - `EventPublisherAdapter` - domain event publishing (RabbitMQ implementation provided)
 
 Register custom implementations in `infrastructure/DependencyInjection.kt`.

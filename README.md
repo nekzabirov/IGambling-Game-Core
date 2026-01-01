@@ -98,6 +98,7 @@ All spin operations use the **Saga Pattern** for distributed transactions with a
 |----------|-------------|
 | `ListGamesUsecase` | Lists games with filtering and pagination |
 | `UpdateGameUsecase` | Updates game configuration (active, bonus settings) |
+| `UpdateGameImageUsecase` | Uploads and updates game image by key |
 | `AddGameTagUsecase` | Adds a tag to a game |
 | `RemoveGameTagUsecase` | Removes a tag from a game |
 | `AddGameFavouriteUsecase` | Adds game to player's favorites |
@@ -120,6 +121,7 @@ All spin operations use the **Saga Pattern** for distributed transactions with a
 |----------|-------------|
 | `ProviderListUsecase` | Lists game providers |
 | `UpdateProviderUsecase` | Updates provider configuration |
+| `UpdateProviderImageUsecase` | Uploads and updates provider image by key |
 | `AssignProviderToAggregatorUsecase` | Assigns a provider to an aggregator |
 
 ### Aggregator Management
@@ -342,13 +344,22 @@ message OpenSessionResult {
 
 ```protobuf
 service Game {
+  rpc Find (FindGameCommand) returns (FindGameResult);
   rpc List (ListGameCommand) returns (ListGameResult);
   rpc Update (UpdateGameConfig) returns (EmptyResult);
+  rpc UpdateImage (UpdateGameImageCommand) returns (EmptyResult);
   rpc AddTag (GameTagCommand) returns (EmptyResult);
   rpc RemoveTag (GameTagCommand) returns (EmptyResult);
   rpc AddFavourite (GameFavouriteCommand) returns (EmptyResult);
   rpc RemoveFavourite (GameFavouriteCommand) returns (EmptyResult);
   rpc DemoGame (DemoGameCommand) returns (DemoGameResult);
+}
+
+message UpdateGameImageCommand {
+  string identity = 1;      // Game identifier
+  string key = 2;           // Image key (e.g., "thumbnail", "banner")
+  string ext = 3;           // File extension (e.g., "png", "jpg")
+  bytes data = 4;           // Image binary data
 }
 
 message ListGameCommand {
@@ -422,6 +433,14 @@ message AddCollectionCommand {
 service Provider {
   rpc List (ListProviderCommand) returns (ListProviderResult);
   rpc Update (UpdateProviderConfig) returns (EmptyResult);
+  rpc UpdateImage (UpdateProviderImageCommand) returns (EmptyResult);
+}
+
+message UpdateProviderImageCommand {
+  string identity = 1;      // Provider identifier
+  string key = 2;           // Image key (e.g., "logo", "banner")
+  string ext = 3;           // File extension (e.g., "png", "jpg")
+  bytes data = 4;           // Image binary data
 }
 ```
 
@@ -745,6 +764,40 @@ val AggregatorModule = module {
 ## Custom Adapters (Required)
 
 **This service ships with fake/mock adapters. You MUST implement real adapters for production.**
+
+### FileAdapter
+
+Interface: `application/port/outbound/FileAdapter.kt`
+
+```kotlin
+/**
+ * Media file data for upload.
+ */
+data class MediaFile(
+    val ext: String,
+    val bytes: ByteArray
+)
+
+interface FileAdapter {
+    /**
+     * Upload a file and return the path/URL.
+     * @param folder The folder/prefix for the file
+     * @param fileName The name of the file (without extension)
+     * @param file The media file to upload
+     * @return The path or URL of the uploaded file
+     */
+    suspend fun upload(folder: String, fileName: String, file: MediaFile): Result<String>
+
+    /**
+     * Delete a file by path.
+     * @param path The path of the file to delete
+     * @return true if deleted successfully
+     */
+    suspend fun delete(path: String): Result<Boolean>
+}
+```
+
+**S3 Implementation**: An S3 adapter is provided in `infrastructure/external/s3/S3FileAdapter.kt`. Configure with your bucket name and base URL.
 
 ### WalletAdapter
 

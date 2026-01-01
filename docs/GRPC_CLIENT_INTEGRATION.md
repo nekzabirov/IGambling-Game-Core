@@ -381,6 +381,28 @@ class GameService(
 
         return gameStub.demoGame(command).launchUrl
     }
+
+    /**
+     * Upload or update a game image.
+     * @param identity Game identifier
+     * @param key Image key (e.g., "thumbnail", "banner", "logo")
+     * @param ext File extension (e.g., "png", "jpg", "webp")
+     * @param data Image binary data
+     */
+    suspend fun updateImage(
+        identity: String,
+        key: String,
+        ext: String,
+        data: ByteArray
+    ) {
+        val command = updateGameImageCommand {
+            this.identity = identity
+            this.key = key
+            this.ext = ext
+            this.data = com.google.protobuf.ByteString.copyFrom(data)
+        }
+        gameStub.updateImage(command)
+    }
 }
 ```
 
@@ -425,6 +447,28 @@ class ProviderService(
         }
 
         providerStub.update(command)
+    }
+
+    /**
+     * Upload or update a provider image.
+     * @param identity Provider identifier
+     * @param key Image key (e.g., "logo", "banner")
+     * @param ext File extension (e.g., "png", "jpg", "webp")
+     * @param data Image binary data
+     */
+    suspend fun updateImage(
+        identity: String,
+        key: String,
+        ext: String,
+        data: ByteArray
+    ) {
+        val command = updateProviderImageCommand {
+            this.identity = identity
+            this.key = key
+            this.ext = ext
+            this.data = com.google.protobuf.ByteString.copyFrom(data)
+        }
+        providerStub.updateImage(command)
     }
 }
 ```
