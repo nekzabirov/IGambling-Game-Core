@@ -12,9 +12,7 @@ message CollectionDto {
 
   map<string, string> name = 3;
 
-  map<string, string> images = 4;
+  int32 order = 4;
 
-  int32 order = 5;
-
-  bool active = 6;
+  bool active = 5;
 }

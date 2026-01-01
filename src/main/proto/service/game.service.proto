@@ -20,6 +20,8 @@ service Game {
 
   rpc Update (UpdateGameConfig) returns (EmptyResult);
 
+  rpc UpdateImage (UpdateGameImageCommand) returns (EmptyResult);
+
   rpc AddTag (GameTagCommand) returns (EmptyResult);
 
   rpc RemoveTag (GameTagCommand) returns (EmptyResult);
@@ -161,4 +163,14 @@ message DemoGameCommand {
 
 message DemoGameResult {
   string launch_url = 1;
+}
+
+message UpdateGameImageCommand {
+  string identity = 1;
+
+  string key = 2;
+
+  string ext = 3;
+
+  bytes data = 4;
 }

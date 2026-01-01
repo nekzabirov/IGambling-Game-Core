@@ -3,7 +3,6 @@ package application.usecase.collection
 import domain.collection.model.Collection
 import domain.collection.repository.CollectionRepository
 import domain.common.error.NotFoundError
-import shared.value.ImageMap
 import shared.value.LocaleName
 
 /**
@@ -16,8 +15,7 @@ class UpdateCollectionUsecase(
         identity: String,
         name: LocaleName? = null,
         order: Int? = null,
-        active: Boolean? = null,
-        images: ImageMap? = null
+        active: Boolean? = null
     ): Result<Collection> {
         val existing = collectionRepository.findByIdentity(identity)
             ?: return Result.failure(NotFoundError("Collection", identity))
@@ -25,8 +23,7 @@ class UpdateCollectionUsecase(
         val updated = existing.copy(
             name = name ?: existing.name,
             order = order ?: existing.order,
-            active = active ?: existing.active,
-            images = images ?: existing.images
+            active = active ?: existing.active
         )
 
         return try {

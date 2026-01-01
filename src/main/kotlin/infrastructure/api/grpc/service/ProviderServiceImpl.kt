@@ -1,6 +1,8 @@
 package infrastructure.api.grpc.service
 
+import application.port.outbound.MediaFile
 import application.usecase.provider.ProviderListUsecase
+import application.usecase.provider.UpdateProviderImageUsecase
 import application.usecase.provider.UpdateProviderUsecase
 import shared.value.Pageable
 import com.nekzabirov.igambling.proto.dto.EmptyResult
@@ -8,6 +10,7 @@ import com.nekzabirov.igambling.proto.service.ListProviderCommand
 import com.nekzabirov.igambling.proto.service.ListProviderResult
 import com.nekzabirov.igambling.proto.service.ProviderGrpcKt
 import com.nekzabirov.igambling.proto.service.UpdateProviderConfig
+import com.nekzabirov.igambling.proto.service.UpdateProviderImageCommand
 import io.grpc.Status
 import io.grpc.StatusException
 import io.ktor.server.application.*
@@ -18,6 +21,7 @@ import org.koin.ktor.ext.get
 class ProviderServiceImpl(application: Application) : ProviderGrpcKt.ProviderCoroutineImplBase() {
     private val providerListUsecase = application.get<ProviderListUsecase>()
     private val updateProviderUsecase = application.get<UpdateProviderUsecase>()
+    private val updateProviderImageUsecase = application.get<UpdateProviderImageUsecase>()
 
     override suspend fun list(request: ListProviderCommand): ListProviderResult {
         val page = providerListUsecase(pageable = Pageable(request.pageNumber, request.pageSize)) { builder ->
@@ -51,6 +55,18 @@ class ProviderServiceImpl(application: Application) : ProviderGrpcKt.ProviderCor
 
     override suspend fun update(request: UpdateProviderConfig): EmptyResult =
         updateProviderUsecase(identity = request.identity, order = request.order, active = request.active)
+            .map { EmptyResult.getDefaultInstance() }
+            .getOrElse { throw StatusException(Status.INVALID_ARGUMENT.withDescription(it.message)) }
+
+    override suspend fun updateImage(request: UpdateProviderImageCommand): EmptyResult =
+        updateProviderImageUsecase(
+            identity = request.identity,
+            key = request.key,
+            mediaFile = MediaFile(
+                ext = request.ext,
+                bytes = request.data.toByteArray()
+            )
+        )
             .map { EmptyResult.getDefaultInstance() }
             .getOrElse { throw StatusException(Status.INVALID_ARGUMENT.withDescription(it.message)) }
 }

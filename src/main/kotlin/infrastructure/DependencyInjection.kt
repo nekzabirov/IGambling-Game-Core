@@ -18,6 +18,7 @@ import application.usecase.spin.*
 import application.service.AggregatorService
 import infrastructure.messaging.messagingModule
 import infrastructure.external.UnitCurrencyAdapter
+import infrastructure.external.s3.S3FileAdapter
 import infrastructure.external.turbo.TurboPlayerAdapter
 import infrastructure.external.turbo.TurboWalletAdapter
 import infrastructure.aggregator.AggregatorModule
@@ -48,6 +49,7 @@ private val adapterModule = module {
     single<WalletAdapter> { TurboWalletAdapter() }
     single<PlayerAdapter> { TurboPlayerAdapter() }
     single<CurrencyAdapter> { UnitCurrencyAdapter() }
+    single<FileAdapter> { S3FileAdapter(bucketName = "game-assets", baseUrl = "https://cdn.example.com") }
 }
 
 private val serviceModule = module {
@@ -67,6 +69,7 @@ private val useCaseModule = module {
     factory { FindGameUsecase(get()) }
     factory { ListGamesUsecase(get()) }
     factory { UpdateGameUsecase(get()) }
+    factory { UpdateGameImageUsecase(get(), get()) }
     factory { AddGameTagUsecase(get()) }
     factory { RemoveGameTagUsecase(get()) }
     factory { AddGameFavouriteUsecase(get(), get(), get()) }
@@ -101,6 +104,7 @@ private val useCaseModule = module {
     // ==========================================
     factory { ProviderListUsecase(get(), get()) }
     factory { UpdateProviderUsecase(get()) }
+    factory { UpdateProviderImageUsecase(get(), get()) }
     factory { AssignProviderToAggregatorUsecase(get(), get()) }
 
     // ==========================================

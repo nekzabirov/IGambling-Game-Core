@@ -70,7 +70,6 @@ fun ResultRow.toCollection(): Collection = Collection(
     id = this[CollectionTable.id].value,
     identity = this[CollectionTable.identity],
     name = this[CollectionTable.name],
-    images = this[CollectionTable.images],
     active = this[CollectionTable.active],
     order = this[CollectionTable.order]
 )

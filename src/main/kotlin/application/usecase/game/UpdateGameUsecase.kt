@@ -3,8 +3,6 @@ package application.usecase.game
 import domain.common.error.NotFoundError
 import domain.game.model.Game
 import domain.game.repository.GameRepository
-import shared.value.ImageMap
-import java.util.UUID
 
 /**
  * Command for updating a game.
@@ -12,7 +10,6 @@ import java.util.UUID
 data class UpdateGameCommand(
     val identity: String,
     val name: String? = null,
-    val images: ImageMap? = null,
     val bonusBetEnable: Boolean? = null,
     val bonusWageringEnable: Boolean? = null,
     val active: Boolean? = null
@@ -30,7 +27,6 @@ class UpdateGameUsecase(
 
         val updatedGame = existingGame.copy(
             name = command.name ?: existingGame.name,
-            images = command.images ?: existingGame.images,
             bonusBetEnable = command.bonusBetEnable ?: existingGame.bonusBetEnable,
             bonusWageringEnable = command.bonusWageringEnable ?: existingGame.bonusWageringEnable,
             active = command.active ?: existingGame.active

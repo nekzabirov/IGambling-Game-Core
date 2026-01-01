@@ -24,7 +24,6 @@ class ExposedCollectionRepository : BaseExposedRepositoryWithIdentity<Collection
         val id = CollectionTable.insertAndGetId {
             it[identity] = collection.identity
             it[name] = collection.name
-            it[images] = collection.images
             it[active] = collection.active
             it[order] = collection.order
         }
@@ -35,7 +34,6 @@ class ExposedCollectionRepository : BaseExposedRepositoryWithIdentity<Collection
         CollectionTable.update({ CollectionTable.id eq collection.id }) {
             it[identity] = collection.identity
             it[name] = collection.name
-            it[images] = collection.images
             it[active] = collection.active
             it[order] = collection.order
         }

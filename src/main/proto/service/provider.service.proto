@@ -13,6 +13,8 @@ service Provider {
   rpc List (ListProviderCommand) returns (ListProviderResult);
 
   rpc Update (UpdateProviderConfig) returns (EmptyResult);
+
+  rpc UpdateImage (UpdateProviderImageCommand) returns (EmptyResult);
 }
 
 message ListProviderCommand {
@@ -47,4 +49,14 @@ message UpdateProviderConfig {
   int32 order = 2;
 
   bool active = 3;
+}
+
+message UpdateProviderImageCommand {
+  string identity = 1;
+
+  string key = 2;
+
+  string ext = 3;
+
+  bytes data = 4;
 }

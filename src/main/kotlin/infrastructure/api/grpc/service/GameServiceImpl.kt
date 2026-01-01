@@ -1,5 +1,6 @@
 package infrastructure.api.grpc.service
 
+import application.port.outbound.MediaFile
 import application.usecase.game.AddGameFavouriteUsecase
 import application.usecase.game.AddGameTagUsecase
 import application.usecase.game.DemoGameUsecase
@@ -7,6 +8,7 @@ import application.usecase.game.FindGameUsecase
 import application.usecase.game.ListGamesUsecase
 import application.usecase.game.RemoveGameFavouriteUsecase
 import application.usecase.game.RemoveGameTagUsecase
+import application.usecase.game.UpdateGameImageUsecase
 import application.usecase.game.UpdateGameUsecase
 import shared.value.Currency
 import domain.common.value.Locale
@@ -22,6 +24,7 @@ import com.nekzabirov.igambling.proto.service.GameTagCommand
 import com.nekzabirov.igambling.proto.service.ListGameCommand
 import com.nekzabirov.igambling.proto.service.ListGameResult
 import com.nekzabirov.igambling.proto.service.UpdateGameConfig
+import com.nekzabirov.igambling.proto.service.UpdateGameImageCommand
 import io.grpc.Status
 import io.grpc.StatusException
 import io.ktor.server.application.*
@@ -37,6 +40,7 @@ class GameServiceImpl(application: Application) : GameGrpcKt.GameCoroutineImplBa
     private val findGameUsecase = application.get<FindGameUsecase>()
     private val listGamesUsecase = application.get<ListGamesUsecase>()
     private val updateGameUsecase = application.get<UpdateGameUsecase>()
+    private val updateGameImageUsecase = application.get<UpdateGameImageUsecase>()
     private val addGameTagUsecase = application.get<AddGameTagUsecase>()
     private val removeGameTagUsecase = application.get<RemoveGameTagUsecase>()
     private val addGameFavouriteUsecase = application.get<AddGameFavouriteUsecase>()
@@ -129,6 +133,18 @@ class GameServiceImpl(application: Application) : GameGrpcKt.GameCoroutineImplBa
             active = request.active,
             bonusBet = request.bonusBet,
             bonusWagering = request.bonusWagering
+        )
+            .map { EmptyResult.getDefaultInstance() }
+            .getOrElse { throw StatusException(Status.INVALID_ARGUMENT.withDescription(it.message)) }
+
+    override suspend fun updateImage(request: UpdateGameImageCommand): EmptyResult =
+        updateGameImageUsecase(
+            identity = request.identity,
+            key = request.key,
+            mediaFile = MediaFile(
+                ext = request.ext,
+                bytes = request.data.toByteArray()
+            )
         )
             .map { EmptyResult.getDefaultInstance() }
             .getOrElse { throw StatusException(Status.INVALID_ARGUMENT.withDescription(it.message)) }

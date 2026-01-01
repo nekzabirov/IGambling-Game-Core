@@ -1,6 +1,5 @@
 package domain.collection.model
 
-import shared.value.ImageMap
 import shared.value.LocaleName
 import java.util.UUID
 
@@ -11,7 +10,6 @@ data class Collection(
     val id: UUID = UUID.randomUUID(),
     val identity: String,
     val name: LocaleName,
-    val images: ImageMap = ImageMap.EMPTY,
     val active: Boolean = true,
     val order: Int = 100
 ) {

@@ -11,7 +11,6 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import io.mockk.slot
 import kotlinx.coroutines.test.runTest
-import shared.value.ImageMap
 import shared.value.LocaleName
 import shared.value.Page
 import shared.value.Pageable
@@ -30,14 +29,13 @@ class AddCollectionUsecaseTest {
     fun `invoke creates collection successfully`() = runTest {
         val identity = "new-collection"
         val name = LocaleName(mapOf("en" to "New Collection"))
-        val images = ImageMap.EMPTY
 
         val collectionSlot = slot<Collection>()
 
         coEvery { collectionRepository.existsByIdentity(identity) } returns false
         coEvery { collectionRepository.save(capture(collectionSlot)) } answers { collectionSlot.captured }
 
-        val result = usecase(identity, name, images)
+        val result = usecase(identity, name)
 
         assertTrue(result.isSuccess)
         val collection = result.getOrThrow()
