@@ -19,8 +19,7 @@ class S3FileAdapter(
     private val accessKey: String,
     private val secretKey: String,
     private val bucketName: String,
-    private val region: String,
-    private val cdnBaseUrl: String
+    private val region: String
 ) : FileAdapter {
 
     private val s3Client: S3Client by lazy {
@@ -48,8 +47,7 @@ class S3FileAdapter(
 
             s3Client.putObject(request)
 
-            val publicUrl = "$cdnBaseUrl/$key"
-            Result.success(publicUrl)
+            Result.success(key)
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -57,13 +55,9 @@ class S3FileAdapter(
 
     override suspend fun delete(path: String): Result<Boolean> {
         return try {
-            val key = path
-                .removePrefix(cdnBaseUrl)
-                .removePrefix("/")
-
             val request = DeleteObjectRequest {
                 bucket = bucketName
-                this.key = key
+                key = path
             }
 
             s3Client.deleteObject(request)

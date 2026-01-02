@@ -111,6 +111,7 @@ class GrpcConfig {
         channel = ManagedChannelBuilder
             .forAddress(host, port)
             .usePlaintext() // Use .useTransportSecurity() for TLS
+            .maxInboundMessageSize(50 * 1024 * 1024) // 50 MB
             .build()
         return channel!!
     }
@@ -950,6 +951,7 @@ fun gameCoreChannel(): ManagedChannel {
     return ManagedChannelBuilder
         .forAddress(host, port)
         .usePlaintext()
+        .maxInboundMessageSize(50 * 1024 * 1024) // 50 MB
         .keepAliveTime(30, TimeUnit.SECONDS)
         .keepAliveTimeout(10, TimeUnit.SECONDS)
         .keepAliveWithoutCalls(true)
@@ -999,6 +1001,7 @@ fun gameCoreChannel(): ManagedChannel {
     return ManagedChannelBuilder
         .forAddress(host, port)
         .usePlaintext()
+        .maxInboundMessageSize(50 * 1024 * 1024) // 50 MB
         .intercept(LoggingInterceptor())
         .build()
 }
@@ -1042,6 +1045,7 @@ fun gameCoreChannel(): ManagedChannel {
     return ManagedChannelBuilder
         .forAddress(host, port)
         .useTransportSecurity()
+        .maxInboundMessageSize(50 * 1024 * 1024) // 50 MB
         .build()
 }
 ```

@@ -71,7 +71,7 @@ class ExposedProviderRepository : BaseExposedRepositoryWithIdentity<Provider, Pr
             items = items,
             totalPages = pageable.getTotalPages(totalCount),
             totalItems = totalCount,
-            currentPage = pageable.pageReal
+            currentPage = pageable.pageReal,
         )
     }
 

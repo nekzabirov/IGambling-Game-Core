@@ -55,7 +55,7 @@ fun ResultRow.toProvider(): Provider = Provider(
     images = this[ProviderTable.images],
     order = this[ProviderTable.order],
     aggregatorId = this[ProviderTable.aggregatorId]?.value,
-    active = this[ProviderTable.active]
+    active = this[ProviderTable.active],
 )
 
 fun ResultRow.toAggregatorInfo(): AggregatorInfo = AggregatorInfo(

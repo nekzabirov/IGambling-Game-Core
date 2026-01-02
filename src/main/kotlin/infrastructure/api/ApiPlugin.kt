@@ -70,6 +70,7 @@ fun Application.installApi() {
 private fun Application.installGrpc() {
     val server: Server = NettyServerBuilder
         .forPort(5050)
+        .maxInboundMessageSize(50 * 1024 * 1024) // 50 MB
         .addService(SyncServiceImpl(this))
         .addService(CollectionServiceImpl(this))
         .addService(ProviderServiceImpl(this))

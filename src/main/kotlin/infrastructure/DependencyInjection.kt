@@ -55,8 +55,7 @@ private val adapterModule = module {
             accessKey = System.getenv("S3_ACCESS_KEY") ?: "minioadmin",
             secretKey = System.getenv("S3_SECRET_KEY") ?: "minioadmin",
             bucketName = System.getenv("S3_BUCKET") ?: "uploads",
-            region = System.getenv("S3_REGION") ?: "us-east-1",
-            cdnBaseUrl = System.getenv("CDN_PUBLIC_URL") ?: "http://localhost:4040"
+            region = System.getenv("S3_REGION") ?: "us-east-1"
         )
     }
 }
