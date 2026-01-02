@@ -49,7 +49,16 @@ private val adapterModule = module {
     single<WalletAdapter> { TurboWalletAdapter() }
     single<PlayerAdapter> { TurboPlayerAdapter() }
     single<CurrencyAdapter> { UnitCurrencyAdapter() }
-    single<FileAdapter> { S3FileAdapter(bucketName = "game-assets", baseUrl = "https://cdn.example.com") }
+    single<FileAdapter> {
+        S3FileAdapter(
+            endpoint = System.getenv("S3_ENDPOINT") ?: "http://localhost:9000",
+            accessKey = System.getenv("S3_ACCESS_KEY") ?: "minioadmin",
+            secretKey = System.getenv("S3_SECRET_KEY") ?: "minioadmin",
+            bucketName = System.getenv("S3_BUCKET") ?: "uploads",
+            region = System.getenv("S3_REGION") ?: "us-east-1",
+            cdnBaseUrl = System.getenv("CDN_PUBLIC_URL") ?: "http://localhost:4040"
+        )
+    }
 }
 
 private val serviceModule = module {
@@ -88,6 +97,7 @@ private val useCaseModule = module {
     factory { GetPresetUsecase(get(), get()) }
     factory { CreateFreespinUsecase(get(), get()) }
     factory { CancelFreespinUsecase(get(), get()) }
+    factory { GetRoundsDetailsUsecase(get()) }
 
     // ==========================================
     // Application Use Cases - Collection

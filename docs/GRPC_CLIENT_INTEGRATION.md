@@ -14,6 +14,7 @@ This guide demonstrates how to integrate the Game Core gRPC client into your app
   - [Collection Service](#collection-service)
   - [Freespin Service](#freespin-service)
   - [Sync Service](#sync-service)
+  - [Round Service](#round-service)
 - [Error Handling](#error-handling)
 - [Best Practices](#best-practices)
 
@@ -171,6 +172,11 @@ class GameCoreServiceConfig {
     fun syncServiceStub(channel: ManagedChannel): SyncGrpcKt.SyncCoroutineStub {
         return SyncGrpcKt.SyncCoroutineStub(channel)
     }
+
+    @Bean
+    fun roundServiceStub(channel: ManagedChannel): RoundGrpcKt.RoundCoroutineStub {
+        return RoundGrpcKt.RoundCoroutineStub(channel)
+    }
 }
 ```
 
@@ -184,6 +190,7 @@ class GameCoreServiceConfig {
 | `Collection` | Manage game collections/categories |
 | `Freespin` | Create and manage free spins |
 | `Sync` | Aggregator and variant synchronization |
+| `Round` | Query round details with aggregated amounts |
 
 ## Usage Examples
 
@@ -710,6 +717,152 @@ class SyncService(
         }
 
         return syncStub.listVariants(command)
+    }
+}
+```
+
+### Round Service
+
+Query round details with aggregated spin amounts:
+
+```kotlin
+import com.nekzabirov.igambling.proto.service.*
+import org.springframework.stereotype.Service
+
+@Service
+class RoundService(
+    private val roundStub: RoundGrpcKt.RoundCoroutineStub
+) {
+
+    /**
+     * Get paginated round details with aggregated amounts and game info.
+     * @param playerId Optional filter by player ID
+     * @param gameIdentity Optional filter by game identity
+     * @param pageNumber Page number (1-based)
+     * @param pageSize Number of items per page
+     */
+    suspend fun getRoundsDetails(
+        playerId: String? = null,
+        gameIdentity: String? = null,
+        pageNumber: Int = 1,
+        pageSize: Int = 20
+    ): GetRoundsDetailsResult {
+        val command = getRoundsDetailsCommand {
+            this.pageNumber = pageNumber
+            this.pageSize = pageSize
+            playerId?.let { this.playerId = it }
+            gameIdentity?.let { this.gameIdentity = it }
+        }
+
+        return roundStub.getRoundsDetails(command)
+    }
+
+    /**
+     * Get all rounds for a specific player.
+     */
+    suspend fun getPlayerRounds(
+        playerId: String,
+        pageNumber: Int = 1,
+        pageSize: Int = 20
+    ): GetRoundsDetailsResult {
+        return getRoundsDetails(
+            playerId = playerId,
+            pageNumber = pageNumber,
+            pageSize = pageSize
+        )
+    }
+
+    /**
+     * Get all rounds for a specific game.
+     */
+    suspend fun getGameRounds(
+        gameIdentity: String,
+        pageNumber: Int = 1,
+        pageSize: Int = 20
+    ): GetRoundsDetailsResult {
+        return getRoundsDetails(
+            gameIdentity = gameIdentity,
+            pageNumber = pageNumber,
+            pageSize = pageSize
+        )
+    }
+}
+```
+
+**REST Controller Example:**
+
+```kotlin
+import org.springframework.web.bind.annotation.*
+
+@RestController
+@RequestMapping("/api/rounds")
+class RoundController(
+    private val roundService: RoundService
+) {
+
+    data class RoundDetailResponse(
+        val id: String,
+        val placeAmount: String,
+        val settleAmount: String,
+        val freeSpinId: String?,
+        val currency: String,
+        val gameName: String,
+        val gameIdentity: String,
+        val isFinished: Boolean
+    )
+
+    data class PagedResponse<T>(
+        val items: List<T>,
+        val totalPages: Int,
+        val totalItems: Long,
+        val currentPage: Int
+    )
+
+    @GetMapping
+    suspend fun getRounds(
+        @RequestParam(required = false) playerId: String?,
+        @RequestParam(required = false) gameIdentity: String?,
+        @RequestParam(defaultValue = "1") pageNumber: Int,
+        @RequestParam(defaultValue = "20") pageSize: Int
+    ): PagedResponse<RoundDetailResponse> {
+        val result = roundService.getRoundsDetails(
+            playerId = playerId,
+            gameIdentity = gameIdentity,
+            pageNumber = pageNumber,
+            pageSize = pageSize
+        )
+
+        return PagedResponse(
+            items = result.itemsList.map { round ->
+                RoundDetailResponse(
+                    id = round.id,
+                    placeAmount = round.placeAmount,
+                    settleAmount = round.settleAmount,
+                    freeSpinId = if (round.hasFreeSpinId()) round.freeSpinId else null,
+                    currency = round.currency,
+                    gameName = round.game.name,
+                    gameIdentity = round.game.identity,
+                    isFinished = round.isFinished
+                )
+            },
+            totalPages = result.totalPage,
+            totalItems = result.totalItems,
+            currentPage = result.currentPage
+        )
+    }
+
+    @GetMapping("/player/{playerId}")
+    suspend fun getPlayerRounds(
+        @PathVariable playerId: String,
+        @RequestParam(defaultValue = "1") pageNumber: Int,
+        @RequestParam(defaultValue = "20") pageSize: Int
+    ): PagedResponse<RoundDetailResponse> {
+        return getRounds(
+            playerId = playerId,
+            gameIdentity = null,
+            pageNumber = pageNumber,
+            pageSize = pageSize
+        )
     }
 }
 ```

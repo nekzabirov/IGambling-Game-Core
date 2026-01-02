@@ -49,6 +49,9 @@ dependencies {
     // Messaging - RabbitMQ
     implementation(libs.rabbitmq)
 
+    // AWS S3
+    implementation(libs.aws.s3)
+
     // gRPC
     implementation(libs.bundles.grpc)
     implementation(libs.protobuf.kotlin)

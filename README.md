@@ -93,6 +93,11 @@ All spin operations use the **Saga Pattern** for distributed transactions with a
 | `CreateFreespinUsecase` | Creates a freespin bonus for a player |
 | `CancelFreespinUsecase` | Cancels an active freespin |
 
+### Round Use Cases
+| Use Case | Description |
+|----------|-------------|
+| `GetRoundsDetailsUsecase` | Gets paginated rounds with aggregated amounts and game details |
+
 ### Game Management
 | Use Case | Description |
 |----------|-------------|
@@ -441,6 +446,38 @@ message UpdateProviderImageCommand {
   string key = 2;           // Image key (e.g., "logo", "banner")
   string ext = 3;           // File extension (e.g., "png", "jpg")
   bytes data = 4;           // Image binary data
+}
+```
+
+### Round Service
+
+```protobuf
+service Round {
+  rpc GetRoundsDetails (GetRoundsDetailsCommand) returns (GetRoundsDetailsResult);
+}
+
+message GetRoundsDetailsCommand {
+  int32 page_number = 1;
+  int32 page_size = 2;
+  optional string player_id = 3;           // Filter by player
+  optional string game_identity = 4;       // Filter by game
+}
+
+message GetRoundsDetailsResult {
+  repeated RoundDetailsDto items = 1;
+  int32 total_page = 2;
+  int64 total_items = 3;
+  int32 current_page = 4;
+}
+
+message RoundDetailsDto {
+  string id = 1;                           // Round UUID
+  string place_amount = 2;                 // Total PLACE spin amounts
+  string settle_amount = 3;                // Total SETTLE spin amounts
+  optional string free_spin_id = 4;        // Freespin ID if applicable
+  string currency = 5;                     // Currency code
+  GameWithDetailsDto game = 6;             // Full game details
+  bool is_finished = 7;                    // Round finished status
 }
 ```
 

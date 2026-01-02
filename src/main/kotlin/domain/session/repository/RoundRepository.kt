@@ -1,6 +1,9 @@
 package domain.session.repository
 
 import domain.session.model.Round
+import domain.session.model.RoundDetails
+import shared.value.Page
+import shared.value.Pageable
 import java.util.UUID
 
 /**
@@ -18,4 +21,9 @@ interface RoundRepository {
      * Find or create a round for the given session and external ID.
      */
     suspend fun findOrCreate(sessionId: UUID, gameId: UUID, extId: String): Round
+
+    /**
+     * Find rounds with details (aggregated amounts, game info) with filtering and pagination.
+     */
+    suspend fun findAllWithDetails(pageable: Pageable, filter: RoundFilter): Page<RoundDetails>
 }

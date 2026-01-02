@@ -1,0 +1,19 @@
+package domain.session.model
+
+import domain.game.model.GameWithDetails
+import shared.value.Currency
+import java.math.BigInteger
+import java.util.UUID
+
+/**
+ * Round details read model with aggregated spin amounts and game information.
+ */
+data class RoundDetails(
+    val id: UUID,
+    val placeAmount: BigInteger,
+    val settleAmount: BigInteger,
+    val freeSpinId: String?,
+    val currency: Currency,
+    val game: GameWithDetails,
+    val isFinished: Boolean
+)
