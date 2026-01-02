@@ -1,224 +1,201 @@
-# Release Notes - v1.0.0
+# Release Notes - v1.0.1
 
-**Release Date:** December 2025
+**Release Date:** January 2026
 
 ---
 
 ## Overview
 
-iGambling Core Service v1.0.0 is the initial stable release of a production-ready, modular gaming platform built on hexagonal architecture. This release provides comprehensive game aggregator integration, session management, and wallet operations for online gaming platforms.
+iGambling Core Service v1.0.1 introduces new features for round history querying, image management, and significant architectural improvements with the Saga pattern reorganization and production-ready adapter integrations.
 
 ---
 
-## Features
+## New Features
 
-### Session Management
-- **Open Session** - Create player gaming sessions with secure token generation
-- **Session Caching** - 5-minute TTL for optimized performance
-- Automatic session token validation and management
-- Multi-platform support (Desktop, Mobile, Download)
-- Locale and currency configuration per session
+### Round Details Query
+- **GetRoundsDetails** - New gRPC endpoint to retrieve round history with aggregated amounts and game details
+- Advanced filtering by player ID, game ID, provider ID, aggregator, date range, and round status
+- Pagination support with `offset` and `limit` parameters
+- Returns comprehensive round information including:
+  - Round status (in-progress, finished)
+  - Total bet and win amounts
+  - Associated game and provider details
+  - Spin transaction history
 
-### Spin (Betting) Operations
-- **Place Spin** - Process bets with balance validation and limit checks
-- **Settle Spin** - Record win/loss outcomes with automatic fund deposits
-- **Rollback** - Reverse transactions with full refund support
-- Real + Bonus balance separation for accurate wagering
-- Bet limit enforcement per player
+### Game & Provider Image Management
+- **UpdateGameImage** - Upload and update game thumbnail images via gRPC
+- **UpdateProviderImage** - Upload and update provider logo images via gRPC
+- S3-based file storage with automatic path management
+- Supports image replacement and deletion
 
-### Freespin Management
-- **Get Preset** - Retrieve freespin configurations from aggregators
-- **Create Freespin** - Award freespin bonuses with customizable parameters
-- **Cancel Freespin** - Revoke active freespin offers
-- Currency conversion support across aggregators
-- Configurable start/end dates for freespin validity
-
-### Game Management
-- **List Games** - Advanced filtering (active, bonus settings, platforms, providers, tags)
-- **Find Game** - Retrieve individual game details
-- **Update Game** - Configure game settings (active status, bonus eligibility)
-- **Demo Mode** - Launch games in demo/free-play mode
-- **Favorites** - Add/remove games from player favorites
-- **Tagging** - Organize games with custom tags
-- **Win Recording** - Track and display game wins
-
-### Collection Management
-- **Create Collections** - Organize games into themed groups
-- **Localized Names** - Multi-language support for collection names
-- **Game Assignment** - Add/remove games from collections
-- **Ordering** - Custom sort order for games within collections
-- Pagination support for large catalogs
-
-### Provider Management
-- **List Providers** - Browse game providers with filtering
-- **Update Provider** - Configure provider settings
-- **Aggregator Assignment** - Link providers to aggregators for sync
-
-### Aggregator Management
-- **Add Aggregator** - Register new aggregators with custom configuration
-- **List Aggregators** - Browse registered aggregators
-- **Sync Games** - Import games from aggregator catalogs
-- **Game Variants** - Manage platform/locale-specific game versions
+### gRPC Configuration
+- Configurable message size limits (default: 50 MB) for handling large payloads
+- Enhanced client integration documentation with configuration examples
 
 ---
 
-## Integrated Aggregators
+## Architectural Improvements
 
-### 1. Pragmatic Play (`PRAGMATIC`)
+### Saga Pattern Reorganization
 
-Full integration with Pragmatic Play gaming platform.
+All spin operations now use a fully modular Saga architecture with dedicated packages and step files:
 
-**Configuration:**
-- `secretKey` - API secret key
-- `secureLogin` - Secure login identifier
-- `gatewayUrl` - Pragmatic API gateway URL
+```
+application/saga/spin/
+├── place/           # PlaceSpinSaga (6 steps)
+│   ├── PlaceSpinSaga.kt
+│   └── step/
+│       ├── ValidateGameStep.kt
+│       ├── FindOrCreateRoundStep.kt
+│       ├── ValidateBalanceStep.kt
+│       ├── WalletWithdrawStep.kt
+│       ├── SavePlaceSpinStep.kt
+│       └── PublishSpinPlacedEventStep.kt
+│
+├── settle/          # SettleSpinSaga (6 steps)
+├── end/             # EndSpinSaga (3 steps)
+└── rollback/        # RollbackSpinSaga (5 steps)
+```
 
-**Supported Operations:**
-- Game launch URL generation
-- Freespin management with currency conversion
-- Game catalog synchronization
-- Wallet callbacks (authenticate, balance, bet, result, endRound, refund, adjustment)
+**Benefits:**
+- Individual step files for better maintainability and testing
+- Clear separation of concerns per operation
+- Easier debugging and modification of specific steps
+- Consistent compensation handling across all sagas
 
----
+### Turbo Adapter Integration
 
-### 2. OneGameHub (`ONEGAMEHUB`)
+Production-ready adapters replacing mock implementations:
 
-Integration with OneGameHub aggregator platform.
+| Adapter | Description |
+|---------|-------------|
+| **TurboWalletAdapter** | HTTP client integration for wallet operations (balance, withdraw, deposit, rollback) |
+| **TurboPlayerAdapter** | HTTP client integration for player limit retrieval |
 
-**Configuration:**
-- `salt` - Encryption salt
-- `secret` - API secret
-- `partner` - Partner identifier
-- `gateway` - OneGameHub API gateway URL
+**Wallet DTOs Added:**
+- `BalanceType` - Real and bonus balance separation
+- `BetTransactionRequest` - Structured bet withdrawal requests
+- `SettleTransactionRequest` - Structured win deposit requests
+- `AccountDto`, `AccountRequest` - Account management
 
-**Supported Operations:**
-- Game launch URL generation
-- Freespin management
-- Game catalog synchronization
-- Wallet callbacks (balance, bet, win, cancel)
-
-**Error Mapping:**
-- `BetLimitExceededError` → `EXCEED_WAGER_LIMIT`
-- `InsufficientBalanceError` → `INSUFFICIENT_FUNDS`
-- `SessionInvalidError` → `SESSION_TIMEOUT`
-- `GameUnavailableError` → `UNAUTHORIZED`
-
----
-
-### 3. Pateplay (`PATEPLAY`)
-
-Integration with Pateplay gaming aggregator.
-
-**Configuration:**
-- `gatewayUrl` - Pateplay API gateway URL
-- `siteCode` - Site identifier
-- `gatewayApiKey` - Gateway API key
-- `gatewayApiSecret` - Gateway API secret
-- `gameLaunchUrl` - Base URL for game launch
-- `gameDemoLaunchUrl` - Base URL for demo games
-- `walletApiKey` - Wallet API key
-- `walletApiSecret` - Wallet API secret
-
-**Supported Operations:**
-- Game launch URL generation with secure signing
-- Freespin management
-- Game catalog synchronization
+**Player DTOs Added:**
+- `PlayerLimitDto` - Bet limit configuration
+- `PlayerResponse` - Player data response
 
 ---
 
-## gRPC API Services
+## Bug Fixes
 
-| Service | Operations |
-|---------|------------|
-| **SessionService** | OpenSession |
-| **GameService** | Find, List, Update, AddTag, RemoveTag, AddFavourite, RemoveFavourite, DemoGame |
-| **FreespinService** | GetPreset, CreateFreespin, CancelFreespin |
-| **CollectionService** | AddCollection, UpdateCollection, AddGameCollection, RemoveGameFromCollection, ChangeGameOrder, List |
-| **ProviderService** | List, Update |
-| **SyncService** | AddAggregator, ListAggregator, ListVariants, AssignGameVariant, AssignProvider |
+- Fixed event publishing for spin operations
+- Improved currency conversion with proper rounding in `UnitCurrencyAdapter` and `OneGameHubCurrencyAdapter`
+- Simplified S3 file handling by returning keys directly instead of CDN URLs
 
 ---
 
-## Domain Events (RabbitMQ)
+## gRPC API Changes
+
+### New Service: RoundService
+
+| Operation | Description |
+|-----------|-------------|
+| **GetRoundsDetails** | Query round history with filtering and pagination |
+
+### Updated Services
+
+| Service | New Operations |
+|---------|----------------|
+| **GameService** | `UpdateImage` - Upload game thumbnail |
+| **ProviderService** | `UpdateImage` - Upload provider logo |
+
+---
+
+## Domain Events
+
+New event added:
 
 | Event | Routing Key |
 |-------|-------------|
-| SpinPlacedEvent | `spin.placed` |
-| SpinSettledEvent | `spin.settled` |
-| SessionOpenedEvent | `session.opened` |
-| SessionClosedEvent | `session.closed` |
-| GameFavouriteAddedEvent | `game.favourite.added` |
-| GameFavouriteRemovedEvent | `game.favourite.removed` |
-| GameWonEvent | `game.won` |
+| SpinRollbackEvent | `spin.rollback` |
 
 ---
 
-## Technology Stack
+## File Adapter
 
-| Component | Technology |
-|-----------|------------|
-| Language | Kotlin (JVM 21) |
-| Framework | Ktor Server |
-| Database ORM | Exposed |
-| Databases | H2, PostgreSQL |
-| Dependency Injection | Koin |
-| Messaging | RabbitMQ (AMQP) |
-| API Protocol | gRPC + REST |
-| Serialization | kotlinx.serialization |
+New `FileAdapter` port for file storage operations:
 
----
-
-## Architecture
-
-The service follows **Hexagonal Architecture** (Ports & Adapters):
-
-```
-API Layer (gRPC/REST)
-        ↓
-Application Layer (Use Cases, Services, Events)
-        ↓
-Domain Layer (Entities, Repositories, Errors)
-        ↓
-Infrastructure Layer (Aggregators, Persistence)
+```kotlin
+interface FileAdapter {
+    suspend fun upload(path: String, content: ByteArray, contentType: String): String
+    suspend fun delete(path: String)
+    suspend fun exists(path: String): Boolean
+}
 ```
 
----
-
-## Required Custom Adapters
-
-The following adapters must be implemented for production deployment:
-
-- **WalletAdapter** - Player balance and transaction operations
-- **PlayerAdapter** - Player bet limit retrieval
-- **CacheAdapter** - Session and aggregator caching
-- **EventPublisherAdapter** - Domain event publication
+S3 implementation provided in `infrastructure/external/s3/S3FileAdapter.kt`.
 
 ---
 
-## Known Limitations
+## Migration Notes
 
-- Mock adapters included for development/testing only
-- Webhook handlers for Pragmatic and Pateplay require implementation
-- H2 database for development; PostgreSQL recommended for production
+### From v1.0.0
+
+1. **Saga Imports** - If extending sagas, update imports from:
+   - `application/saga/spin/PlaceSpinSaga` → `application/saga/spin/place/PlaceSpinSaga`
+   - `application/saga/spin/SettleSpinSaga` → `application/saga/spin/settle/SettleSpinSaga`
+
+2. **Removed UseCases** - The following have been converted to Sagas:
+   - `PlaceSpinUsecase` → `PlaceSpinSaga`
+   - `SettleSpinUsecase` → `SettleSpinSaga`
+   - `EndSpinUsecase` → `EndSpinSaga`
+   - `RollbackUsecase` → `RollbackSpinSaga`
+
+3. **Adapter Registration** - If using custom adapters, ensure they're registered in `DependencyInjection.kt` to override the default Turbo adapters.
+
+4. **Collection Model** - `ImageMap` has been removed from collections. Image handling is now separate.
 
 ---
 
-## Getting Started
+## Configuration
 
-1. Configure aggregator credentials via `AddAggregator` gRPC call
-2. Implement required custom adapters (Wallet, Player, Cache, EventPublisher)
-3. Sync games from aggregators using `SyncService`
-4. Configure game collections and provider settings
-5. Open sessions and process spins via gRPC API
+### S3 File Storage (Required for Image Features)
 
----
-
-## gRPC Client
-
-A standalone gRPC client JAR is published for external integration:
-
-```
-com.nekzabirov.igambling:game-core-grpc-client
+```kotlin
+// Environment variables
+S3_ENDPOINT=your-s3-endpoint
+S3_ACCESS_KEY=your-access-key
+S3_SECRET_KEY=your-secret-key
+S3_BUCKET=your-bucket-name
+S3_REGION=your-region
 ```
 
-Available via GitHub Maven Packages.
+### gRPC Message Size
+
+```kotlin
+// Server configuration (ApiPlugin.kt)
+maxInboundMessageSize = 50 * 1024 * 1024  // 50 MB
+
+// Client configuration
+ManagedChannelBuilder.forAddress(host, port)
+    .maxInboundMessageSize(50 * 1024 * 1024)
+    .build()
+```
+
+---
+
+## Dependencies
+
+No new external dependencies added. Internal module organization improved.
+
+---
+
+## Known Issues
+
+- S3 adapter requires proper endpoint configuration for non-AWS S3-compatible storage
+- Turbo adapters require external Turbo service to be running
+
+---
+
+## Contributors
+
+- nekzabirov
+- Claude Code (AI-assisted development)
