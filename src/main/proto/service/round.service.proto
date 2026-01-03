@@ -1,0 +1,67 @@
+syntax = "proto3";
+
+package game.service;
+
+option java_package = "com.nekgamebling.game.service";
+option java_multiple_files = true;
+
+import "dto/common.dto.proto";
+import "dto/session.dto.proto";
+import "dto/game.dto.proto";
+import "dto/provider.dto.proto";
+
+service RoundService {
+  rpc Find(FindRoundQuery) returns (FindRoundResult);
+  rpc FindAll(FindAllRoundQuery) returns (FindAllRoundResult);
+}
+
+// ============================================
+// Find Single Round
+// ============================================
+
+message FindRoundQuery {
+  string id = 1;
+}
+
+message FindRoundResult {
+  RoundItemDto item = 1;
+}
+
+// ============================================
+// Find All Rounds (Paginated)
+// ============================================
+
+message FindAllRoundQuery {
+  // Pagination
+  dto.PaginationRequestDto pagination = 1;
+
+  // Filters
+  optional string game_identity = 2;
+  optional string provider_identity = 3;
+  optional bool finished = 4;
+  optional string player_id = 5;
+  optional string free_spin_id = 6;
+}
+
+message FindAllRoundResult {
+  // Paginated round items
+  repeated RoundItemDto items = 1;
+  dto.PaginationMetaDto pagination = 2;
+
+  // Related entities from results
+  repeated dto.ProviderDto providers = 3;
+  repeated dto.GameDto games = 4;
+}
+
+message RoundItemDto {
+  dto.RoundDto round = 1;
+
+  string provider_identity = 2;
+  string game_identity = 3;
+  string player_id = 4;
+
+  int64 total_place_real = 5;
+  int64 total_place_bonus = 6;
+  int64 total_settle_real = 7;
+  int64 total_settle_bonus = 8;
+}

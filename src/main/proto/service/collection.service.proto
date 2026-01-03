@@ -1,0 +1,85 @@
+syntax = "proto3";
+
+package game.service;
+
+option java_package = "com.nekgamebling.game.service";
+option java_multiple_files = true;
+
+import "dto/common.dto.proto";
+import "dto/collection.dto.proto";
+
+service CollectionService {
+  rpc Find(FindCollectionQuery) returns (FindCollectionResult);
+  rpc FindAll(FindAllCollectionQuery) returns (FindAllCollectionResult);
+  rpc Update(UpdateCollectionCommand) returns (UpdateCollectionResult);
+  rpc UpdateGames(UpdateCollectionGamesCommand) returns (UpdateCollectionGamesResult);
+}
+
+// ============================================
+// Find Single Collection
+// ============================================
+
+message FindCollectionQuery {
+  string identity = 1;
+}
+
+message FindCollectionResult {
+  dto.CollectionDto collection = 1;
+  int32 provider_count = 2;
+  int32 game_count = 3;
+}
+
+// ============================================
+// Find All Collections (Paginated)
+// ============================================
+
+message FindAllCollectionQuery {
+  // Pagination
+  dto.PaginationRequestDto pagination = 1;
+
+  // Search query (matches collection identity)
+  string query = 2;
+
+  // Filters
+  optional bool active = 3;
+}
+
+message FindAllCollectionResult {
+  // Paginated collection items
+  repeated CollectionItemDto items = 1;
+  dto.PaginationMetaDto pagination = 2;
+}
+
+message CollectionItemDto {
+  dto.CollectionDto collection = 1;
+  int32 provider_count = 2;
+  int32 game_count = 3;
+}
+
+// ============================================
+// Update Collection
+// ============================================
+
+message UpdateCollectionCommand {
+  string identity = 1;
+  optional bool active = 2;
+  optional int32 order = 3;
+}
+
+message UpdateCollectionResult {
+  // Empty response - success indicated by no error
+}
+
+// ============================================
+// Update Collection Games
+// ============================================
+
+message UpdateCollectionGamesCommand {
+  string identity = 1;
+  repeated string add_games = 2;
+  repeated string remove_games = 3;
+}
+
+message UpdateCollectionGamesResult {
+  // Empty response - success indicated by no error
+}

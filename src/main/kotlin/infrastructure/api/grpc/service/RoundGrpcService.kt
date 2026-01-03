@@ -1,0 +1,109 @@
+package infrastructure.api.grpc.service
+
+import application.port.inbound.QueryHandler
+import com.nekgamebling.application.port.inbound.spin.FindAllRoundQuery
+import com.nekgamebling.application.port.inbound.spin.FindAllRoundQueryResult
+import com.nekgamebling.application.port.inbound.spin.FindRoundQuery
+import com.nekgamebling.application.port.inbound.spin.FindRoundQueryResult
+import com.nekgamebling.game.dto.PaginationMetaDto
+import com.nekgamebling.game.service.FindAllRoundResult
+import com.nekgamebling.game.service.FindRoundResult
+import com.nekgamebling.game.service.RoundItemDto
+import com.nekgamebling.game.service.RoundServiceGrpcKt
+import infrastructure.api.grpc.mapper.toProto
+import io.grpc.Status
+import io.grpc.StatusException
+import shared.value.Pageable
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
+import com.nekgamebling.game.service.FindRoundQuery as FindRoundQueryProto
+import com.nekgamebling.game.service.FindAllRoundQuery as FindAllRoundQueryProto
+
+class RoundGrpcService(
+    private val findRoundQueryHandler: QueryHandler<FindRoundQuery, FindRoundQueryResult>,
+    private val findAllRoundQueryHandler: QueryHandler<FindAllRoundQuery, FindAllRoundQueryResult>,
+    coroutineContext: CoroutineContext = EmptyCoroutineContext
+) : RoundServiceGrpcKt.RoundServiceCoroutineImplBase(coroutineContext) {
+
+    override suspend fun find(request: FindRoundQueryProto): FindRoundResult {
+        val query = FindRoundQuery(id = request.id)
+
+        return findRoundQueryHandler.handle(query)
+            .map { response ->
+                FindRoundResult.newBuilder()
+                    .setItem(
+                        RoundItemDto.newBuilder()
+                            .setRound(response.round.toProto())
+                            .setProviderIdentity(response.providerIdentity)
+                            .setGameIdentity(response.gameIdentity)
+                            .setPlayerId(response.playerId)
+                            .setTotalPlaceReal(response.totalPlaceReal)
+                            .setTotalPlaceBonus(response.totalPlaceBonus)
+                            .setTotalSettleReal(response.totalSettleReal)
+                            .setTotalSettleBonus(response.totalSettleBonus)
+                            .build()
+                    )
+                    .build()
+            }
+            .getOrElse { error ->
+                throw StatusException(
+                    Status.NOT_FOUND.withDescription(error.message)
+                )
+            }
+    }
+
+    override suspend fun findAll(request: FindAllRoundQueryProto): FindAllRoundResult {
+        val query = FindAllRoundQuery(
+            pageable = if (request.hasPagination()) {
+                Pageable(
+                    page = request.pagination.page,
+                    size = request.pagination.size
+                )
+            } else {
+                Pageable.DEFAULT
+            },
+            gameIdentity = if (request.hasGameIdentity()) request.gameIdentity else null,
+            providerIdentity = if (request.hasProviderIdentity()) request.providerIdentity else null,
+            finished = if (request.hasFinished()) request.finished else null,
+            playerId = if (request.hasPlayerId()) request.playerId else null,
+            freeSpinId = if (request.hasFreeSpinId()) request.freeSpinId else null
+        )
+
+        return findAllRoundQueryHandler.handle(query)
+            .map { response ->
+                FindAllRoundResult.newBuilder()
+                    .addAllItems(response.items.items.map { item ->
+                        RoundItemDto.newBuilder()
+                            .setRound(item.round.toProto())
+                            .setProviderIdentity(item.providerIdentity)
+                            .setGameIdentity(item.gameIdentity)
+                            .setPlayerId(item.playerId)
+                            .setTotalPlaceReal(item.totalPlaceReal)
+                            .setTotalPlaceBonus(item.totalPlaceBonus)
+                            .setTotalSettleReal(item.totalSettleReal)
+                            .setTotalSettleBonus(item.totalSettleBonus)
+                            .build()
+                    })
+                    .setPagination(
+                        PaginationMetaDto.newBuilder()
+                            .setPage(response.items.currentPage)
+                            .setSize(query.pageable.sizeReal)
+                            .setTotalElements(response.items.totalItems)
+                            .setTotalPages(response.items.totalPages.toInt())
+                            .build()
+                    )
+                    .addAllProviders(response.providers.map { it.toProto(null) })
+                    .addAllGames(response.games.map { game ->
+                        val providerIdentity = response.providers
+                            .find { it.id == game.providerId }?.identity ?: ""
+                        game.toProto(providerIdentity)
+                    })
+                    .build()
+            }
+            .getOrElse { error ->
+                throw StatusException(
+                    Status.INTERNAL.withDescription(error.message)
+                )
+            }
+    }
+}

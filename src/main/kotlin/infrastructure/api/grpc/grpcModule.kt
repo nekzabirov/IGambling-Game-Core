@@ -4,6 +4,8 @@ import application.port.inbound.CommandHandler
 import application.port.inbound.QueryHandler
 import application.port.inbound.command.AddGameTagCommand
 import application.port.inbound.command.RemoveGameTagCommand
+import com.nekgamebling.application.port.inbound.game.command.PlayGameCommand
+import com.nekgamebling.application.port.inbound.game.command.PlayGameResponse
 import application.port.inbound.command.UpdateGameCommand
 import application.port.inbound.command.UpdateGameImageCommand
 import com.nekgamebling.application.port.inbound.game.query.FindAllGameQuery
@@ -18,6 +20,18 @@ import com.nekgamebling.application.port.inbound.provider.query.FindaProviderQue
 import com.nekgamebling.application.port.inbound.provider.query.FindaProviderResponse
 import com.nekgamebling.application.port.inbound.provider.command.UpdateProviderCommand
 import com.nekgamebling.application.port.inbound.provider.command.UpdateProviderImageCommand
+import com.nekgamebling.application.port.inbound.collection.command.UpdateCollectionCommand
+import com.nekgamebling.application.port.inbound.collection.command.UpdateCollectionGamesCommand
+import com.nekgamebling.application.port.inbound.collection.query.FindAllCollectionsQuery
+import com.nekgamebling.application.port.inbound.collection.query.FindAllCollectionsResponse
+import com.nekgamebling.application.port.inbound.collection.query.FindCollectionQuery
+import com.nekgamebling.application.port.inbound.collection.query.FindCollectionResponse
+import com.nekgamebling.application.port.inbound.spin.FindAllRoundQuery
+import com.nekgamebling.application.port.inbound.spin.FindAllRoundQueryResult
+import com.nekgamebling.application.port.inbound.spin.FindRoundQuery
+import com.nekgamebling.application.port.inbound.spin.FindRoundQueryResult
+import infrastructure.api.grpc.service.CollectionGrpcService
+import infrastructure.api.grpc.service.RoundGrpcService
 import infrastructure.api.grpc.service.GameGrpcService
 import infrastructure.api.grpc.service.ProviderGrpcService
 import org.koin.dsl.module
@@ -34,6 +48,7 @@ val grpcModule = module {
             findGameQueryHandler = get<QueryHandler<FindGameQuery, FindGameResponse>>(),
             findAllGameQueryHandler = get<QueryHandler<FindAllGameQuery, FindAllGameResponse>>(),
             gameDemoUrlQueryHandler = get<QueryHandler<GameDemoUrlQuery, GameDemoUrlResponse>>(),
+            playGameCommandHandler = get<CommandHandler<PlayGameCommand, PlayGameResponse>>(),
             updateGameCommandHandler = get<CommandHandler<UpdateGameCommand, Unit>>(),
             updateGameImageCommandHandler = get<CommandHandler<UpdateGameImageCommand, Unit>>(),
             addGameTagCommandHandler = get<CommandHandler<AddGameTagCommand, Unit>>(),
@@ -47,6 +62,22 @@ val grpcModule = module {
             findAllProvidersQueryHandler = get<QueryHandler<FindAllProvidersQuery, FindAllProvidersResponse>>(),
             updateProviderCommandHandler = get<CommandHandler<UpdateProviderCommand, Unit>>(),
             updateProviderImageCommandHandler = get<CommandHandler<UpdateProviderImageCommand, Unit>>()
+        )
+    }
+
+    single {
+        CollectionGrpcService(
+            findCollectionQueryHandler = get<QueryHandler<FindCollectionQuery, FindCollectionResponse>>(),
+            findAllCollectionsQueryHandler = get<QueryHandler<FindAllCollectionsQuery, FindAllCollectionsResponse>>(),
+            updateCollectionCommandHandler = get<CommandHandler<UpdateCollectionCommand, Unit>>(),
+            updateCollectionGamesCommandHandler = get<CommandHandler<UpdateCollectionGamesCommand, Unit>>()
+        )
+    }
+
+    single {
+        RoundGrpcService(
+            findRoundQueryHandler = get<QueryHandler<FindRoundQuery, FindRoundQueryResult>>(),
+            findAllRoundQueryHandler = get<QueryHandler<FindAllRoundQuery, FindAllRoundQueryResult>>()
         )
     }
 }

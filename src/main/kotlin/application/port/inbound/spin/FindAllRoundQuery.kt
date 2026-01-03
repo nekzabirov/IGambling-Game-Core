@@ -1,0 +1,38 @@
+package com.nekgamebling.application.port.inbound.spin
+
+import application.port.inbound.Query
+import domain.game.model.Game
+import domain.provider.model.Provider
+import domain.session.model.Round
+import shared.value.Page
+import shared.value.Pageable
+
+data class FindAllRoundQuery(
+    val pageable: Pageable,
+
+    val gameIdentity: String?,
+    val providerIdentity: String?,
+    val finished: Boolean?,
+    val playerId: String?,
+    val freeSpinId: String?
+) : Query<FindAllRoundQueryResult>
+
+data class FindAllRoundQueryResult(
+    val items: Page<RoundItem>,
+    val providers: List<Provider>,
+    val games: List<Game>
+)
+
+data class RoundItem(
+    val round: Round,
+
+    val providerIdentity: String,
+    val gameIdentity: String,
+
+    val playerId: String,
+
+    val totalPlaceReal: Long,
+    val totalPlaceBonus: Long,
+    val totalSettleReal: Long,
+    val totalSettleBonus: Long
+)

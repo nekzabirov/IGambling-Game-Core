@@ -14,6 +14,7 @@ import "dto/collection.dto.proto";
 service GameService {
   rpc Find(FindGameQuery) returns (FindGameResult);
   rpc FindAll(FindAllGameQuery) returns (FindAllGameResult);
+  rpc Play(PlayGameCommand) returns (PlayGameResult);
   rpc DemoUrl(GameDemoUrlQuery) returns (GameDemoUrlResult);
   rpc Update(UpdateGameCommand) returns (UpdateGameResult);
   rpc UpdateImage(UpdateGameImageCommand) returns (UpdateGameImageResult);
@@ -98,6 +99,23 @@ message GameDemoUrlQuery {
 }
 
 message GameDemoUrlResult {
+  string launch_url = 1;
+}
+
+// ============================================
+// Play Game (Open Session)
+// ============================================
+
+message PlayGameCommand {
+  string identity = 1;
+  string player_id = 2;
+  string currency = 3;
+  string locale = 4;
+  dto.PlatformDto platform = 5;
+  string lobby_url = 6;
+}
+
+message PlayGameResult {
   string launch_url = 1;
 }
 

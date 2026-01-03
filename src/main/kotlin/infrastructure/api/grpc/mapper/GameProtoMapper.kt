@@ -8,6 +8,10 @@ import domain.common.value.Platform
 import domain.game.model.Game
 import domain.game.model.GameVariant
 import domain.provider.model.Provider
+import domain.session.model.Round
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toInstant
 
 fun Game.toProto(providerIdentity: String): GameDto = GameDto.newBuilder()
     .setIdentity(identity)
@@ -77,4 +81,24 @@ fun Platform.toProto(): PlatformDto = when (this) {
     Platform.DESKTOP -> PlatformDto.PLATFORM_DESKTOP
     Platform.MOBILE -> PlatformDto.PLATFORM_MOBILE
     Platform.DOWNLOAD -> PlatformDto.PLATFORM_DOWNLOAD
+}
+
+fun LocalDateTime.toProto(): TimestampDto {
+    val instant = this.toInstant(TimeZone.UTC)
+    return TimestampDto.newBuilder()
+        .setSeconds(instant.epochSeconds)
+        .setNanos(instant.nanosecondsOfSecond)
+        .build()
+}
+
+fun Round.toProto(): RoundDto {
+    val builder = RoundDto.newBuilder()
+        .setId(id.toString())
+        .setSessionId(sessionId.toString())
+        .setGameId(gameId.toString())
+        .setExtId(extId)
+        .setFinished(finished)
+        .setCreatedAt(createdAt.toProto())
+    finishedAt?.let { builder.setFinishedAt(it.toProto()) }
+    return builder.build()
 }

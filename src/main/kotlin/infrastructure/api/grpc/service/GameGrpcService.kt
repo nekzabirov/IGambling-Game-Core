@@ -4,6 +4,8 @@ import application.port.inbound.CommandHandler
 import application.port.inbound.QueryHandler
 import application.port.inbound.command.AddGameTagCommand
 import application.port.inbound.command.RemoveGameTagCommand
+import com.nekgamebling.application.port.inbound.game.command.PlayGameCommand
+import com.nekgamebling.application.port.inbound.game.command.PlayGameResponse
 import application.port.inbound.command.UpdateGameCommand
 import application.port.inbound.command.UpdateGameImageCommand
 import com.nekgamebling.application.port.inbound.game.query.FindAllGameQuery
@@ -22,6 +24,7 @@ import com.nekgamebling.game.service.UpdateGameResult
 import com.nekgamebling.game.service.AddGameTagResult
 import com.nekgamebling.game.service.RemoveGameTagResult
 import com.nekgamebling.game.service.GameDemoUrlResult
+import com.nekgamebling.game.service.PlayGameResult
 import domain.common.value.Locale
 import domain.common.value.Platform
 import infrastructure.api.grpc.mapper.toProto
@@ -38,12 +41,14 @@ import com.nekgamebling.game.service.UpdateGameImageCommand as UpdateGameImageCo
 import com.nekgamebling.game.service.AddGameTagCommand as AddGameTagCommandProto
 import com.nekgamebling.game.service.RemoveGameTagCommand as RemoveGameTagCommandProto
 import com.nekgamebling.game.service.GameDemoUrlQuery as GameDemoUrlQueryProto
+import com.nekgamebling.game.service.PlayGameCommand as PlayGameCommandProto
 import com.nekgamebling.game.dto.PlatformDto
 
 class GameGrpcService(
     private val findGameQueryHandler: QueryHandler<FindGameQuery, FindGameResponse>,
     private val findAllGameQueryHandler: QueryHandler<FindAllGameQuery, FindAllGameResponse>,
     private val gameDemoUrlQueryHandler: QueryHandler<GameDemoUrlQuery, GameDemoUrlResponse>,
+    private val playGameCommandHandler: CommandHandler<PlayGameCommand, PlayGameResponse>,
     private val updateGameCommandHandler: CommandHandler<UpdateGameCommand, Unit>,
     private val updateGameImageCommandHandler: CommandHandler<UpdateGameImageCommand, Unit>,
     private val addGameTagCommandHandler: CommandHandler<AddGameTagCommand, Unit>,
@@ -159,6 +164,29 @@ class GameGrpcService(
         PlatformDto.PLATFORM_MOBILE -> Platform.MOBILE
         PlatformDto.PLATFORM_DOWNLOAD -> Platform.DOWNLOAD
         else -> Platform.DESKTOP
+    }
+
+    override suspend fun play(request: PlayGameCommandProto): PlayGameResult {
+        val command = PlayGameCommand(
+            identity = request.identity,
+            playerId = request.playerId,
+            currency = Currency(request.currency),
+            locale = Locale(request.locale),
+            platform = request.platform.toDomain(),
+            lobbyUrl = request.lobbyUrl
+        )
+
+        return playGameCommandHandler.handle(command)
+            .map { response ->
+                PlayGameResult.newBuilder()
+                    .setLaunchUrl(response.launchUrl)
+                    .build()
+            }
+            .getOrElse { error ->
+                throw StatusException(
+                    Status.INVALID_ARGUMENT.withDescription(error.message)
+                )
+            }
     }
 
     override suspend fun update(request: UpdateGameCommandProto): UpdateGameResult {

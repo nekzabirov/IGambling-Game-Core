@@ -70,11 +70,17 @@ fun Application.installApi() {
 
 private fun Application.installGrpc() {
     val gameService: GameGrpcService by getKoin().inject()
+    val providerService: ProviderGrpcService by getKoin().inject()
+    val collectionService: CollectionGrpcService by getKoin().inject()
+    val roundService: RoundGrpcService by getKoin().inject()
 
     val server: Server = NettyServerBuilder
         .forPort(5050)
         .maxInboundMessageSize(50 * 1024 * 1024) // 50 MB
         .addService(gameService)
+        .addService(providerService)
+        .addService(collectionService)
+        .addService(roundService)
         .build()
         .start()
 

@@ -18,8 +18,27 @@ import com.nekgamebling.application.port.inbound.provider.query.FindaProviderQue
 import com.nekgamebling.application.port.inbound.provider.query.FindaProviderResponse
 import com.nekgamebling.application.port.inbound.provider.command.UpdateProviderCommand
 import com.nekgamebling.application.port.inbound.provider.command.UpdateProviderImageCommand
+import com.nekgamebling.application.port.inbound.collection.command.UpdateCollectionCommand
+import com.nekgamebling.application.port.inbound.collection.command.UpdateCollectionGamesCommand
+import com.nekgamebling.application.port.inbound.collection.query.FindAllCollectionsQuery
+import com.nekgamebling.application.port.inbound.collection.query.FindAllCollectionsResponse
+import com.nekgamebling.application.port.inbound.collection.query.FindCollectionQuery
+import com.nekgamebling.application.port.inbound.collection.query.FindCollectionResponse
 import com.nekgamebling.infrastructure.handler.provider.command.UpdateProviderCommandHandler
 import com.nekgamebling.infrastructure.handler.provider.command.UpdateProviderImageCommandHandler
+import com.nekgamebling.infrastructure.handler.collection.command.UpdateCollectionCommandHandler
+import com.nekgamebling.infrastructure.handler.collection.command.UpdateCollectionGamesCommandHandler
+import com.nekgamebling.application.port.inbound.game.command.PlayGameCommand
+import com.nekgamebling.application.port.inbound.game.command.PlayGameResponse
+import com.nekgamebling.infrastructure.handler.game.command.PlayGameCommandHandler
+import com.nekgamebling.application.port.inbound.spin.FindAllRoundQuery
+import com.nekgamebling.application.port.inbound.spin.FindAllRoundQueryResult
+import com.nekgamebling.application.port.inbound.spin.FindRoundQuery
+import com.nekgamebling.application.port.inbound.spin.FindRoundQueryResult
+import com.nekgamebling.infrastructure.handler.spin.query.FindAllRoundQueryHandler
+import com.nekgamebling.infrastructure.handler.spin.query.FindRoundQueryHandler
+import com.nekgamebling.infrastructure.handler.collection.query.FindAllCollectionsQueryHandler
+import com.nekgamebling.infrastructure.handler.collection.query.FindCollectionQueryHandler
 import com.nekgamebling.infrastructure.handler.game.query.FindAllGameQueryHandler
 import com.nekgamebling.infrastructure.handler.provider.query.FindAllProvidersQueryHandler
 import com.nekgamebling.infrastructure.handler.provider.query.FindaProviderQueryHandler
@@ -44,6 +63,10 @@ val handlerModule = module {
     single<QueryHandler<GameDemoUrlQuery, GameDemoUrlResponse>> { GameDemoUrlQueryHandler(get()) }
     single<QueryHandler<FindaProviderQuery, FindaProviderResponse>> { FindaProviderQueryHandler() }
     single<QueryHandler<FindAllProvidersQuery, FindAllProvidersResponse>> { FindAllProvidersQueryHandler() }
+    single<QueryHandler<FindCollectionQuery, FindCollectionResponse>> { FindCollectionQueryHandler() }
+    single<QueryHandler<FindAllCollectionsQuery, FindAllCollectionsResponse>> { FindAllCollectionsQueryHandler() }
+    single<QueryHandler<FindRoundQuery, FindRoundQueryResult>> { FindRoundQueryHandler() }
+    single<QueryHandler<FindAllRoundQuery, FindAllRoundQueryResult>> { FindAllRoundQueryHandler() }
 
     // ==========================================
     // Command Handlers
@@ -54,4 +77,7 @@ val handlerModule = module {
     single<CommandHandler<RemoveGameTagCommand, Unit>> { RemoveGameTagCommandHandler() }
     single<CommandHandler<UpdateProviderCommand, Unit>> { UpdateProviderCommandHandler() }
     single<CommandHandler<UpdateProviderImageCommand, Unit>> { UpdateProviderImageCommandHandler(get()) }
+    single<CommandHandler<UpdateCollectionCommand, Unit>> { UpdateCollectionCommandHandler() }
+    single<CommandHandler<UpdateCollectionGamesCommand, Unit>> { UpdateCollectionGamesCommandHandler() }
+    single<CommandHandler<PlayGameCommand, PlayGameResponse>> { PlayGameCommandHandler(get()) }
 }
