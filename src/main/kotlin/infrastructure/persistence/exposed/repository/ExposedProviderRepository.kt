@@ -7,15 +7,9 @@ import infrastructure.persistence.exposed.mapper.toProvider
 import infrastructure.persistence.exposed.table.ProviderTable
 import shared.value.Page
 import shared.value.Pageable
-import org.jetbrains.exposed.sql.Query
-import org.jetbrains.exposed.sql.ResultRow
-import org.jetbrains.exposed.sql.SortOrder
-import org.jetbrains.exposed.sql.andWhere
-import org.jetbrains.exposed.sql.or
-import org.jetbrains.exposed.sql.selectAll
+import infrastructure.persistence.exposed.table.GameTable
+import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
-import org.jetbrains.exposed.sql.update
-import org.jetbrains.exposed.sql.upsertReturning
 import java.util.UUID
 
 /**
@@ -97,5 +91,38 @@ class ExposedProviderRepository : BaseExposedRepositoryWithIdentity<Provider, Pr
         ProviderTable.update({ ProviderTable.id eq providerId }) {
             it[ProviderTable.aggregatorId] = aggregatorId
         } > 0
+    }
+
+    override suspend fun getGameCountsByProviderIds(providerIds: List<UUID>): Map<UUID, Pair<Int, Int>> {
+        if (providerIds.isEmpty()) return emptyMap()
+
+        return newSuspendedTransaction {
+            val totalCountExpr = GameTable.id.count()
+
+            // Get total game counts per provider
+            val totalCounts = GameTable
+                .select(GameTable.providerId, totalCountExpr)
+                .where { GameTable.providerId inList providerIds }
+                .groupBy(GameTable.providerId)
+                .associate { row ->
+                    row[GameTable.providerId].value to row[totalCountExpr].toInt()
+                }
+
+            // Get active game counts per provider
+            val activeCounts = GameTable
+                .select(GameTable.providerId, totalCountExpr)
+                .where { (GameTable.providerId inList providerIds) and (GameTable.active eq true) }
+                .groupBy(GameTable.providerId)
+                .associate { row ->
+                    row[GameTable.providerId].value to row[totalCountExpr].toInt()
+                }
+
+            // Combine into result map
+            providerIds.associateWith { providerId ->
+                val total = totalCounts[providerId] ?: 0
+                val active = activeCounts[providerId] ?: 0
+                total to active
+            }
+        }
     }
 }

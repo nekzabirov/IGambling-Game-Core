@@ -29,4 +29,10 @@ interface ProviderRepository {
      * Assign provider to an aggregator.
      */
     suspend fun assignToAggregator(providerId: UUID, aggregatorId: UUID): Boolean
+
+    /**
+     * Get game counts (total and active) for given provider IDs.
+     * @return Map of providerId to Pair(totalGamesCount, activeGamesCount)
+     */
+    suspend fun getGameCountsByProviderIds(providerIds: List<UUID>): Map<UUID, Pair<Int, Int>>
 }

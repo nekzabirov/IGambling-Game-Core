@@ -37,15 +37,20 @@ class ProviderListUsecase(
             aggregatorRepository.findById(id)
         }
 
+        // Batch load game counts to avoid N+1
+        val providerIds = page.items.map { it.id }
+        val gameCountsMap = providerRepository.getGameCountsByProviderIds(providerIds)
+
         val items = page.items.mapNotNull { provider ->
             val aggregatorId = provider.aggregatorId ?: return@mapNotNull null
             val aggregator = aggregatorsMap[aggregatorId] ?: return@mapNotNull null
+            val (totalGames, activeGames) = gameCountsMap[provider.id] ?: (0 to 0)
 
             ProviderListItem(
                 provider = provider,
                 aggregatorInfo = aggregator,
-                totalGamesCount = 0, // TODO: Add actual count
-                activeGamesCount = 0
+                totalGamesCount = totalGames,
+                activeGamesCount = activeGames
             )
         }
 
