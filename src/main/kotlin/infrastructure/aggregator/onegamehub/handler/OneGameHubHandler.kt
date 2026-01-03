@@ -40,59 +40,86 @@ class OneGameHubHandler(
         return returnSuccess(session)
     }
 
-    suspend fun bet(token: SessionToken, payload: OneGameHubBetDto): OneGameHubResponse =
-        Logger.profileSuspend("OneGameHub.place(round=${payload.roundId})") {
-            val session = sessionService.findByToken(token).getOrElse {
-                return@profileSuspend it.toErrorResponse
-            }
+    suspend fun bet(token: SessionToken, payload: OneGameHubBetDto): OneGameHubResponse {
+        val start = System.currentTimeMillis()
 
-            val context = PlaceSpinContext(
-                session = session,
-                gameSymbol = payload.gameSymbol,
-                extRoundId = payload.roundId,
-                transactionId = payload.transactionId,
-                freeSpinId = payload.freeSpinId,
-                amount = currencyAdapter.convertProviderToSystem(payload.amount, session.currency)
-            )
+        val session = sessionService.findByToken(token).getOrElse {
+            return it.toErrorResponse
+        }
+        val sessionTime = System.currentTimeMillis() - start
 
-            placeSpinSaga.execute(context).getOrElse {
-                return@profileSuspend it.toErrorResponse
-            }
+        val context = PlaceSpinContext(
+            session = session,
+            gameSymbol = payload.gameSymbol,
+            extRoundId = payload.roundId,
+            transactionId = payload.transactionId,
+            freeSpinId = payload.freeSpinId,
+            amount = currencyAdapter.convertProviderToSystem(payload.amount, session.currency)
+        )
 
-            returnSuccess(session)
+        val sagaStart = System.currentTimeMillis()
+        placeSpinSaga.execute(context).getOrElse {
+            return it.toErrorResponse
+        }
+        val sagaTime = System.currentTimeMillis() - sagaStart
+
+        val totalTime = System.currentTimeMillis() - start
+        Logger.info("[PROFILE] OneGameHub.place(round=${payload.roundId}) session={}ms saga={}ms total={}ms",
+            sessionTime, sagaTime, totalTime)
+
+        // Use balance from wallet response (no extra HTTP call!)
+        val balance = context.resultBalance ?: return returnSuccess(session)
+        return OneGameHubResponse.Success(
+            balance = currencyAdapter.convertSystemToProvider(balance.totalAmount, balance.currency).toInt(),
+            currency = balance.currency.value
+        )
+    }
+
+    suspend fun win(token: SessionToken, payload: OneGameHubBetDto): OneGameHubResponse {
+        val start = System.currentTimeMillis()
+
+        val session = sessionService.findByToken(token).getOrElse {
+            return it.toErrorResponse
         }
 
-    suspend fun win(token: SessionToken, payload: OneGameHubBetDto): OneGameHubResponse =
-        Logger.profileSuspend("OneGameHub.settle(round=${payload.roundId}, finishRound=${payload.finishRound})") {
-            val session = sessionService.findByToken(token).getOrElse {
-                return@profileSuspend it.toErrorResponse
-            }
+        val context = SettleSpinContext(
+            session = session,
+            extRoundId = payload.roundId,
+            transactionId = payload.transactionId,
+            freeSpinId = payload.freeSpinId,
+            winAmount = currencyAdapter.convertProviderToSystem(payload.amount, session.currency)
+        )
 
-            val context = SettleSpinContext(
+        settleSpinSaga.execute(context).getOrElse {
+            return it.toErrorResponse
+        }
+
+        if (payload.finishRound) {
+            val endContext = EndSpinContext(
                 session = session,
                 extRoundId = payload.roundId,
-                transactionId = payload.transactionId,
-                freeSpinId = payload.freeSpinId,
-                winAmount = currencyAdapter.convertProviderToSystem(payload.amount, session.currency)
+                freeSpinId = payload.freeSpinId
             )
-
-            settleSpinSaga.execute(context).getOrElse {
-                return@profileSuspend it.toErrorResponse
+            endSpinSaga.execute(endContext).getOrElse {
+                return it.toErrorResponse
             }
-
-            if (payload.finishRound) {
-                val endContext = EndSpinContext(
-                    session = session,
-                    extRoundId = payload.roundId,
-                    freeSpinId = payload.freeSpinId
-                )
-                endSpinSaga.execute(endContext).getOrElse {
-                    return@profileSuspend it.toErrorResponse
-                }
-            }
-
-            returnSuccess(session)
         }
+
+        val totalTime = System.currentTimeMillis() - start
+        Logger.info("[PROFILE] OneGameHub.settle(round=${payload.roundId}, finishRound=${payload.finishRound}) total={}ms", totalTime)
+
+        // Use cached balance from settle saga if available
+        val balance = context.resultBalance
+        if (balance != null) {
+            return OneGameHubResponse.Success(
+                balance = currencyAdapter.convertSystemToProvider(balance.totalAmount, balance.currency).toInt(),
+                currency = balance.currency.value
+            )
+        }
+
+        // Fallback: fetch balance (only when winAmount=0 and saga skipped)
+        return returnSuccess(session)
+    }
 
     suspend fun cancel(token: SessionToken, roundId: String, transactionId: String): OneGameHubResponse =
         Logger.profileSuspend("OneGameHub.cancel(round=$roundId)") {

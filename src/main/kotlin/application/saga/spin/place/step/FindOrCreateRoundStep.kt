@@ -21,22 +21,12 @@ class FindOrCreateRoundStep(
             IllegalStateError("find_round", "game not set in context")
         )
 
-        // Check if round exists first
-        val existingRound = roundRepository.findBySessionAndExtId(
-            context.session.id,
-            context.extRoundId
+        // findOrCreate handles both lookup and creation in one call
+        context.round = roundRepository.findOrCreate(
+            sessionId = context.session.id,
+            gameId = game.id,
+            extId = context.extRoundId
         )
-
-        if (existingRound != null) {
-            context.round = existingRound
-        } else {
-            context.put(PlaceSpinContext.KEY_ROUND_CREATED, true)
-            context.round = roundRepository.findOrCreate(
-                sessionId = context.session.id,
-                gameId = game.id,
-                extId = context.extRoundId
-            )
-        }
 
         return Result.success(Unit)
     }

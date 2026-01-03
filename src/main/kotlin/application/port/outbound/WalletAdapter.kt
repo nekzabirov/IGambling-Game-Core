@@ -16,6 +16,7 @@ interface WalletAdapter {
 
     /**
      * Withdraw funds from player's wallet.
+     * Returns the updated balance after withdrawal.
      */
     suspend fun withdraw(
         playerId: String,
@@ -23,10 +24,11 @@ interface WalletAdapter {
         currency: Currency,
         realAmount: BigInteger,
         bonusAmount: BigInteger
-    ): Result<Unit>
+    ): Result<Balance>
 
     /**
      * Deposit funds to player's wallet.
+     * Returns the updated balance after deposit.
      */
     suspend fun deposit(
         playerId: String,
@@ -34,7 +36,7 @@ interface WalletAdapter {
         currency: Currency,
         realAmount: BigInteger,
         bonusAmount: BigInteger
-    ): Result<Unit>
+    ): Result<Balance>
 
     /**
      * Rollback a previous transaction.

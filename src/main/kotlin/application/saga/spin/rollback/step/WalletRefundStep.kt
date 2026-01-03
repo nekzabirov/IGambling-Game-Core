@@ -31,7 +31,7 @@ class WalletRefundStep(
         val txId = context.sagaId.toString()
 
         // Deposit the refund (reverse of withdraw)
-        walletAdapter.deposit(
+        val newBalance = walletAdapter.deposit(
             playerId = context.session.playerId,
             transactionId = txId,
             currency = context.session.currency,
@@ -41,6 +41,7 @@ class WalletRefundStep(
             return Result.failure(it)
         }
 
+        context.resultBalance = newBalance
         context.put(RollbackSpinContext.KEY_WALLET_REFUND_COMPLETED, true)
         return Result.success(Unit)
     }

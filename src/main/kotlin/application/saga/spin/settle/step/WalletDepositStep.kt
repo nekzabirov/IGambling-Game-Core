@@ -24,7 +24,7 @@ class WalletDepositStep(
         // Use saga ID as transaction ID for idempotency
         val txId = context.sagaId.toString()
 
-        walletAdapter.deposit(
+        val newBalance = walletAdapter.deposit(
             playerId = context.session.playerId,
             transactionId = txId,
             currency = context.session.currency,
@@ -34,6 +34,7 @@ class WalletDepositStep(
             return Result.failure(it)
         }
 
+        context.resultBalance = newBalance
         context.put(SettleSpinContext.KEY_WALLET_TX_COMPLETED, true)
         return Result.success(Unit)
     }

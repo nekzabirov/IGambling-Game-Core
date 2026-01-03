@@ -1,6 +1,7 @@
 package application.saga.spin.rollback
 
 import application.saga.BaseSagaContext
+import domain.session.model.Balance
 import domain.session.model.Round
 import domain.session.model.Session
 import domain.session.model.Spin
@@ -22,6 +23,7 @@ class RollbackSpinContext(
     var refundRealAmount: BigInteger = BigInteger.ZERO
     var refundBonusAmount: BigInteger = BigInteger.ZERO
     var gameIdentity: String = ""
+    var resultBalance: Balance? = null  // Balance after wallet refund
 
     val isFreeSpin: Boolean get() = originalSpin?.freeSpinId != null
 

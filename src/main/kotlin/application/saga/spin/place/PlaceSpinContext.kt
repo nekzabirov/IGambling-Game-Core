@@ -30,6 +30,7 @@ class PlaceSpinContext(
     var spin: Spin? = null
     var betRealAmount: BigInteger = BigInteger.ZERO
     var betBonusAmount: BigInteger = BigInteger.ZERO
+    var resultBalance: Balance? = null  // Balance after wallet operation
 
     val isFreeSpin: Boolean get() = freeSpinId != null
 

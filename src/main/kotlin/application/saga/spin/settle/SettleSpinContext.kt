@@ -1,6 +1,7 @@
 package application.saga.spin.settle
 
 import application.saga.BaseSagaContext
+import domain.session.model.Balance
 import domain.session.model.Round
 import domain.session.model.Session
 import domain.session.model.Spin
@@ -24,6 +25,7 @@ class SettleSpinContext(
     var realAmount: BigInteger = BigInteger.ZERO
     var bonusAmount: BigInteger = BigInteger.ZERO
     var gameIdentity: String = ""
+    var resultBalance: Balance? = null  // Balance after wallet operation
 
     val isFreeSpin: Boolean get() = freeSpinId != null
 

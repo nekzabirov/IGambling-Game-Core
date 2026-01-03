@@ -25,7 +25,7 @@ class WalletWithdrawStep(
         // Use saga ID as transaction ID for idempotency
         val txId = context.sagaId.toString()
 
-        walletAdapter.withdraw(
+        val newBalance = walletAdapter.withdraw(
             playerId = context.session.playerId,
             transactionId = txId,
             currency = context.session.currency,
@@ -35,6 +35,7 @@ class WalletWithdrawStep(
             return Result.failure(it)
         }
 
+        context.resultBalance = newBalance
         context.put(PlaceSpinContext.KEY_WALLET_TX_COMPLETED, true)
         return Result.success(Unit)
     }

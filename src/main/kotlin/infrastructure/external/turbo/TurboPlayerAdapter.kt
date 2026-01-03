@@ -6,6 +6,7 @@ import infrastructure.external.turbo.dto.TurboResponse
 import io.ktor.client.call.body
 import io.ktor.client.request.get
 import java.math.BigInteger
+import java.util.concurrent.ConcurrentHashMap
 
 class TurboPlayerAdapter : PlayerAdapter {
 
@@ -15,16 +16,32 @@ class TurboPlayerAdapter : PlayerAdapter {
         System.getenv()["TURBO_PLAYER_URL"] ?: "http://localhost:8080"
     }
 
-    override suspend fun findCurrentBetLimit(playerId: String): Result<BigInteger?> = runCatching {
-        val response: TurboResponse<List<PlayerLimitDto>> =
-            client.get("$urlAddress/limits/$playerId").body()
+    // Cache player limits for 60 seconds (limits rarely change during a session)
+    private data class CachedLimit(val limit: BigInteger?, val expiresAt: Long)
+    private val limitCache = ConcurrentHashMap<String, CachedLimit>()
+    private val cacheTtlMs = 60_000L // 1 minute
 
-        if (response.data == null) throw Exception("Failed to fetch limits from TurboPlayer")
+    override suspend fun findCurrentBetLimit(playerId: String): Result<BigInteger?> {
+        // Check cache first
+        val cached = limitCache[playerId]
+        if (cached != null && System.currentTimeMillis() < cached.expiresAt) {
+            return Result.success(cached.limit)
+        }
 
-        val amount = response.data.find { it.isActive() && it.isPlaceBet() }
-            ?.getRestAmount()
-            ?: return Result.success(null)
+        return runCatching {
+            val response: TurboResponse<List<PlayerLimitDto>> =
+                client.get("$urlAddress/limits/$playerId").body()
 
-        return Result.success(amount.toBigInteger())
+            if (response.data == null) throw Exception("Failed to fetch limits from TurboPlayer")
+
+            val amount = response.data.find { it.isActive() && it.isPlaceBet() }
+                ?.getRestAmount()
+                ?.toBigInteger()
+
+            // Cache the result
+            limitCache[playerId] = CachedLimit(amount, System.currentTimeMillis() + cacheTtlMs)
+
+            amount
+        }
     }
 }
