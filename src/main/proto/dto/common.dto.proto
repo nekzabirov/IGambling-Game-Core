@@ -1,0 +1,87 @@
+syntax = "proto3";
+
+package game.dto;
+
+option java_multiple_files = true;
+option java_package = "com.nekgamebling.game.dto";
+
+// ============================================
+// ENUMS
+// ============================================
+
+enum PlatformDto {
+  PLATFORM_UNSPECIFIED = 0;
+  PLATFORM_DESKTOP = 1;
+  PLATFORM_MOBILE = 2;
+  PLATFORM_DOWNLOAD = 3;
+}
+
+enum SpinTypeDto {
+  SPIN_TYPE_UNSPECIFIED = 0;
+  SPIN_TYPE_PLACE = 1;
+  SPIN_TYPE_SETTLE = 2;
+  SPIN_TYPE_ROLLBACK = 3;
+}
+
+enum AggregatorTypeDto {
+  AGGREGATOR_UNSPECIFIED = 0;
+  AGGREGATOR_ONEGAMEHUB = 1;
+  AGGREGATOR_PRAGMATIC = 2;
+  AGGREGATOR_PATEPLAY = 3;
+}
+
+enum RoundStatusDto {
+  ROUND_STATUS_UNSPECIFIED = 0;
+  ROUND_STATUS_ACTIVE = 1;
+  ROUND_STATUS_FINISHED = 2;
+}
+
+// ============================================
+// VALUE OBJECTS
+// ============================================
+
+// Map of locale code to localized string value
+message LocaleNameDto {
+  map<string, string> values = 1;
+}
+
+// Map of image type/key to image URL
+message ImageMapDto {
+  map<string, string> images = 1;
+}
+
+// Balance value object
+message BalanceDto {
+  string real = 1;       // BigInteger as string
+  string bonus = 2;      // BigInteger as string
+  string currency = 3;
+  string total = 4;      // Computed: real + bonus
+}
+
+// Bet amount value object
+message BetAmountDto {
+  string real = 1;       // BigInteger as string
+  string bonus = 2;      // BigInteger as string
+  string currency = 3;
+  string total = 4;      // Computed: real + bonus
+}
+
+// Pagination request
+message PaginationRequestDto {
+  int32 page = 1;
+  int32 size = 2;
+}
+
+// Pagination response metadata
+message PaginationMetaDto {
+  int32 page = 1;
+  int32 size = 2;
+  int64 total_elements = 3;
+  int32 total_pages = 4;
+}
+
+// Timestamp wrapper for datetime fields
+message TimestampDto {
+  int64 seconds = 1;
+  int32 nanos = 2;
+}

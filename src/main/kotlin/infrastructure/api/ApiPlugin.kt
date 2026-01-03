@@ -1,7 +1,7 @@
-package api
+package com.nekgamebling.infrastructure.api
 
+import com.nekgamebling.infrastructure.api.rest.aggregatorRoute
 import infrastructure.api.grpc.service.*
-import api.rest.aggregatorRoute
 import io.grpc.Server
 import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder
 import io.ktor.server.application.*
@@ -10,6 +10,7 @@ import io.ktor.server.routing.*
 import io.ktor.util.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.koin.ktor.ext.getKoin
 import org.slf4j.LoggerFactory
 
 private val REQUEST_START_TIME = AttributeKey<Long>("RequestStartTime")
@@ -68,16 +69,12 @@ fun Application.installApi() {
 }
 
 private fun Application.installGrpc() {
+    val gameService: GameGrpcService by getKoin().inject()
+
     val server: Server = NettyServerBuilder
         .forPort(5050)
         .maxInboundMessageSize(50 * 1024 * 1024) // 50 MB
-        .addService(SyncServiceImpl(this))
-        .addService(CollectionServiceImpl(this))
-        .addService(ProviderServiceImpl(this))
-        .addService(GameServiceImpl(this))
-        .addService(SessionServiceImpl(this))
-        .addService(FreespinServiceImpl(this))
-        .addService(RoundServiceImpl(this))
+        .addService(gameService)
         .build()
         .start()
 

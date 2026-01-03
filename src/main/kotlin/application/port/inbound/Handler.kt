@@ -30,7 +30,7 @@ interface QueryHandler<Q : Query<R>, R> {
      * Queries do not return Result<> wrapper since they are pure reads.
      * Returns nullable for single-entity queries (null = not found).
      */
-    suspend fun handle(query: Q): R
+    suspend fun handle(query: Q): Result<R>
 }
 
 /**

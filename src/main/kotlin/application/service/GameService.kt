@@ -1,7 +1,7 @@
 package application.service
 
 import application.port.outbound.AggregatorAdapterRegistry
-import application.port.outbound.CacheAdapter
+import com.nekgamebling.application.port.outbound.storage.CacheAdapter
 import domain.common.error.AggregatorNotSupportedError
 import domain.common.error.GameUnavailableError
 import domain.common.error.NotFoundError

@@ -1,18 +1,39 @@
 syntax = "proto3";
 
-package nekzabirov.igambling.v1;
+package game.dto;
 
-option java_package = "com.nekzabirov.igambling.proto.dto";
 option java_multiple_files = true;
+option java_package = "com.nekgamebling.game.dto";
 
+import "dto/common.dto.proto";
+
+// ============================================
+// COLLECTION DOMAIN DTOs
+// ============================================
+
+// Collection entity
 message CollectionDto {
-  string id = 1;
+  string identity = 1;                    // Unique identifier
+  LocaleNameDto name = 2;                 // Localized name
+  bool active = 3;                        // Active status
+  int32 order = 4;                        // Display order
+}
 
-  string identity = 2;
+// Association between collection and game
+message CollectionGameDto {
+  string collection_identity = 1;         // Collection identity reference
+  string game_identity = 2;               // Game identity reference
+  int32 order = 3;                        // Display order within collection
+}
 
-  map<string, string> name = 3;
+// List of collections
+message CollectionListDto {
+  repeated CollectionDto items = 1;
+  PaginationMetaDto pagination = 2;
+}
 
-  int32 order = 4;
-
-  bool active = 5;
+// Collection with games
+message CollectionWithGamesDto {
+  CollectionDto collection = 1;
+  repeated CollectionGameDto games = 2;
 }

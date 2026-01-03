@@ -1,62 +1,93 @@
 syntax = "proto3";
 
-package nekzabirov.igambling.v1;
+package game.service;
 
-option java_package = "com.nekzabirov.igambling.proto.service";
+option java_package = "com.nekgamebling.game.service";
 option java_multiple_files = true;
 
+import "dto/common.dto.proto";
 import "dto/provider.dto.proto";
-import "dto/empty.result.proto";
 import "dto/aggregator.dto.proto";
 
-service Provider {
-  rpc List (ListProviderCommand) returns (ListProviderResult);
-
-  rpc Update (UpdateProviderConfig) returns (EmptyResult);
-
-  rpc UpdateImage (UpdateProviderImageCommand) returns (EmptyResult);
+service ProviderService {
+  rpc Find(FindProviderQuery) returns (FindProviderResult);
+  rpc FindAll(FindAllProviderQuery) returns (FindAllProviderResult);
+  rpc Update(UpdateProviderCommand) returns (UpdateProviderResult);
+  rpc UpdateImage(UpdateProviderImageCommand) returns (UpdateProviderImageResult);
 }
 
-message ListProviderCommand {
-  string query = 1;
+// ============================================
+// Find Single Provider
+// ============================================
 
-  optional bool active = 2;
-
-  int32 page_number = 3;
-
-  int32 page_size = 4;
-}
-
-message ListProviderResult {
-  message Item {
-    ProviderDto provider = 1;
-
-    int32 active_games = 2;
-
-    int32 total_games = 3;
-  }
-
-  repeated Item items = 1;
-
-  repeated AggregatorDto aggregators = 2;
-
-  int32 total_page = 3;
-}
-
-message UpdateProviderConfig {
+message FindProviderQuery {
   string identity = 1;
-
-  int32 order = 2;
-
-  bool active = 3;
 }
+
+message FindProviderResult {
+  dto.ProviderDto provider = 1;
+  dto.AggregatorInfoDto aggregator = 2;
+  int32 active_games = 3;
+  int32 total_games = 4;
+}
+
+// ============================================
+// Find All Providers (Paginated)
+// ============================================
+
+message FindAllProviderQuery {
+  // Pagination
+  dto.PaginationRequestDto pagination = 1;
+
+  // Search query (matches provider name or identity)
+  string query = 2;
+
+  // Filters
+  optional bool active = 3;
+  optional string aggregator_identity = 4;
+}
+
+message FindAllProviderResult {
+  // Paginated provider items
+  repeated ProviderItemDto items = 1;
+  dto.PaginationMetaDto pagination = 2;
+
+  // Related entities from results
+  repeated dto.AggregatorInfoDto aggregators = 3;
+}
+
+message ProviderItemDto {
+  dto.ProviderDto provider = 1;
+  string aggregator_identity = 2;
+  int32 active_games = 3;
+  int32 total_games = 4;
+}
+
+// ============================================
+// Update Provider
+// ============================================
+
+message UpdateProviderCommand {
+  string identity = 1;
+  optional bool active = 2;
+  optional int32 order = 3;
+}
+
+message UpdateProviderResult {
+  // Empty response - success indicated by no error
+}
+
+// ============================================
+// Update Provider Image
+// ============================================
 
 message UpdateProviderImageCommand {
   string identity = 1;
-
   string key = 2;
+  bytes file = 3;
+  string extension = 4;
+}
 
-  string ext = 3;
-
-  bytes data = 4;
+message UpdateProviderImageResult {
+  // Empty response - success indicated by no error
 }

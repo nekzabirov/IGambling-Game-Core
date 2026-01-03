@@ -1,6 +1,6 @@
 package infrastructure.persistence.cache
 
-import application.port.outbound.CacheAdapter
+import com.nekgamebling.application.port.outbound.storage.CacheAdapter
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.util.concurrent.ConcurrentHashMap

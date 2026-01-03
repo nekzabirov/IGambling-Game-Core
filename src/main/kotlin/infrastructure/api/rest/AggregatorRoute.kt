@@ -1,4 +1,4 @@
-package api.rest
+package com.nekgamebling.infrastructure.api.rest
 
 import infrastructure.aggregator.onegamehub.handler.oneGameHubWebhookRoute
 import io.ktor.server.routing.*

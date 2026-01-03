@@ -1,6 +1,6 @@
 package infrastructure.persistence.cache
 
-import application.port.outbound.CacheAdapter
+import com.nekgamebling.application.port.outbound.storage.CacheAdapter
 import kotlin.time.Duration
 
 /**

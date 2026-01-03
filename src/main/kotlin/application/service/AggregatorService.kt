@@ -1,7 +1,7 @@
 package application.service
 
 import application.port.outbound.AggregatorInfoRepository
-import application.port.outbound.CacheAdapter
+import com.nekgamebling.application.port.outbound.storage.CacheAdapter
 import domain.aggregator.model.AggregatorInfo
 import domain.common.error.NotFoundError
 import infrastructure.persistence.cache.CachingRepository

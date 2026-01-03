@@ -1,8 +1,0 @@
-syntax = "proto3";
-
-package nekzabirov.igambling.v1;
-
-option java_package = "com.nekzabirov.igambling.proto.dto";
-option java_multiple_files = true;
-
-message EmptyResult {}

@@ -1,176 +1,157 @@
 syntax = "proto3";
 
-package nekzabirov.igambling.v1;
+package game.service;
 
-option java_package = "com.nekzabirov.igambling.proto.service";
+option java_package = "com.nekgamebling.game.service";
 option java_multiple_files = true;
 
+import "dto/common.dto.proto";
 import "dto/provider.dto.proto";
-import "dto/empty.result.proto";
 import "dto/game.dto.proto";
-import "dto/collection.dto.proto";
-import "dto/game_variant.dto.proto";
-import "dto/platformType.dto.proto";
 import "dto/aggregator.dto.proto";
+import "dto/collection.dto.proto";
 
-service Game {
-  rpc Find (FindGameCommand) returns (FindGameResult);
-
-  rpc List (ListGameCommand) returns (ListGameResult);
-
-  rpc Update (UpdateGameConfig) returns (EmptyResult);
-
-  rpc UpdateImage (UpdateGameImageCommand) returns (EmptyResult);
-
-  rpc AddTag (GameTagCommand) returns (EmptyResult);
-
-  rpc RemoveTag (GameTagCommand) returns (EmptyResult);
-
-  rpc AddFavourite (GameFavouriteCommand) returns (EmptyResult);
-
-  rpc RemoveFavourite (GameFavouriteCommand) returns (EmptyResult);
-
-  rpc DemoGame (DemoGameCommand) returns (DemoGameResult);
+service GameService {
+  rpc Find(FindGameQuery) returns (FindGameResult);
+  rpc FindAll(FindAllGameQuery) returns (FindAllGameResult);
+  rpc DemoUrl(GameDemoUrlQuery) returns (GameDemoUrlResult);
+  rpc Update(UpdateGameCommand) returns (UpdateGameResult);
+  rpc UpdateImage(UpdateGameImageCommand) returns (UpdateGameImageResult);
+  rpc AddTag(AddGameTagCommand) returns (AddGameTagResult);
+  rpc RemoveTag(RemoveGameTagCommand) returns (RemoveGameTagResult);
 }
 
-message FindGameCommand {
+// ============================================
+// Find Single Game
+// ============================================
+
+message FindGameQuery {
   string identity = 1;
 }
 
 message FindGameResult {
-  string id = 1;
+  dto.GameDto game = 1;
 
-  string identity = 2;
+  dto.ProviderDto provider = 2;
 
-  string name = 3;
+  dto.GameVariantDto active_variant = 3;
 
-  map<string, string> images = 4;
+  dto.AggregatorInfoDto aggregator = 4;
 
-  bool bonus_bet_enable = 5;
-
-  bool bonus_wagering_enable = 6;
-
-  repeated string tags = 7;
-
-  string symbol = 8;
-
-  bool free_spin_enable = 9;
-
-  bool free_chip_enable = 10;
-
-  bool jackpot_enable = 11;
-
-  bool demo_enable = 12;
-
-  bool bonus_buy_enable = 13;
-
-  repeated string locales = 14;
-
-  repeated PlatformType platforms = 15;
-
-  int32 play_lines = 16;
-
-  ProviderDto provider = 17;
-
-  AggregatorDto aggregator = 18;
+  repeated dto.CollectionDto collections = 5;
 }
 
-message ListGameCommand {
-  string query = 1;
+// ============================================
+// Find All Games (Paginated)
+// ============================================
 
-  optional bool active = 2;
+message FindAllGameQuery {
+  // Pagination
+  dto.PaginationRequestDto pagination = 1;
 
-  int32 page_number = 3;
+  // Search query (matches game name or identity)
+  string query = 2;
 
-  int32 page_size = 4;
+  // Filters
+  optional bool active = 3;
+  repeated string provider_identities = 4;
+  repeated string collection_identities = 5;
+  repeated string tags = 6;
 
-  optional bool bonus_bet = 5;
+  // Game feature filters
+  optional bool bonus_bet_enable = 7;
+  optional bool bonus_wagering_enable = 8;
 
-  optional bool bonus_wagering = 6;
-
-  optional bool free_spin_enable = 7;
-
-  optional bool free_chip_enable = 8;
-
-  optional bool jackpot_enable = 9;
-
-  optional bool demo_enable = 10;
-
-  optional bool bonus_buy_enable = 11;
-
-  repeated PlatformType platforms = 12;
-
-  repeated string provider_identity = 13;
-
-  repeated string category_identity = 14;
-
-  repeated string tags = 15;
-
-  optional string player_id = 16;
+  // Variant feature filters
+  optional bool free_spin_enable = 9;
+  optional bool free_chip_enable = 10;
+  optional bool jackpot_enable = 11;
 }
 
-message ListGameResult {
-  message Item {
-    GameDto game = 1;
+message FindAllGameResult {
+  // Paginated game items
+  repeated GameItemDto items = 1;
+  dto.PaginationMetaDto pagination = 2;
 
-    GameVariantDto variant = 2;
-
-    repeated string collectionIds = 3;
-  }
-
-  repeated Item items = 1;
-
-  repeated ProviderDto providers = 2;
-
-  repeated CollectionDto collections = 3;
-
-  int32 total_page = 4;
+  // Related entities from results
+  repeated dto.ProviderDto providers = 3;
+  repeated dto.AggregatorInfoDto aggregators = 4;
+  repeated dto.CollectionDto collections = 5;
 }
 
-message UpdateGameConfig {
+message GameItemDto {
+  dto.GameDto game = 1;
+  dto.GameVariantDto active_variant = 2;
+  repeated string collection_identities = 3;
+}
+
+// ============================================
+// Game Demo URL
+// ============================================
+
+message GameDemoUrlQuery {
   string identity = 1;
-
-  bool active = 2;
-
-  bool bonus_bet = 3;
-
-  bool bonus_wagering = 4;
-}
-
-message GameTagCommand {
-  string identity = 1;
-
-  string tag = 2;
-}
-
-message GameFavouriteCommand {
-  string game_identity = 1;
-
-  string player_id = 2;
-}
-
-message DemoGameCommand {
-  string game_identity = 1;
-
   string currency = 2;
-
   string locale = 3;
-
-  PlatformType platform = 4;
-
+  dto.PlatformDto platform = 4;
   string lobby_url = 5;
 }
 
-message DemoGameResult {
+message GameDemoUrlResult {
   string launch_url = 1;
 }
 
+// ============================================
+// Update Game
+// ============================================
+
+message UpdateGameCommand {
+  string identity = 1;
+  optional bool bonus_bet_enable = 2;
+  optional bool bonus_wagering_enable = 3;
+}
+
+message UpdateGameResult {
+  // Empty response - success indicated by no error
+}
+
+// ============================================
+// Update Game Image
+// ============================================
+
 message UpdateGameImageCommand {
   string identity = 1;
-
   string key = 2;
+  bytes file = 3;
+  string extension = 4;
+}
 
-  string ext = 3;
+message UpdateGameImageResult {
+  // Empty response - success indicated by no error
+}
 
-  bytes data = 4;
+// ============================================
+// Add Game Tag
+// ============================================
+
+message AddGameTagCommand {
+  string identity = 1;
+  string tag = 2;
+}
+
+message AddGameTagResult {
+  // Empty response - success indicated by no error
+}
+
+// ============================================
+// Remove Game Tag
+// ============================================
+
+message RemoveGameTagCommand {
+  string identity = 1;
+  string tag = 2;
+}
+
+message RemoveGameTagResult {
+  // Empty response - success indicated by no error
 }

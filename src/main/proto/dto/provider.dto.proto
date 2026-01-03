@@ -1,24 +1,34 @@
 syntax = "proto3";
 
-package nekzabirov.igambling.v1;
+package game.dto;
 
-import "google/protobuf/empty.proto";
-
-option java_package = "com.nekzabirov.igambling.proto.dto";
 option java_multiple_files = true;
+option java_package = "com.nekgamebling.game.dto";
 
+import "dto/common.dto.proto";
+
+// ============================================
+// PROVIDER DOMAIN DTOs
+// ============================================
+
+// Provider entity
 message ProviderDto {
-  string id = 1;
+  string identity = 1;                    // Unique identifier
+  string name = 2;                        // Provider name
+  ImageMapDto images = 3;                 // Provider images
+  int32 order = 4;                        // Display order
+  optional string aggregator_identity = 5; // Aggregator identity reference (nullable)
+  bool active = 6;                        // Active status
+}
 
-  string identity = 2;
+// Provider filter for queries
+message ProviderFilterDto {
+  string query = 1;                       // Search query
+  optional bool active = 2;               // Filter by active status
+}
 
-  string name = 3;
-
-  int32 order = 4;
-
-  string aggregatorId = 5;
-
-  map<string, string> images = 6;
-
-  bool active = 7;
+// List of providers
+message ProviderListDto {
+  repeated ProviderDto items = 1;
+  PaginationMetaDto pagination = 2;
 }

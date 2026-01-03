@@ -1,20 +1,41 @@
 syntax = "proto3";
 
-package nekzabirov.igambling.v1;
+package game.dto;
 
-import "google/protobuf/empty.proto";
-
-option java_package = "com.nekzabirov.igambling.proto.dto";
 option java_multiple_files = true;
+option java_package = "com.nekgamebling.game.dto";
 
-message AggregatorDto {
-  string id = 1;
+import "dto/common.dto.proto";
 
-  string identity = 2;
+// ============================================
+// AGGREGATOR DOMAIN DTOs
+// ============================================
 
-  string type = 3;
+// Aggregator configuration and info
+message AggregatorInfoDto {
+  string identity = 1;                    // Unique identifier
+  map<string, string> config = 2;         // Configuration key-value pairs
+  AggregatorTypeDto aggregator = 3;       // Aggregator type enum
+  bool active = 4;                        // Active status
+}
 
-  map<string, string> config = 4;
+// Game information from aggregator (external game data)
+message AggregatorGameDto {
+  string symbol = 1;                      // Game symbol/code
+  string name = 2;                        // Game name
+  string provider_name = 3;               // Provider name from aggregator
+  bool free_spin_enable = 4;              // Free spin support
+  bool free_chip_enable = 5;              // Free chip support
+  bool jackpot_enable = 6;                // Jackpot support
+  bool demo_enable = 7;                   // Demo mode support
+  bool bonus_buy_enable = 8;              // Bonus buy feature
+  repeated string locales = 9;            // Supported locales
+  repeated PlatformDto platforms = 10;    // Supported platforms
+  int32 play_lines = 11;                  // Number of play lines
+}
 
-  bool active = 5;
+// List of aggregator info items
+message AggregatorInfoListDto {
+  repeated AggregatorInfoDto items = 1;
+  PaginationMetaDto pagination = 2;
 }

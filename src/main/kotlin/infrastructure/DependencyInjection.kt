@@ -6,8 +6,8 @@ import application.saga.spin.place.PlaceSpinSaga
 import application.saga.spin.rollback.RollbackSpinSaga
 import application.saga.spin.settle.SettleSpinSaga
 import application.service.*
-import infrastructure.handler.command.*
-import infrastructure.handler.query.*
+import com.nekgamebling.infrastructure.handler.handlerModule
+import infrastructure.api.grpc.grpcModule
 import infrastructure.messaging.messagingModule
 import infrastructure.external.UnitCurrencyAdapter
 import infrastructure.external.s3.S3FileAdapter
@@ -27,8 +27,9 @@ fun Application.coreModule() = module {
         DBModule,
         adapterModule,
         serviceModule,
-        handlerModule,
         sagaModule,
+        handlerModule,
+        grpcModule,
         AggregatorModule,
         messagingModule(this@coreModule)
     )
@@ -62,78 +63,6 @@ private val serviceModule = module {
     single { AggregatorService(get(), get()) }
     single { FreespinService(get(), get()) }
     single { GameSyncService(get(), get(), get(), get()) }
-}
-
-private val handlerModule = module {
-    // ==========================================
-    // Query Handlers - Game
-    // ==========================================
-    factory { FindGameByIdQueryHandler() }
-    factory { FindGameByIdentityQueryHandler() }
-    factory { FindGameBySymbolQueryHandler() }
-    factory { ListGamesQueryHandler() }
-    factory { SearchGamesQueryHandler() }
-
-    // ==========================================
-    // Query Handlers - Collection
-    // ==========================================
-    factory { ListCollectionsQueryHandler() }
-    factory { FindCollectionByIdentityQueryHandler() }
-    factory { FindCollectionByIdQueryHandler() }
-
-    // ==========================================
-    // Query Handlers - Provider
-    // ==========================================
-    factory { ListProvidersQueryHandler() }
-    factory { FindProviderByIdentityQueryHandler() }
-    factory { FindProviderByIdQueryHandler() }
-
-    // ==========================================
-    // Query Handlers - Aggregator
-    // ==========================================
-    factory { ListAggregatorsQueryHandler() }
-    factory { ListActiveAggregatorsQueryHandler() }
-    factory { FindAggregatorByIdentityQueryHandler() }
-    factory { FindAggregatorByIdQueryHandler() }
-    factory { FindAggregatorByTypeQueryHandler() }
-    factory { ListGameVariantsQueryHandler() }
-
-    // ==========================================
-    // Query Handlers - Round
-    // ==========================================
-    factory { GetRoundsDetailsQueryHandler() }
-
-    // ==========================================
-    // Command Handlers - Game
-    // ==========================================
-    factory { UpdateGameCommandHandler() }
-    factory { UpdateGameImageCommandHandler(get()) }
-    factory { AddGameTagCommandHandler() }
-    factory { RemoveGameTagCommandHandler() }
-    factory { AddGameFavouriteCommandHandler(get()) }
-    factory { RemoveGameFavouriteCommandHandler(get()) }
-    factory { AddGameWinCommandHandler(get()) }
-
-    // ==========================================
-    // Command Handlers - Collection
-    // ==========================================
-    factory { AddCollectionCommandHandler() }
-    factory { UpdateCollectionCommandHandler() }
-    factory { AddGameToCollectionCommandHandler() }
-    factory { RemoveGameFromCollectionCommandHandler() }
-    factory { ChangeGameOrderInCollectionCommandHandler() }
-
-    // ==========================================
-    // Command Handlers - Provider
-    // ==========================================
-    factory { UpdateProviderCommandHandler() }
-    factory { UpdateProviderImageCommandHandler(get()) }
-    factory { AssignProviderToAggregatorCommandHandler() }
-
-    // ==========================================
-    // Command Handlers - Aggregator
-    // ==========================================
-    factory { AddAggregatorCommandHandler() }
 }
 
 private val sagaModule = module {
