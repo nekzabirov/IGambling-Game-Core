@@ -5,6 +5,7 @@ import infrastructure.external.turbo.dto.PlayerLimitDto
 import infrastructure.external.turbo.dto.TurboResponse
 import io.ktor.client.call.body
 import io.ktor.client.request.get
+import shared.Logger
 import java.math.BigInteger
 import java.util.concurrent.ConcurrentHashMap
 
@@ -25,12 +26,14 @@ class TurboPlayerAdapter : PlayerAdapter {
         // Check cache first
         val cached = limitCache[playerId]
         if (cached != null && System.currentTimeMillis() < cached.expiresAt) {
+            Logger.info("[CACHE HIT] playerLimit for player=$playerId")
             return Result.success(cached.limit)
         }
 
         return runCatching {
-            val response: TurboResponse<List<PlayerLimitDto>> =
+            val response: TurboResponse<List<PlayerLimitDto>> = Logger.profileSuspend("turbo.player.findLimit") {
                 client.get("$urlAddress/limits/$playerId").body()
+            }
 
             if (response.data == null) throw Exception("Failed to fetch limits from TurboPlayer")
 

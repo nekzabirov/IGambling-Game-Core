@@ -4,6 +4,7 @@ import application.port.outbound.WalletAdapter
 import application.saga.SagaStep
 import application.saga.spin.place.PlaceSpinContext
 import domain.session.model.Balance
+import infrastructure.external.turbo.BalanceCache
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -41,6 +42,9 @@ class WalletWithdrawStep(
             currency = balance.currency
         )
         context.resultBalance = predictedBalance
+
+        // Cache predicted balance for subsequent requests (e.g., win with amount=0)
+        BalanceCache.put(context.session.playerId, predictedBalance)
 
         // Fire wallet call in background (don't wait)
         val txId = context.sagaId.toString()

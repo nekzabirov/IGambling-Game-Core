@@ -28,7 +28,13 @@ class TurboWalletAdapter : WalletAdapter {
     }
 
     override suspend fun findBalance(playerId: String): Result<Balance> = runCatching {
-        val walletResponse: TurboResponse<List<AccountDto>> = Logger.profileSuspend("turbo.wallet.finBalance") {
+        // Check cache first (saves ~200ms HTTP call)
+        BalanceCache.get(playerId)?.let { cached ->
+            Logger.info("[CACHE HIT] balance for player=$playerId")
+            return@runCatching cached
+        }
+
+        val walletResponse: TurboResponse<List<AccountDto>> = Logger.profileSuspend("turbo.wallet.findBalance") {
             client.get("$urlAddress/accounts/find") {
                 parameter("playerId", playerId)
             }.body()
@@ -38,11 +44,16 @@ class TurboWalletAdapter : WalletAdapter {
 
         val account = walletResponse.data.firstOrNull { it.status == 1 } ?: throw Exception("Failed to fetch balance from TurboWallet")
 
-        return@runCatching Balance(
+        val balance = Balance(
             real = account.realBalance.toBigInteger() + account.lockedBalance.toBigInteger(),
             bonus = account.bonusBalance.toBigInteger(),
             currency = Currency(account.currency)
         )
+
+        // Cache for subsequent requests
+        BalanceCache.put(playerId, balance)
+
+        return@runCatching balance
     }
 
     override suspend fun withdraw(
@@ -70,11 +81,16 @@ class TurboWalletAdapter : WalletAdapter {
         val tx = response.data?.firstOrNull()
             ?: throw Exception("No transaction data in withdraw response")
 
-        Balance(
+        val balance = Balance(
             real = tx.realBalance.toBigInteger() + tx.lockedBalance.toBigInteger(),
             bonus = tx.bonusBalance.toBigInteger(),
             currency = Currency(tx.currency)
         )
+
+        // Update cache with actual balance from wallet
+        BalanceCache.put(playerId, balance)
+
+        balance
     }
 
     override suspend fun deposit(
@@ -102,11 +118,16 @@ class TurboWalletAdapter : WalletAdapter {
         val tx = response.data?.firstOrNull()
             ?: throw Exception("No transaction data in deposit response")
 
-        Balance(
+        val balance = Balance(
             real = tx.realBalance.toBigInteger() + tx.lockedBalance.toBigInteger(),
             bonus = tx.bonusBalance.toBigInteger(),
             currency = Currency(tx.currency)
         )
+
+        // Update cache with actual balance from wallet
+        BalanceCache.put(playerId, balance)
+
+        balance
     }
 
     override suspend fun rollback(playerId: String, transactionId: String): Result<Unit> {
