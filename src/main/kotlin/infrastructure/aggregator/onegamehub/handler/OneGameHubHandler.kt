@@ -20,6 +20,7 @@ import domain.common.error.InvalidPresetError
 import domain.common.error.SessionInvalidError
 import domain.session.model.Session
 import infrastructure.aggregator.onegamehub.handler.dto.OneGameHubResponse
+import shared.Logger
 import shared.value.SessionToken
 
 class OneGameHubHandler(
@@ -39,75 +40,78 @@ class OneGameHubHandler(
         return returnSuccess(session)
     }
 
-    suspend fun bet(token: SessionToken, payload: OneGameHubBetDto): OneGameHubResponse {
-        val session = sessionService.findByToken(token).getOrElse {
-            return it.toErrorResponse
+    suspend fun bet(token: SessionToken, payload: OneGameHubBetDto): OneGameHubResponse =
+        Logger.profileSuspend("OneGameHub.place(round=${payload.roundId})") {
+            val session = sessionService.findByToken(token).getOrElse {
+                return@profileSuspend it.toErrorResponse
+            }
+
+            val context = PlaceSpinContext(
+                session = session,
+                gameSymbol = payload.gameSymbol,
+                extRoundId = payload.roundId,
+                transactionId = payload.transactionId,
+                freeSpinId = payload.freeSpinId,
+                amount = currencyAdapter.convertProviderToSystem(payload.amount, session.currency)
+            )
+
+            placeSpinSaga.execute(context).getOrElse {
+                return@profileSuspend it.toErrorResponse
+            }
+
+            returnSuccess(session)
         }
 
-        val context = PlaceSpinContext(
-            session = session,
-            gameSymbol = payload.gameSymbol,
-            extRoundId = payload.roundId,
-            transactionId = payload.transactionId,
-            freeSpinId = payload.freeSpinId,
-            amount = currencyAdapter.convertProviderToSystem(payload.amount, session.currency)
-        )
+    suspend fun win(token: SessionToken, payload: OneGameHubBetDto): OneGameHubResponse =
+        Logger.profileSuspend("OneGameHub.settle(round=${payload.roundId}, finishRound=${payload.finishRound})") {
+            val session = sessionService.findByToken(token).getOrElse {
+                return@profileSuspend it.toErrorResponse
+            }
 
-        placeSpinSaga.execute(context).getOrElse {
-            return it.toErrorResponse
-        }
-
-        return returnSuccess(session)
-    }
-
-    suspend fun win(token: SessionToken, payload: OneGameHubBetDto): OneGameHubResponse {
-        val session = sessionService.findByToken(token).getOrElse {
-            return it.toErrorResponse
-        }
-
-        val context = SettleSpinContext(
-            session = session,
-            extRoundId = payload.roundId,
-            transactionId = payload.transactionId,
-            freeSpinId = payload.freeSpinId,
-            winAmount = currencyAdapter.convertProviderToSystem(payload.amount, session.currency)
-        )
-
-        settleSpinSaga.execute(context).getOrElse {
-            return it.toErrorResponse
-        }
-
-        if (payload.finishRound) {
-            val endContext = EndSpinContext(
+            val context = SettleSpinContext(
                 session = session,
                 extRoundId = payload.roundId,
-                freeSpinId = payload.freeSpinId
+                transactionId = payload.transactionId,
+                freeSpinId = payload.freeSpinId,
+                winAmount = currencyAdapter.convertProviderToSystem(payload.amount, session.currency)
             )
-            endSpinSaga.execute(endContext).getOrElse {
-                return it.toErrorResponse
+
+            settleSpinSaga.execute(context).getOrElse {
+                return@profileSuspend it.toErrorResponse
             }
+
+            if (payload.finishRound) {
+                val endContext = EndSpinContext(
+                    session = session,
+                    extRoundId = payload.roundId,
+                    freeSpinId = payload.freeSpinId
+                )
+                endSpinSaga.execute(endContext).getOrElse {
+                    return@profileSuspend it.toErrorResponse
+                }
+            }
+
+            returnSuccess(session)
         }
 
-        return returnSuccess(session)
-    }
+    suspend fun cancel(token: SessionToken, roundId: String, transactionId: String): OneGameHubResponse =
+        Logger.profileSuspend("OneGameHub.cancel(round=$roundId)") {
+            val session = sessionService.findByToken(token).getOrElse {
+                return@profileSuspend it.toErrorResponse
+            }
 
-    suspend fun cancel(token: SessionToken, roundId: String, transactionId: String): OneGameHubResponse {
-        val session = sessionService.findByToken(token).getOrElse {
-            return it.toErrorResponse
+            val context = RollbackSpinContext(
+                session = session,
+                extRoundId = roundId,
+                transactionId = transactionId
+            )
+
+            rollbackSpinSaga.execute(context).getOrElse {
+                return@profileSuspend it.toErrorResponse
+            }
+
+            returnSuccess(session)
         }
-
-        val context = RollbackSpinContext(
-            session = session,
-            extRoundId = roundId,
-            transactionId = transactionId
-        )
-
-        rollbackSpinSaga.execute(context).getOrElse {
-            return it.toErrorResponse
-        }
-
-        return returnSuccess(session)
-    }
 
     private suspend fun returnSuccess(session: Session): OneGameHubResponse {
         val balance = walletAdapter.findBalance(session.playerId).getOrElse {

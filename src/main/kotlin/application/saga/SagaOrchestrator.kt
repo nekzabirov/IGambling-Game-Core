@@ -5,6 +5,7 @@ import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import org.slf4j.LoggerFactory
+import shared.Logger as AppLogger
 
 /**
  * Core saga orchestrator that manages step execution and compensation.
@@ -90,10 +91,12 @@ class SagaOrchestrator<C : SagaContext>(
         var lastError: Throwable? = null
 
         repeat(retryPolicy.maxAttempts) { attempt ->
-            val result = try {
-                step.execute(context)
-            } catch (e: Exception) {
-                Result.failure(e)
+            val result = AppLogger.profileSuspend("$sagaName.${step.stepName}") {
+                try {
+                    step.execute(context)
+                } catch (e: Exception) {
+                    Result.failure(e)
+                }
             }
 
             if (result.isSuccess) return result
@@ -126,7 +129,9 @@ class SagaOrchestrator<C : SagaContext>(
             logger.info("Compensating step [${step.stepName}]")
 
             try {
-                step.compensate(context).onFailure { error ->
+                AppLogger.profileSuspend("$sagaName.${step.stepName}.compensate") {
+                    step.compensate(context)
+                }.onFailure { error ->
                     logger.error("Compensation failed for step [${step.stepName}]: ${error.message}")
                     onStepComplete?.invoke(step.stepId, StepStatus.COMPENSATION_FAILED)
                     // Continue with other compensations even if one fails

@@ -1,9 +1,13 @@
 package infrastructure.persistence.exposed.repository
 
 import application.port.outbound.RoundRepository
+import domain.common.value.SpinType
 import domain.session.model.Round
+import domain.session.model.Spin
 import infrastructure.persistence.exposed.mapper.toRound
+import infrastructure.persistence.exposed.mapper.toSpin
 import infrastructure.persistence.exposed.table.RoundTable
+import infrastructure.persistence.exposed.table.SpinTable
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -25,6 +29,21 @@ class ExposedRoundRepository : RoundRepository {
                 .where { (RoundTable.sessionId eq sessionId) and (RoundTable.extId eq extId) }
                 .singleOrNull()
                 ?.toRound()
+        }
+
+    override suspend fun findWithPlaceSpin(sessionId: UUID, extId: String): Pair<Round, Spin>? =
+        newSuspendedTransaction {
+            (RoundTable innerJoin SpinTable)
+                .selectAll()
+                .where {
+                    (RoundTable.sessionId eq sessionId) and
+                    (RoundTable.extId eq extId) and
+                    (SpinTable.type eq SpinType.PLACE)
+                }
+                .singleOrNull()
+                ?.let { row ->
+                    row.toRound() to row.toSpin()
+                }
         }
 
     override suspend fun findOrCreate(sessionId: UUID, gameId: UUID, extId: String): Round =

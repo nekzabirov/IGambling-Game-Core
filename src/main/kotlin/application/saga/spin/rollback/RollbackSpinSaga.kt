@@ -13,11 +13,10 @@ import application.service.GameService
  * Saga definition for rolling back a spin (refunding a bet).
  *
  * Step order:
- * 1. FindRound - find the round by external ID
- * 2. FindOriginalSpin - find the spin to rollback
- * 3. WalletRefund - refund the bet amount to wallet
- * 4. SaveRollbackSpin - save rollback spin record
- * 5. PublishEvent - publish rollback event
+ * 1. FindRoundWithSpin - find round AND place spin in single query (optimized)
+ * 2. WalletRefund - refund the bet amount to wallet
+ * 3. SaveRollbackSpin - save rollback spin record
+ * 4. PublishEvent - publish rollback event
  */
 class RollbackSpinSaga(
     private val gameService: GameService,
@@ -29,8 +28,7 @@ class RollbackSpinSaga(
     private val orchestrator = SagaOrchestrator(
         sagaName = "RollbackSpinSaga",
         steps = listOf(
-            FindRoundStep(roundRepository),
-            FindOriginalSpinStep(spinRepository),
+            FindRoundWithSpinStep(roundRepository),
             WalletRefundStep(walletAdapter),
             SaveRollbackSpinStep(spinRepository),
             PublishRollbackEventStep(eventPublisher, gameService)

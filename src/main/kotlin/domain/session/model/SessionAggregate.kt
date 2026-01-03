@@ -13,6 +13,7 @@ import shared.value.Currency
 import domain.common.value.Locale
 import domain.common.value.Platform
 import domain.common.value.SpinType
+import kotlinx.datetime.toKotlinLocalDateTime
 import java.math.BigInteger
 import java.util.UUID
 
@@ -398,7 +399,7 @@ class RoundEntity private constructor(
             extId = extId,
             _status = RoundStatus.ACTIVE,
             _spins = mutableListOf(),
-            createdAt = Clock.System.now().toLocalDateTime(TimeZone.UTC),
+            createdAt = java.time.LocalDateTime.now().toKotlinLocalDateTime(),
             _finishedAt = null
         )
 

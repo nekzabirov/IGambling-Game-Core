@@ -7,6 +7,8 @@ import application.saga.spin.place.PlaceSpinContext
 import domain.common.error.BetLimitExceededError
 import domain.common.error.IllegalStateError
 import domain.common.error.InsufficientBalanceError
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import java.math.BigInteger
 
 /**
@@ -29,14 +31,15 @@ class ValidateBalanceStep(
             IllegalStateError("validate_balance", "game not set")
         )
 
-        // Fetch balance and bet limit
-        val balance = walletAdapter.findBalance(context.session.playerId).getOrElse {
-            return Result.failure(it)
+        // Fetch balance and bet limit in parallel for faster processing
+        val (balanceResult, betLimitResult) = coroutineScope {
+            val balanceDeferred = async { walletAdapter.findBalance(context.session.playerId) }
+            val betLimitDeferred = async { playerAdapter.findCurrentBetLimit(context.session.playerId) }
+            balanceDeferred.await() to betLimitDeferred.await()
         }
 
-        val betLimit = playerAdapter.findCurrentBetLimit(context.session.playerId).getOrElse {
-            return Result.failure(it)
-        }
+        val balance = balanceResult.getOrElse { return Result.failure(it) }
+        val betLimit = betLimitResult.getOrElse { return Result.failure(it) }
 
         // Adjust balance if bonus bet is disabled
         val adjustedBalance = if (!game.bonusBetEnable) {

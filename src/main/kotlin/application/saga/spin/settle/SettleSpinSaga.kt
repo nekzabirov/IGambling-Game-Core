@@ -14,12 +14,11 @@ import java.math.BigInteger
  * Saga definition for settling a spin (determining win/loss).
  *
  * Step order:
- * 1. FindRound - find the round by external ID
- * 2. FindPlaceSpin - find the original place spin
- * 3. CalculateWinAmounts - determine real/bonus split
- * 4. WalletDeposit - deposit winnings (BEFORE saving)
- * 5. SaveSettleSpin - save settle spin record (AFTER wallet success)
- * 6. PublishEvent - publish domain event
+ * 1. FindRoundWithSpin - find round AND place spin in single query (optimized)
+ * 2. CalculateWinAmounts - determine real/bonus split
+ * 3. WalletDeposit - deposit winnings (BEFORE saving)
+ * 4. SaveSettleSpin - save settle spin record (AFTER wallet success)
+ * 5. PublishEvent - publish domain event
  */
 class SettleSpinSaga(
     private val gameService: GameService,
@@ -31,8 +30,7 @@ class SettleSpinSaga(
     private val orchestrator = SagaOrchestrator(
         sagaName = "SettleSpinSaga",
         steps = listOf(
-            FindRoundStep(roundRepository),
-            FindPlaceSpinStep(spinRepository),
+            FindRoundWithSpinStep(roundRepository),
             CalculateWinAmountsStep(),
             WalletDepositStep(walletAdapter),
             SaveSettleSpinStep(spinRepository),
