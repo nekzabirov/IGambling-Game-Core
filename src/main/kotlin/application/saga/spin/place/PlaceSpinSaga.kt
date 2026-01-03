@@ -19,13 +19,14 @@ import application.service.GameService
  * Previous implementation had a bug where spin was saved first, causing
  * orphan records if wallet withdrawal failed.
  *
+ * **OPTIMIZATION**: Steps 2 & 3 now run in PARALLEL via PrepareRoundAndBalanceStep.
+ *
  * Step order:
  * 1. ValidateGame - validate aggregator and game exist
- * 2. FindOrCreateRound - create/get round
- * 3. ValidateBalance - check player has sufficient funds
- * 4. WalletWithdraw - withdraw from wallet (BEFORE saving)
- * 5. SaveSpin - save spin record (AFTER wallet success)
- * 6. PublishEvent - publish domain event
+ * 2. PrepareRoundAndBalance - create round AND validate balance IN PARALLEL
+ * 3. WalletWithdraw - withdraw from wallet (BEFORE saving)
+ * 4. SaveSpin - save spin record (AFTER wallet success)
+ * 5. PublishEvent - publish domain event
  */
 class PlaceSpinSaga(
     private val aggregatorService: AggregatorService,
@@ -40,8 +41,7 @@ class PlaceSpinSaga(
         sagaName = "PlaceSpinSaga",
         steps = listOf(
             ValidateGameStep(aggregatorService, gameService),
-            FindOrCreateRoundStep(roundRepository),
-            ValidateBalanceStep(walletAdapter, playerAdapter),
+            PrepareRoundAndBalanceStep(roundRepository, walletAdapter, playerAdapter),
             WalletWithdrawStep(walletAdapter),
             SavePlaceSpinStep(spinRepository),
             PublishSpinPlacedEventStep(eventPublisher)

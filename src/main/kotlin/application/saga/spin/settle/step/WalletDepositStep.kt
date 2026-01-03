@@ -21,6 +21,12 @@ class WalletDepositStep(
             return Result.success(Unit)
         }
 
+        // Skip wallet call for zero-win (no deposit needed)
+        if (context.realAmount == java.math.BigInteger.ZERO && context.bonusAmount == java.math.BigInteger.ZERO) {
+            // resultBalance stays null - handler will fetch if needed
+            return Result.success(Unit)
+        }
+
         // Use saga ID as transaction ID for idempotency
         val txId = context.sagaId.toString()
 

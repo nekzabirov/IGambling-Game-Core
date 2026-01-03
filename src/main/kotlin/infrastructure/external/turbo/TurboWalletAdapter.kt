@@ -84,11 +84,7 @@ class TurboWalletAdapter : WalletAdapter {
         realAmount: BigInteger,
         bonusAmount: BigInteger
     ): Result<Balance> = runCatching {
-        if (realAmount + bonusAmount <= BigInteger.ZERO) {
-            // No deposit needed, fetch current balance
-            return findBalance(playerId)
-        }
-
+        // Zero-amount check is now handled at saga step level
         val request = SettleTransactionRequest(
             playerId = playerId,
             amount = (realAmount + bonusAmount).toLong(),
