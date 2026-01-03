@@ -77,6 +77,7 @@ private fun Application.installGrpc() {
         .addService(GameServiceImpl(this))
         .addService(SessionServiceImpl(this))
         .addService(FreespinServiceImpl(this))
+        .addService(RoundServiceImpl(this))
         .build()
         .start()
 

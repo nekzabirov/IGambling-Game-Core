@@ -1,5 +1,6 @@
 package domain.session.model
 
+import kotlinx.datetime.LocalDateTime
 import shared.value.Currency
 import domain.common.value.Locale
 import domain.common.value.Platform
@@ -34,9 +35,11 @@ data class Round(
     val sessionId: UUID,
     val gameId: UUID,
     val extId: String,
-    val finished: Boolean = false
+    val finished: Boolean = false,
+    val createdAt: LocalDateTime,
+    val finishedAt: LocalDateTime? = null
 ) {
-    fun finish(): Round = copy(finished = true)
+    fun finish(finishedAt: LocalDateTime): Round = copy(finished = true, finishedAt = finishedAt)
 }
 
 /**

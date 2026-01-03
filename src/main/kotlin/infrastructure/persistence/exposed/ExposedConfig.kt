@@ -1,5 +1,6 @@
 package infrastructure.persistence.exposed
 
+import infrastructure.persistence.exposed.migration.MigrationRunner
 import infrastructure.persistence.exposed.table.AggregatorInfoTable
 import infrastructure.persistence.exposed.table.CollectionGameTable
 import infrastructure.persistence.exposed.table.CollectionTable
@@ -39,6 +40,14 @@ object ExposedConfig {
         )
 
         createTables()
+        runMigrations()
+    }
+
+    /**
+     * Run database migrations.
+     */
+    private fun runMigrations() {
+        MigrationRunner.migrate()
     }
 
     /**

@@ -8,6 +8,10 @@ import domain.session.repository.RoundRepository
 import infrastructure.persistence.exposed.mapper.toGameWithDetails
 import infrastructure.persistence.exposed.mapper.toRound
 import infrastructure.persistence.exposed.table.*
+import kotlinx.datetime.Clock
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import shared.value.Currency
@@ -50,8 +54,10 @@ class ExposedRoundRepository : BaseExposedRepository<Round, RoundTable>(RoundTab
     }
 
     override suspend fun finish(id: UUID): Boolean = newSuspendedTransaction {
+        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         RoundTable.update({ RoundTable.id eq id }) {
             it[finished] = true
+            it[finishedAt] = now
         } > 0
     }
 
@@ -92,7 +98,7 @@ class ExposedRoundRepository : BaseExposedRepository<Round, RoundTable>(RoundTab
         val roundIds = buildRoundBaseQuery()
             .applyFilters(filter)
             .withDistinct()
-            .orderBy(RoundTable.id to SortOrder.DESC)
+            .orderBy(RoundTable.createdAt to SortOrder.DESC)
             .limit(pageable.sizeReal)
             .offset(pageable.offset)
             .map { it[RoundTable.id].value }
@@ -109,6 +115,8 @@ class ExposedRoundRepository : BaseExposedRepository<Round, RoundTable>(RoundTab
                 roundId to RoundRowData(
                     roundId = roundId,
                     finished = row[RoundTable.finished],
+                    createdAt = row[RoundTable.createdAt],
+                    finishedAt = row[RoundTable.finishedAt],
                     currency = Currency(row[SessionTable.currency]),
                     game = row.toGameWithDetails()
                 )
@@ -149,7 +157,9 @@ class ExposedRoundRepository : BaseExposedRepository<Round, RoundTable>(RoundTab
                 freeSpinId = amounts.freeSpinId,
                 currency = data.currency,
                 game = data.game,
-                isFinished = data.finished
+                isFinished = data.finished,
+                createdAt = data.createdAt,
+                finishedAt = data.finishedAt
             )
         }
 
@@ -165,7 +175,7 @@ class ExposedRoundRepository : BaseExposedRepository<Round, RoundTable>(RoundTab
         return RoundTable
             .innerJoin(SessionTable, { RoundTable.sessionId }, { SessionTable.id })
             .innerJoin(GameTable, { RoundTable.gameId }, { GameTable.id })
-            .select(RoundTable.id)
+            .select(RoundTable.id, RoundTable.createdAt)
     }
 
     private fun buildFullRoundQuery(): Query {
@@ -192,6 +202,8 @@ class ExposedRoundRepository : BaseExposedRepository<Round, RoundTable>(RoundTab
     private data class RoundRowData(
         val roundId: UUID,
         val finished: Boolean,
+        val createdAt: LocalDateTime,
+        val finishedAt: LocalDateTime?,
         val currency: Currency,
         val game: domain.game.model.GameWithDetails
     )

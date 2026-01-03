@@ -1,6 +1,7 @@
 package domain.session.model
 
 import domain.game.model.GameWithDetails
+import kotlinx.datetime.LocalDateTime
 import shared.value.Currency
 import java.math.BigInteger
 import java.util.UUID
@@ -15,5 +16,7 @@ data class RoundDetails(
     val freeSpinId: String?,
     val currency: Currency,
     val game: GameWithDetails,
-    val isFinished: Boolean
+    val isFinished: Boolean,
+    val createdAt: LocalDateTime,
+    val finishedAt: LocalDateTime?
 )

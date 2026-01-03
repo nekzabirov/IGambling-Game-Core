@@ -91,7 +91,9 @@ fun ResultRow.toRound(): Round = Round(
     sessionId = this[RoundTable.sessionId].value,
     gameId = this[RoundTable.gameId].value,
     extId = this[RoundTable.extId],
-    finished = this[RoundTable.finished]
+    finished = this[RoundTable.finished],
+    createdAt = this[RoundTable.createdAt],
+    finishedAt = this[RoundTable.finishedAt]
 )
 
 fun ResultRow.toSpin(): Spin = Spin(

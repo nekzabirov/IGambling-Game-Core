@@ -5,6 +5,10 @@ import domain.common.event.DomainEventProducer
 import domain.common.event.DomainEventRegistry
 import domain.common.value.*
 import domain.session.event.*
+import kotlinx.datetime.Clock
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import shared.value.Currency
 import domain.common.value.Locale
 import domain.common.value.Platform
@@ -279,10 +283,13 @@ class RoundEntity private constructor(
     val gameId: GameId,
     val extId: ExternalRoundId,
     private var _status: RoundStatus,
-    private val _spins: MutableList<SpinEntity>
+    private val _spins: MutableList<SpinEntity>,
+    val createdAt: LocalDateTime,
+    private var _finishedAt: LocalDateTime?
 ) {
     val status: RoundStatus get() = _status
     val isFinished: Boolean get() = _status == RoundStatus.FINISHED
+    val finishedAt: LocalDateTime? get() = _finishedAt
     val spins: List<SpinEntity> get() = _spins.toList()
 
     /**
@@ -363,6 +370,7 @@ class RoundEntity private constructor(
     fun finish() {
         require(_status == RoundStatus.ACTIVE) { "Round already finished" }
         _status = RoundStatus.FINISHED
+        _finishedAt = Clock.System.now().toLocalDateTime(TimeZone.UTC)
     }
 
     /**
@@ -373,7 +381,9 @@ class RoundEntity private constructor(
         sessionId = sessionId.value,
         gameId = gameId.value,
         extId = extId.value,
-        finished = isFinished
+        finished = isFinished,
+        createdAt = createdAt,
+        finishedAt = finishedAt
     )
 
     companion object {
@@ -387,7 +397,9 @@ class RoundEntity private constructor(
             gameId = gameId,
             extId = extId,
             _status = RoundStatus.ACTIVE,
-            _spins = mutableListOf()
+            _spins = mutableListOf(),
+            createdAt = Clock.System.now().toLocalDateTime(TimeZone.UTC),
+            _finishedAt = null
         )
 
         fun reconstitute(
@@ -396,14 +408,18 @@ class RoundEntity private constructor(
             gameId: GameId,
             extId: ExternalRoundId,
             status: RoundStatus,
-            spins: List<SpinEntity>
+            spins: List<SpinEntity>,
+            createdAt: LocalDateTime,
+            finishedAt: LocalDateTime?
         ): RoundEntity = RoundEntity(
             id = id,
             sessionId = sessionId,
             gameId = gameId,
             extId = extId,
             _status = status,
-            _spins = spins.toMutableList()
+            _spins = spins.toMutableList(),
+            createdAt = createdAt,
+            _finishedAt = finishedAt
         )
     }
 }

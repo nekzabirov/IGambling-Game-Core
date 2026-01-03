@@ -1,6 +1,7 @@
 package infrastructure.api.grpc.service
 
 import application.usecase.spin.GetRoundsDetailsUsecase
+import com.google.protobuf.Timestamp
 import com.nekzabirov.igambling.proto.service.GetRoundsDetailsCommand
 import com.nekzabirov.igambling.proto.service.GetRoundsDetailsResult
 import com.nekzabirov.igambling.proto.service.RoundGrpcKt
@@ -9,6 +10,9 @@ import domain.session.repository.RoundFilter
 import infrastructure.api.grpc.mapper.toAggregatorProto
 import infrastructure.api.grpc.mapper.toProviderProto
 import io.ktor.server.application.*
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toInstant
 import org.koin.ktor.ext.get
 import shared.value.Pageable
 import com.nekzabirov.igambling.proto.service.GameWithDetailsDto
@@ -48,10 +52,20 @@ class RoundServiceImpl(application: Application) : RoundGrpcKt.RoundCoroutineImp
             .setCurrency(this.currency.value)
             .setGame(this.game.toGameWithDetailsProto())
             .setIsFinished(this.isFinished)
+            .setCreatedAt(this.createdAt.toTimestamp())
 
         this.freeSpinId?.let { builder.setFreeSpinId(it) }
+        this.finishedAt?.let { builder.setFinishedAt(it.toTimestamp()) }
 
         return builder.build()
+    }
+
+    private fun LocalDateTime.toTimestamp(): Timestamp {
+        val instant = this.toInstant(TimeZone.UTC)
+        return Timestamp.newBuilder()
+            .setSeconds(instant.epochSeconds)
+            .setNanos(instant.nanosecondsOfSecond)
+            .build()
     }
 
     private fun domain.game.model.GameWithDetails.toGameWithDetailsProto(): GameWithDetailsDto =
