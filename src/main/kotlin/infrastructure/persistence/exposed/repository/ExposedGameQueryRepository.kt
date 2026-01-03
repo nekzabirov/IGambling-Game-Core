@@ -13,6 +13,7 @@ import infrastructure.persistence.exposed.mapper.toProvider
 import infrastructure.persistence.exposed.table.*
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.json.contains
+import infrastructure.persistence.exposed.repository.ilike
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import shared.value.Page
 import shared.value.Pageable
@@ -119,7 +120,7 @@ class ExposedGameQueryRepository : GameQueryRepository {
             .innerJoin(GameVariantTable, { GameVariantTable.gameId }, { GameTable.id })
             .select(GameTable.id, GameTable.identity, GameTable.name, GameVariantTable.symbol, ProviderTable.name)
             .where {
-                (GameTable.name like "%$query%") or (GameTable.identity like "%$query%")
+                GameTable.name.ilike(query) or GameTable.identity.ilike(query)
             }
             .andWhere { GameTable.active eq true }
             .withDistinct()
@@ -171,8 +172,7 @@ class ExposedGameQueryRepository : GameQueryRepository {
     private fun Query.applyFilters(filter: GameFilter): Query = apply {
         if (filter.query.isNotBlank()) {
             andWhere {
-                (GameTable.name like "%${filter.query}%") or
-                        (GameTable.identity like "%${filter.query}%")
+                GameTable.name.ilike(filter.query) or GameTable.identity.ilike(filter.query)
             }
         }
 

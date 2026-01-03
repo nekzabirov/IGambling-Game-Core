@@ -4,6 +4,7 @@ import application.port.outbound.MediaFile
 import application.usecase.provider.ProviderListUsecase
 import application.usecase.provider.UpdateProviderImageUsecase
 import application.usecase.provider.UpdateProviderUsecase
+import domain.provider.repository.ProviderFilter
 import shared.value.Pageable
 import com.nekzabirov.igambling.proto.dto.EmptyResult
 import com.nekzabirov.igambling.proto.service.ListProviderCommand
@@ -24,13 +25,14 @@ class ProviderServiceImpl(application: Application) : ProviderGrpcKt.ProviderCor
     private val updateProviderImageUsecase = application.get<UpdateProviderImageUsecase>()
 
     override suspend fun list(request: ListProviderCommand): ListProviderResult {
-        val page = providerListUsecase(pageable = Pageable(request.pageNumber, request.pageSize)) { builder ->
-            builder.withQuery(request.query)
-
-            if (request.hasActive()) {
-                builder.withActive(request.active)
-            }
-        }
+        val filter = ProviderFilter(
+            query = request.query,
+            active = if (request.hasActive()) request.active else null
+        )
+        val page = providerListUsecase(
+            pageable = Pageable(request.pageNumber, request.pageSize),
+            filter = filter
+        )
 
         val items = page.items.map { i ->
             ListProviderResult.Item

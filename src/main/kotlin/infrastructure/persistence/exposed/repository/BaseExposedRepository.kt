@@ -5,13 +5,53 @@ import shared.value.Pageable
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.UUIDTable
 import org.jetbrains.exposed.sql.Column
+import org.jetbrains.exposed.sql.Expression
+import org.jetbrains.exposed.sql.LikeEscapeOp
 import org.jetbrains.exposed.sql.Op
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.deleteWhere
+import org.jetbrains.exposed.sql.lowerCase
 import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.sql.stringLiteral
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import java.util.UUID
+
+/**
+ * Escapes special SQL LIKE pattern characters in a search query.
+ * Escapes: % (wildcard), _ (single char), \ (escape char)
+ */
+private fun escapeLikePattern(query: String): String {
+    return query
+        .replace("\\", "\\\\")
+        .replace("%", "\\%")
+        .replace("_", "\\_")
+}
+
+/**
+ * Creates a case-insensitive LIKE pattern for partial matching.
+ * Properly escapes special characters and adds wildcards.
+ *
+ * @param query The search query to match
+ * @return Pattern string ready for LIKE operation (e.g., "%search%")
+ */
+fun likePattern(query: String): String {
+    val escaped = escapeLikePattern(query.trim())
+    return "%$escaped%"
+}
+
+/**
+ * Creates a case-insensitive LIKE expression for a column.
+ * Uses LOWER() on both column and pattern for database-agnostic case-insensitivity.
+ *
+ * @param column The string column to search in
+ * @param query The search query
+ * @return SQL expression for case-insensitive partial match
+ */
+fun Expression<String>.ilike(query: String): Op<Boolean> {
+    val pattern = likePattern(query).lowercase()
+    return LikeEscapeOp(this.lowerCase(), stringLiteral(pattern), true, '\\')
+}
 
 /**
  * Base repository providing common CRUD operations for Exposed tables.

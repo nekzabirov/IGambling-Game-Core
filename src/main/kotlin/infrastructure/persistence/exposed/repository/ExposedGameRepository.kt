@@ -221,24 +221,10 @@ class ExposedGameRepository : BaseExposedRepositoryWithIdentity<Game, GameTable>
             .andWhere { AggregatorInfoTable.active eq true }
     }
 
-    private fun buildListQuery(): Query {
-        return GameTable
-            .innerJoin(ProviderTable, { ProviderTable.id }, { GameTable.providerId })
-            .innerJoin(AggregatorInfoTable, { AggregatorInfoTable.id }, { ProviderTable.aggregatorId })
-            .innerJoin(GameVariantTable, { GameVariantTable.gameId }, { GameTable.id }) {
-                GameVariantTable.aggregator eq AggregatorInfoTable.aggregator
-            }
-            .leftJoin(CollectionGameTable, { CollectionGameTable.gameId }, { GameTable.id })
-            .leftJoin(CollectionTable, { CollectionTable.id }, { CollectionGameTable.categoryId })
-            .leftJoin(GameFavouriteTable, { GameFavouriteTable.gameId }, { GameTable.id })
-            .selectAll()
-    }
-
     private fun Query.applyFilters(filter: GameFilter): Query = apply {
         if (filter.query.isNotBlank()) {
             andWhere {
-                (GameTable.name like "%${filter.query}%") or
-                        (GameTable.identity like "%${filter.query}%")
+                GameTable.name.ilike(filter.query) or GameTable.identity.ilike(filter.query)
             }
         }
 

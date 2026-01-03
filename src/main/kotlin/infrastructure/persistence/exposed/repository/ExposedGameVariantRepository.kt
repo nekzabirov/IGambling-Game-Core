@@ -15,6 +15,7 @@ import shared.value.Page
 import shared.value.Pageable
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.and
+import infrastructure.persistence.exposed.repository.ilike
 import org.jetbrains.exposed.sql.andWhere
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.leftJoin
@@ -134,15 +135,14 @@ class ExposedGameVariantRepository : GameVariantRepository {
     ): Page<GameVariantWithDetail> = newSuspendedTransaction {
         val query = GameVariantTable
             .leftJoin(GameTable, onColumn = { GameVariantTable.gameId }, otherColumn = { GameTable.id })
-            .leftJoin(ProviderTable, onColumn = { ProviderTable.id }, otherColumn = { GameTable.providerId })
+            .leftJoin(ProviderTable, onColumn = { GameTable.providerId }, otherColumn = { ProviderTable.id })
             .selectAll()
             .apply {
                 if (filter.query.isNotBlank()) {
                     andWhere {
-                        val queryS = "%${filter.query}%"
-                        (GameVariantTable.name like queryS) or
-                                (GameVariantTable.providerName like queryS) or
-                                (GameVariantTable.symbol like queryS)
+                        GameVariantTable.name.ilike(filter.query) or
+                                GameVariantTable.providerName.ilike(filter.query) or
+                                GameVariantTable.symbol.ilike(filter.query)
                     }
                 }
 

@@ -3,6 +3,7 @@ package application.usecase.provider
 import domain.aggregator.model.AggregatorInfo
 import domain.aggregator.repository.AggregatorRepository
 import domain.provider.model.Provider
+import domain.provider.repository.ProviderFilter
 import domain.provider.repository.ProviderRepository
 import shared.value.Page
 import shared.value.Pageable
@@ -18,24 +19,6 @@ data class ProviderListItem(
 )
 
 /**
- * Filter for listing providers.
- */
-data class ProviderFilter(
-    val query: String = "",
-    val active: Boolean? = null
-) {
-    class Builder {
-        private var query: String = ""
-        private var active: Boolean? = null
-
-        fun withQuery(query: String) = apply { this.query = query }
-        fun withActive(active: Boolean?) = apply { this.active = active }
-
-        fun build() = ProviderFilter(query, active)
-    }
-}
-
-/**
  * Use case for listing providers.
  */
 class ProviderListUsecase(
@@ -44,19 +27,19 @@ class ProviderListUsecase(
 ) {
     suspend operator fun invoke(
         pageable: Pageable,
-        filterBuilder: (ProviderFilter.Builder) -> Unit = {}
+        filter: ProviderFilter = ProviderFilter()
     ): Page<ProviderListItem> {
-        val filter = ProviderFilter.Builder().also(filterBuilder).build()
+        val page = providerRepository.findAll(pageable, filter)
 
-        val page = providerRepository.findAll(pageable)
+        // Batch load aggregator IDs to avoid N+1
+        val aggregatorIds = page.items.mapNotNull { it.aggregatorId }.distinct()
+        val aggregatorsMap = aggregatorIds.associateWith { id ->
+            aggregatorRepository.findById(id)
+        }
 
         val items = page.items.mapNotNull { provider ->
             val aggregatorId = provider.aggregatorId ?: return@mapNotNull null
-            val aggregator = aggregatorRepository.findById(aggregatorId) ?: return@mapNotNull null
-
-            // Apply filter
-            if (filter.active != null && provider.active != filter.active) return@mapNotNull null
-            if (filter.query.isNotBlank() && !provider.name.contains(filter.query, ignoreCase = true)) return@mapNotNull null
+            val aggregator = aggregatorsMap[aggregatorId] ?: return@mapNotNull null
 
             ProviderListItem(
                 provider = provider,

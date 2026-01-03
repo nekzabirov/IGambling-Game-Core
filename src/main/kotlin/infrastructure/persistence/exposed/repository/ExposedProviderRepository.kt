@@ -1,13 +1,17 @@
 package infrastructure.persistence.exposed.repository
 
 import domain.provider.model.Provider
+import domain.provider.repository.ProviderFilter
 import domain.provider.repository.ProviderRepository
 import infrastructure.persistence.exposed.mapper.toProvider
 import infrastructure.persistence.exposed.table.ProviderTable
 import shared.value.Page
 import shared.value.Pageable
+import org.jetbrains.exposed.sql.Query
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SortOrder
+import org.jetbrains.exposed.sql.andWhere
+import org.jetbrains.exposed.sql.or
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.sql.update
@@ -59,9 +63,12 @@ class ExposedProviderRepository : BaseExposedRepositoryWithIdentity<Provider, Pr
         provider
     }
 
-    override suspend fun findAll(pageable: Pageable): Page<Provider> = newSuspendedTransaction {
-        val totalCount = table.selectAll().count()
+    override suspend fun findAll(pageable: Pageable, filter: ProviderFilter): Page<Provider> = newSuspendedTransaction {
+        val baseQuery = table.selectAll().applyFilters(filter)
+        val totalCount = baseQuery.count()
+
         val items = table.selectAll()
+            .applyFilters(filter)
             .orderBy(ProviderTable.order to SortOrder.ASC)
             .limit(pageable.sizeReal)
             .offset(pageable.offset)
@@ -73,6 +80,17 @@ class ExposedProviderRepository : BaseExposedRepositoryWithIdentity<Provider, Pr
             totalItems = totalCount,
             currentPage = pageable.pageReal,
         )
+    }
+
+    private fun Query.applyFilters(filter: ProviderFilter): Query = apply {
+        if (filter.query.isNotBlank()) {
+            andWhere {
+                ProviderTable.name.ilike(filter.query) or ProviderTable.identity.ilike(filter.query)
+            }
+        }
+        filter.active?.let { active ->
+            andWhere { ProviderTable.active eq active }
+        }
     }
 
     override suspend fun assignToAggregator(providerId: UUID, aggregatorId: UUID): Boolean = newSuspendedTransaction {

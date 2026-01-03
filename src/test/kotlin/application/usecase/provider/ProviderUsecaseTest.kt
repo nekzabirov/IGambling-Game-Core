@@ -4,6 +4,7 @@ import domain.aggregator.model.AggregatorInfo
 import domain.aggregator.repository.AggregatorRepository
 import domain.common.error.NotFoundError
 import domain.provider.model.Provider
+import domain.provider.repository.ProviderFilter
 import domain.provider.repository.ProviderRepository
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -61,7 +62,7 @@ class ProviderListUsecaseTest {
             active = true
         )
 
-        coEvery { providerRepository.findAll(pageable) } returns page
+        coEvery { providerRepository.findAll(pageable, any()) } returns page
         coEvery { aggregatorRepository.findById(aggregatorId) } returns aggregatorInfo
 
         val result = usecase(pageable)
@@ -107,7 +108,7 @@ class ProviderListUsecaseTest {
             active = true
         )
 
-        coEvery { providerRepository.findAll(pageable) } returns page
+        coEvery { providerRepository.findAll(pageable, any()) } returns page
         coEvery { aggregatorRepository.findById(aggregatorId) } returns aggregatorInfo
 
         val result = usecase(pageable)
@@ -117,9 +118,10 @@ class ProviderListUsecaseTest {
     }
 
     @Test
-    fun `invoke applies active filter`() = runTest {
+    fun `invoke passes active filter to repository`() = runTest {
         val pageable = Pageable(page = 1, size = 10)
         val aggregatorId = UUID.randomUUID()
+        val filterSlot = slot<ProviderFilter>()
 
         val providers = listOf(
             Provider(
@@ -128,19 +130,12 @@ class ProviderListUsecaseTest {
                 name = "Active Provider",
                 aggregatorId = aggregatorId,
                 active = true
-            ),
-            Provider(
-                id = UUID.randomUUID(),
-                identity = "inactive-provider",
-                name = "Inactive Provider",
-                aggregatorId = aggregatorId,
-                active = false
             )
         )
         val page = Page(
             items = providers,
             totalPages = 1,
-            totalItems = 2,
+            totalItems = 1,
             currentPage = 1
         )
 
@@ -152,19 +147,21 @@ class ProviderListUsecaseTest {
             active = true
         )
 
-        coEvery { providerRepository.findAll(pageable) } returns page
+        coEvery { providerRepository.findAll(pageable, capture(filterSlot)) } returns page
         coEvery { aggregatorRepository.findById(aggregatorId) } returns aggregatorInfo
 
-        val result = usecase(pageable) { it.withActive(true) }
+        val filter = ProviderFilter(active = true)
+        val result = usecase(pageable, filter)
 
         assertEquals(1, result.items.size)
-        assertEquals("active-provider", result.items[0].provider.identity)
+        assertEquals(true, filterSlot.captured.active)
     }
 
     @Test
-    fun `invoke applies query filter`() = runTest {
+    fun `invoke passes query filter to repository`() = runTest {
         val pageable = Pageable(page = 1, size = 10)
         val aggregatorId = UUID.randomUUID()
+        val filterSlot = slot<ProviderFilter>()
 
         val providers = listOf(
             Provider(
@@ -173,19 +170,12 @@ class ProviderListUsecaseTest {
                 name = "Matching Provider",
                 aggregatorId = aggregatorId,
                 active = true
-            ),
-            Provider(
-                id = UUID.randomUUID(),
-                identity = "other-provider",
-                name = "Other Provider",
-                aggregatorId = aggregatorId,
-                active = true
             )
         )
         val page = Page(
             items = providers,
             totalPages = 1,
-            totalItems = 2,
+            totalItems = 1,
             currentPage = 1
         )
 
@@ -197,13 +187,14 @@ class ProviderListUsecaseTest {
             active = true
         )
 
-        coEvery { providerRepository.findAll(pageable) } returns page
+        coEvery { providerRepository.findAll(pageable, capture(filterSlot)) } returns page
         coEvery { aggregatorRepository.findById(aggregatorId) } returns aggregatorInfo
 
-        val result = usecase(pageable) { it.withQuery("Matching") }
+        val filter = ProviderFilter(query = "Matching")
+        val result = usecase(pageable, filter)
 
         assertEquals(1, result.items.size)
-        assertEquals("matching-provider", result.items[0].provider.identity)
+        assertEquals("Matching", filterSlot.captured.query)
     }
 }
 

@@ -23,7 +23,7 @@ interface ProviderRepository {
 
     suspend fun existsByIdentity(identity: String): Boolean
 
-    suspend fun findAll(pageable: Pageable): Page<Provider>
+    suspend fun findAll(pageable: Pageable, filter: ProviderFilter = ProviderFilter()): Page<Provider>
 
     /**
      * Assign provider to an aggregator.
