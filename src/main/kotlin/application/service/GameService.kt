@@ -1,15 +1,28 @@
 package application.service
 
+import application.port.outbound.AggregatorAdapterRegistry
 import application.port.outbound.CacheAdapter
+import domain.common.error.AggregatorNotSupportedError
 import domain.common.error.GameUnavailableError
 import domain.common.error.NotFoundError
+import domain.common.error.ValidationError
 import domain.game.model.Game
 import domain.game.model.GameWithDetails
 import domain.game.repository.GameRepository
 import infrastructure.persistence.cache.CachingRepository
+import shared.value.Currency
 import domain.common.value.Aggregator
+import domain.common.value.Locale
+import domain.common.value.Platform
 import java.util.UUID
 import kotlin.time.Duration.Companion.minutes
+
+/**
+ * Result of demo game operation.
+ */
+data class DemoGameResult(
+    val launchUrl: String
+)
 
 /**
  * Application service for game-related operations.
@@ -17,6 +30,7 @@ import kotlin.time.Duration.Companion.minutes
  */
 class GameService(
     private val gameRepository: GameRepository,
+    private val aggregatorRegistry: AggregatorAdapterRegistry,
     cacheAdapter: CacheAdapter
 ) {
     companion object {
@@ -72,5 +86,64 @@ class GameService(
      */
     suspend fun invalidateCache(identity: String) {
         detailsCache.invalidate(identity)
+    }
+
+    /**
+     * Launch a game in demo mode.
+     * Validates game support for locale/platform and gets demo launch URL from aggregator.
+     *
+     * @param gameIdentity The game identity
+     * @param currency Currency for the demo session
+     * @param locale Locale for the demo session
+     * @param platform Platform for the demo session
+     * @param lobbyUrl URL to return to after demo
+     * @return Result containing the demo launch URL
+     */
+    suspend fun launchDemo(
+        gameIdentity: String,
+        currency: Currency,
+        locale: Locale,
+        platform: Platform,
+        lobbyUrl: String
+    ): Result<DemoGameResult> {
+        val game = findByIdentity(gameIdentity).getOrElse {
+            return Result.failure(it)
+        }
+
+        // Validate locale support
+        if (!game.supportsLocale(locale)) {
+            return Result.failure(
+                ValidationError("locale", "Game does not support locale: ${locale.value}")
+            )
+        }
+
+        // Validate platform support
+        if (!game.supportsPlatform(platform)) {
+            return Result.failure(
+                ValidationError("platform", "Game does not support platform: $platform")
+            )
+        }
+
+        // Get aggregator adapter
+        val factory = aggregatorRegistry.getFactory(game.aggregator.aggregator)
+            ?: return Result.failure(AggregatorNotSupportedError(game.aggregator.aggregator.name))
+
+        val launchUrlAdapter = factory.createLaunchUrlAdapter(game.aggregator)
+
+        // Get demo launch URL
+        val launchUrl = launchUrlAdapter.getLaunchUrl(
+            gameSymbol = game.symbol,
+            sessionToken = "demo",
+            locale = locale,
+            platform = platform,
+            lobbyUrl = lobbyUrl,
+            playerId = "demo",
+            currency = currency,
+            demo = true
+        ).getOrElse {
+            return Result.failure(it)
+        }
+
+        return Result.success(DemoGameResult(launchUrl))
     }
 }

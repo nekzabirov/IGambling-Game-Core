@@ -1,6 +1,9 @@
 package infrastructure.api.grpc.service
 
-import application.usecase.collection.*
+import application.port.inbound.command.*
+import application.port.inbound.query.*
+import infrastructure.handler.command.*
+import infrastructure.handler.query.*
 import shared.value.LocaleName
 import shared.value.Pageable
 import com.nekzabirov.igambling.proto.dto.EmptyResult
@@ -18,74 +21,98 @@ import infrastructure.api.grpc.mapper.toCollectionProto
 import org.koin.ktor.ext.get
 
 class CollectionServiceImpl(application: Application) : CollectionGrpcKt.CollectionCoroutineImplBase() {
-    private val addCollectionUsecase = application.get<AddCollectionUsecase>()
-    private val updateCollectionUsecase = application.get<UpdateCollectionUsecase>()
-    private val addGameCollectionUsecase = application.get<AddGameCollectionUsecase>()
-    private val changeGameOrderUsecase = application.get<ChangeGameOrderUsecase>()
-    private val removeGameCollectionUsecase = application.get<RemoveGameCollectionUsecase>()
-    private val listCollectionUsecase = application.get<ListCollectionUsecase>()
+    private val addCollectionCommandHandler = application.get<AddCollectionCommandHandler>()
+    private val updateCollectionCommandHandler = application.get<UpdateCollectionCommandHandler>()
+    private val addGameToCollectionCommandHandler = application.get<AddGameToCollectionCommandHandler>()
+    private val changeGameOrderCommandHandler = application.get<ChangeGameOrderInCollectionCommandHandler>()
+    private val removeGameFromCollectionCommandHandler = application.get<RemoveGameFromCollectionCommandHandler>()
+    private val listCollectionsQueryHandler = application.get<ListCollectionsQueryHandler>()
 
     override suspend fun addCollection(request: AddCollectionCommand): EmptyResult {
-        addCollectionUsecase(request.identity, LocaleName(request.nameMap))
-            .getOrElse { throw StatusException(Status.INVALID_ARGUMENT.withDescription(it.message)) }
+        addCollectionCommandHandler.handle(
+            application.port.inbound.command.AddCollectionCommand(
+                identity = request.identity,
+                name = LocaleName(request.nameMap)
+            )
+        ).getOrElse { throw StatusException(Status.INVALID_ARGUMENT.withDescription(it.message)) }
 
         return EmptyResult.getDefaultInstance()
     }
 
     override suspend fun updateCollection(request: UpdateCollectionCommand): EmptyResult {
-        updateCollectionUsecase(
-            identity = request.identity,
-            name = LocaleName(request.nameMap),
-            order = request.order,
-            active = request.active
+        updateCollectionCommandHandler.handle(
+            application.port.inbound.command.UpdateCollectionCommand(
+                identity = request.identity,
+                name = LocaleName(request.nameMap),
+                order = request.order,
+                active = request.active
+            )
         ).getOrElse { throw StatusException(Status.INVALID_ARGUMENT.withDescription(it.message)) }
 
         return EmptyResult.getDefaultInstance()
     }
 
     override suspend fun addGameCollection(request: AddGameCollectionCommand): EmptyResult {
-        addGameCollectionUsecase(request.identity, request.gameIdentity)
-            .getOrElse { throw StatusException(Status.INVALID_ARGUMENT.withDescription(it.message)) }
+        addGameToCollectionCommandHandler.handle(
+            AddGameToCollectionCommand(
+                collectionIdentity = request.identity,
+                gameIdentity = request.gameIdentity
+            )
+        ).getOrElse { throw StatusException(Status.INVALID_ARGUMENT.withDescription(it.message)) }
 
         return EmptyResult.getDefaultInstance()
     }
 
     override suspend fun changeGameOrder(request: ChangeGameOrderCollectionCommand): EmptyResult {
-        changeGameOrderUsecase(
-            collectionIdentity = request.identity,
-            gameIdentity = request.gameIdentity,
-            order = request.order
+        changeGameOrderCommandHandler.handle(
+            ChangeGameOrderInCollectionCommand(
+                collectionIdentity = request.identity,
+                gameIdentity = request.gameIdentity,
+                newOrder = request.order
+            )
         ).getOrElse { throw StatusException(Status.INVALID_ARGUMENT.withDescription(it.message)) }
 
         return EmptyResult.getDefaultInstance()
     }
 
     override suspend fun removeGameFromCollection(request: AddGameCollectionCommand): EmptyResult {
-        removeGameCollectionUsecase(request.identity, request.gameIdentity)
-            .getOrElse { throw StatusException(Status.INVALID_ARGUMENT.withDescription(it.message)) }
+        removeGameFromCollectionCommandHandler.handle(
+            RemoveGameFromCollectionCommand(
+                collectionIdentity = request.identity,
+                gameIdentity = request.gameIdentity
+            )
+        ).getOrElse { throw StatusException(Status.INVALID_ARGUMENT.withDescription(it.message)) }
 
         return EmptyResult.getDefaultInstance()
     }
 
     override suspend fun list(request: ListCollectionCommand): ListCollectionResult {
-        val page = listCollectionUsecase(pageable = Pageable(request.pageNumber, request.pageSize)) {
-            it.withQuery(request.query)
+        val page = listCollectionsQueryHandler.handle(
+            ListCollectionsQuery(
+                pageable = Pageable(request.pageNumber, request.pageSize),
+                activeOnly = if (request.hasActive()) request.active else false
+            )
+        )
 
-            if (request.hasActive()) {
-                it.withActive(request.active)
-            }
+        val items = page.items.map {
+            ListCollectionResult.Item.newBuilder()
+                .setTotalGames(it.gameCount)
+                .setActiveGames(it.gameCount) // Using gameCount for both since we don't track active separately
+                .setCollection(
+                    com.nekzabirov.igambling.proto.dto.CollectionDto.newBuilder()
+                        .setId(it.id.toString())
+                        .setIdentity(it.identity)
+                        .putAllName(mapOf("en" to it.name))
+                        .setOrder(it.order)
+                        .setActive(it.active)
+                        .build()
+                )
+                .build()
         }
-            .map {
-                ListCollectionResult.Item.newBuilder()
-                    .setTotalGames(it.totalGamesCount)
-                    .setActiveGames(it.activeGamesCount)
-                    .setCollection(it.category.toCollectionProto())
-                    .build()
-            }
 
         return ListCollectionResult.newBuilder()
             .setTotalPage(page.totalPages.toInt())
-            .addAllItems(page.items)
+            .addAllItems(items)
             .build()
     }
 }

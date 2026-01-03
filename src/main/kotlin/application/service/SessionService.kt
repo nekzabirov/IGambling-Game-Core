@@ -1,16 +1,44 @@
 package application.service
 
+import application.port.outbound.AggregatorAdapterRegistry
 import application.port.outbound.CacheAdapter
+import application.port.outbound.EventPublisherAdapter
+import domain.common.error.AggregatorNotSupportedError
 import domain.common.error.NotFoundError
 import domain.common.error.SessionInvalidError
+import domain.common.error.ValidationError
+import domain.common.event.SessionOpenedEvent
 import domain.session.model.Session
 import domain.session.repository.SessionRepository
 import infrastructure.persistence.cache.CachingRepository
+import shared.value.Currency
 import shared.value.SessionToken
+import domain.common.value.Locale
+import domain.common.value.Platform
 import java.security.SecureRandom
 import java.util.Base64
 import java.util.UUID
 import kotlin.time.Duration.Companion.minutes
+
+/**
+ * Command for opening a new session.
+ */
+data class OpenSessionCommand(
+    val gameIdentity: String,
+    val playerId: String,
+    val currency: Currency,
+    val locale: Locale,
+    val platform: Platform,
+    val lobbyUrl: String
+)
+
+/**
+ * Result of opening a session.
+ */
+data class OpenSessionResult(
+    val session: Session,
+    val launchUrl: String
+)
 
 /**
  * Application service for session-related operations.
@@ -18,6 +46,9 @@ import kotlin.time.Duration.Companion.minutes
  */
 class SessionService(
     private val sessionRepository: SessionRepository,
+    private val gameService: GameService,
+    private val eventPublisher: EventPublisherAdapter,
+    private val aggregatorRegistry: AggregatorAdapterRegistry,
     cacheAdapter: CacheAdapter
 ) {
     companion object {
@@ -86,5 +117,88 @@ class SessionService(
     suspend fun invalidateCache(session: Session) {
         tokenCache.invalidate(session.token)
         idCache.invalidate(session.id.toString())
+    }
+
+    /**
+     * Open a new game session.
+     * Validates game support for locale/platform, creates session, and gets launch URL from aggregator.
+     *
+     * @param command The open session command
+     * @return Result containing the session and launch URL
+     */
+    suspend fun open(command: OpenSessionCommand): Result<OpenSessionResult> {
+        // Find game with details
+        val game = gameService.findByIdentity(command.gameIdentity).getOrElse {
+            return Result.failure(it)
+        }
+
+        // Validate locale support
+        if (!game.supportsLocale(command.locale)) {
+            return Result.failure(
+                ValidationError("locale", "Game does not support locale: ${command.locale.value}")
+            )
+        }
+
+        // Validate platform support
+        if (!game.supportsPlatform(command.platform)) {
+            return Result.failure(
+                ValidationError("platform", "Game does not support platform: ${command.platform}")
+            )
+        }
+
+        // Get aggregator adapter
+        val factory = aggregatorRegistry.getFactory(game.aggregator.aggregator)
+            ?: return Result.failure(AggregatorNotSupportedError(game.aggregator.aggregator.name))
+
+        val launchUrlAdapter = factory.createLaunchUrlAdapter(game.aggregator)
+
+        // Generate session token
+        val token = generateSessionToken()
+
+        // Create session
+        val session = Session(
+            id = UUID.randomUUID(),
+            gameId = game.id,
+            aggregatorId = game.aggregator.id,
+            playerId = command.playerId,
+            token = token,
+            externalToken = null,
+            currency = command.currency,
+            locale = command.locale,
+            platform = command.platform
+        )
+
+        // Save session
+        val savedSession = createSession(session).getOrElse {
+            return Result.failure(it)
+        }
+
+        // Get launch URL from aggregator
+        val launchUrl = launchUrlAdapter.getLaunchUrl(
+            gameSymbol = game.symbol,
+            sessionToken = token,
+            playerId = command.playerId,
+            locale = command.locale,
+            platform = command.platform,
+            currency = command.currency,
+            lobbyUrl = command.lobbyUrl,
+            demo = false
+        ).getOrElse {
+            return Result.failure(it)
+        }
+
+        // Publish event
+        eventPublisher.publish(
+            SessionOpenedEvent(
+                sessionId = savedSession.id.toString(),
+                gameId = game.id.toString(),
+                gameIdentity = game.identity,
+                playerId = command.playerId,
+                currency = command.currency,
+                platform = command.platform.name
+            )
+        )
+
+        return Result.success(OpenSessionResult(savedSession, launchUrl))
     }
 }

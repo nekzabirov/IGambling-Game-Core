@@ -4,9 +4,7 @@ import com.google.protobuf.ListValue
 import com.google.protobuf.NullValue
 import com.google.protobuf.Struct
 import com.google.protobuf.Value
-import application.usecase.spin.CancelFreespinUsecase
-import application.usecase.spin.CreateFreespinUsecase
-import application.usecase.spin.GetPresetUsecase
+import application.service.FreespinService
 import shared.value.Currency
 import com.nekzabirov.igambling.proto.dto.EmptyResult
 import com.nekzabirov.igambling.proto.service.CancelFreespinCommand
@@ -23,12 +21,10 @@ import kotlinx.datetime.toLocalDateTime
 import org.koin.ktor.ext.get
 
 class FreespinServiceImpl(application: Application) : FreespinGrpcKt.FreespinCoroutineImplBase() {
-    private val getPresetUsecase = application.get<GetPresetUsecase>()
-    private val createFreespinUsecase = application.get<CreateFreespinUsecase>()
-    private val cancelFreespinUsecase = application.get<CancelFreespinUsecase>()
+    private val freespinService = application.get<FreespinService>()
 
     override suspend fun getPreset(request: GetPresetCommand): GetPresetResult =
-        getPresetUsecase(gameIdentity = request.gameIdentity)
+        freespinService.getPreset(gameIdentity = request.gameIdentity)
             .map {
                 GetPresetResult.newBuilder()
                     .setPreset(mapToStruct(it.preset))
@@ -37,7 +33,7 @@ class FreespinServiceImpl(application: Application) : FreespinGrpcKt.FreespinCor
             .getOrElse { throw StatusException(Status.INVALID_ARGUMENT.withDescription(it.message)) }
 
     override suspend fun createFreespin(request: CreateFreespinCommand): EmptyResult =
-        createFreespinUsecase(
+        freespinService.create(
             presetValue = request.presetValueMap.mapValues { it.value.toInt() },
             referenceId = request.referenceId,
             playerId = request.playerId,
@@ -52,7 +48,7 @@ class FreespinServiceImpl(application: Application) : FreespinGrpcKt.FreespinCor
             .getOrElse { throw StatusException(Status.INVALID_ARGUMENT.withDescription(it.message)) }
 
     override suspend fun cancelFreespin(request: CancelFreespinCommand): EmptyResult =
-        cancelFreespinUsecase(
+        freespinService.cancel(
             referenceId = request.referenceId,
             gameIdentity = request.gameIdentity
         )

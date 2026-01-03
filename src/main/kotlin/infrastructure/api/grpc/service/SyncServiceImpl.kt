@@ -1,12 +1,12 @@
 package infrastructure.api.grpc.service
 
-import application.usecase.aggregator.AddAggregatorUsecase
-import application.usecase.aggregator.ListAggregatorUsecase
-import application.usecase.aggregator.ListGameVariantsUsecase
-import application.usecase.aggregator.SyncGameUsecase
-import application.usecase.provider.AssignProviderToAggregatorUsecase
-import domain.aggregator.model.AggregatorInfo
+import application.port.inbound.command.*
+import application.port.inbound.query.*
+import application.service.GameSyncService
 import domain.common.value.Aggregator
+import domain.game.repository.GameVariantFilter
+import infrastructure.handler.command.*
+import infrastructure.handler.query.*
 import shared.value.Pageable
 import com.nekzabirov.igambling.proto.dto.EmptyResult
 import com.nekzabirov.igambling.proto.service.AddAggregatorCommand
@@ -26,19 +26,24 @@ import infrastructure.api.grpc.mapper.toGameProto
 import infrastructure.api.grpc.mapper.toGameVariantProto
 import infrastructure.api.grpc.mapper.toProviderProto
 import org.koin.ktor.ext.get
-import java.util.UUID
 
 class SyncServiceImpl(application: Application) : SyncGrpcKt.SyncCoroutineImplBase() {
-    private val addAggregatorUsecase = application.get<AddAggregatorUsecase>()
-    private val listAggregatorUsecase = application.get<ListAggregatorUsecase>()
-    private val listGameVariantsUsecase = application.get<ListGameVariantsUsecase>()
-    private val assignProviderToAggregatorUsecase = application.get<AssignProviderToAggregatorUsecase>()
-    private val syncGameUsecase = application.get<SyncGameUsecase>()
+    private val addAggregatorCommandHandler = application.get<AddAggregatorCommandHandler>()
+    private val listAggregatorsQueryHandler = application.get<ListAggregatorsQueryHandler>()
+    private val listGameVariantsQueryHandler = application.get<ListGameVariantsQueryHandler>()
+    private val assignProviderToAggregatorCommandHandler = application.get<AssignProviderToAggregatorCommandHandler>()
+    private val gameSyncService = application.get<GameSyncService>()
 
     override suspend fun addAggregator(request: AddAggregatorCommand): EmptyResult {
         val type = Aggregator.valueOf(request.type)
 
-        return addAggregatorUsecase(request.identity, type, request.configMap)
+        return addAggregatorCommandHandler.handle(
+            application.port.inbound.command.AddAggregatorCommand(
+                identity = request.identity,
+                aggregator = type,
+                config = request.configMap
+            )
+        )
             .map { EmptyResult.getDefaultInstance() }
             .getOrElse { throw StatusException(Status.INVALID_ARGUMENT.withDescription(it.message)) }
     }
@@ -46,29 +51,31 @@ class SyncServiceImpl(application: Application) : SyncGrpcKt.SyncCoroutineImplBa
     override suspend fun listAggregator(request: ListAggregatorCommand): ListAggregatorResult {
         val pageable = Pageable(page = request.pageNumber, size = request.pageSize)
 
-        return listAggregatorUsecase(pageable) {
-            it.withQuery(request.query)
+        val page = listAggregatorsQueryHandler.handle(
+            ListAggregatorsQuery(
+                pageable = pageable,
+                query = request.query,
+                active = if (request.hasActive()) request.active else null,
+                type = if (request.hasType()) Aggregator.valueOf(request.type) else null
+            )
+        )
 
-            if (request.hasActive()) {
-                it.withActive(request.active)
-            }
-
-            if (request.hasType()) {
-                it.withActive(request.active)
-            }
-        }
-            .let {
-                ListAggregatorResult.newBuilder()
-                    .setTotalPage(it.totalPages.toInt())
-                    .addAllItems(it.items.map { a: AggregatorInfo -> a.toAggregatorProto() })
+        return ListAggregatorResult.newBuilder()
+            .setTotalPage(page.totalPages.toInt())
+            .addAllItems(page.items.map { a ->
+                com.nekzabirov.igambling.proto.dto.AggregatorDto.newBuilder()
+                    .setId(a.id.toString())
+                    .setIdentity(a.identity)
+                    .setType(a.aggregator.name)
+                    .setActive(a.active)
                     .build()
-            }
+            })
+            .build()
     }
 
     override suspend fun listVariants(request: ListVariantsCommand): ListVariantResult {
-        val page = Pageable(page = request.pageNumber, size = request.pageSize)
-
-        return listGameVariantsUsecase(page) {
+        val pageable = Pageable(page = request.pageNumber, size = request.pageSize)
+        val filter = GameVariantFilter.Builder().apply {
             withQuery(request.query)
 
             if (request.hasAggregatorType()) {
@@ -78,27 +85,33 @@ class SyncServiceImpl(application: Application) : SyncGrpcKt.SyncCoroutineImplBa
             if (request.hasGameIdentity()) {
                 withGameIdentity(request.gameIdentity)
             }
-        }.let {
-            ListVariantResult.newBuilder()
-                .setTotalPage(it.totalPages.toInt())
-                .addAllItems(it.items.map { i -> i.variant }.map { v -> v.toGameVariantProto() })
-                .addAllGames(it.items.map { i -> i.game }.toSet().mapNotNull { g -> g?.toGameProto() })
-                .addAllProviders(it.items.map { i -> i.provider }.toSet().mapNotNull { p -> p?.toProviderProto() })
-                .build()
-        }
+        }.build()
+
+        val page = listGameVariantsQueryHandler.handle(
+            ListGameVariantsQuery(pageable = pageable, filter = filter)
+        )
+
+        return ListVariantResult.newBuilder()
+            .setTotalPage(page.totalPages.toInt())
+            .addAllItems(page.items.map { i -> i.variant }.map { v -> v.toGameVariantProto() })
+            .addAllGames(page.items.map { i -> i.game }.toSet().mapNotNull { g -> g?.toGameProto() })
+            .addAllProviders(page.items.map { i -> i.provider }.toSet().mapNotNull { p -> p?.toProviderProto() })
+            .build()
     }
 
     override suspend fun assignProvider(request: AssignProviderCommand): EmptyResult {
-        assignProviderToAggregatorUsecase(
-            providerId = UUID.fromString(request.providerId),
-            aggregatorId = UUID.fromString(request.providerId)
+        assignProviderToAggregatorCommandHandler.handle(
+            AssignProviderToAggregatorCommand(
+                providerIdentity = request.providerId,
+                aggregatorIdentity = request.aggregatorIdentity
+            )
         ).getOrElse { throw StatusException(Status.INVALID_ARGUMENT.withDescription(it.message)) }
 
         return EmptyResult.getDefaultInstance()
     }
 
     override suspend fun syncGame(request: SyncGameCommand): SyncGameResultProto {
-        return syncGameUsecase(request.aggregatorIdentity)
+        return gameSyncService.sync(request.aggregatorIdentity)
             .map { result ->
                 SyncGameResultProto.newBuilder()
                     .setGameCount(result.gameCount)

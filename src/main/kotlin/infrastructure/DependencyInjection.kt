@@ -1,21 +1,13 @@
 package infrastructure
 
-import application.usecase.spin.GetPresetUsecase
 import application.port.outbound.*
 import application.saga.spin.end.EndSpinSaga
 import application.saga.spin.place.PlaceSpinSaga
 import application.saga.spin.rollback.RollbackSpinSaga
 import application.saga.spin.settle.SettleSpinSaga
-import application.service.GameService
-import application.service.SessionService
-import application.service.SpinService
-import application.usecase.aggregator.*
-import application.usecase.collection.*
-import application.usecase.game.*
-import application.usecase.provider.*
-import application.usecase.session.OpenSessionUsecase
-import application.usecase.spin.*
-import application.service.AggregatorService
+import application.service.*
+import infrastructure.handler.command.*
+import infrastructure.handler.query.*
 import infrastructure.messaging.messagingModule
 import infrastructure.external.UnitCurrencyAdapter
 import infrastructure.external.s3.S3FileAdapter
@@ -35,7 +27,7 @@ fun Application.coreModule() = module {
         DBModule,
         adapterModule,
         serviceModule,
-        useCaseModule,
+        handlerModule,
         sagaModule,
         AggregatorModule,
         messagingModule(this@coreModule)
@@ -64,76 +56,94 @@ private val serviceModule = module {
     // ==========================================
     // Application Services
     // ==========================================
-    single { GameService(get(), get()) }
-    single { SessionService(get(), get()) }
-    single { SpinService(get(), get(), get(), get()) }
-    single { AggregatorService(get(), get()) }
+    single { GameService(get(), get(), get()) }
+    single { SessionService(get(), get(), get(), get(), get()) }
+    single { SpinService(get(), get()) }
+    single { AggregatorService(get()) }
+    single { FreespinService(get(), get()) }
+    single { GameSyncService(get(), get()) }
 }
 
-private val useCaseModule = module {
+private val handlerModule = module {
     // ==========================================
-    // Application Use Cases - Game
+    // Query Handlers - Game
     // ==========================================
-    factory { FindGameUsecase(get()) }
-    factory { ListGamesUsecase(get()) }
-    factory { UpdateGameUsecase(get()) }
-    factory { UpdateGameImageUsecase(get(), get()) }
-    factory { AddGameTagUsecase(get()) }
-    factory { RemoveGameTagUsecase(get()) }
-    factory { AddGameFavouriteUsecase(get(), get(), get()) }
-    factory { RemoveGameFavouriteUsecase(get(), get(), get()) }
-    factory { DemoGameUsecase(get(), get()) }
-    factory { AddGameWinUsecase(get(), get(), get()) }
+    factory { FindGameByIdQueryHandler() }
+    factory { FindGameByIdentityQueryHandler() }
+    factory { FindGameBySymbolQueryHandler() }
+    factory { ListGamesQueryHandler() }
+    factory { SearchGamesQueryHandler() }
 
     // ==========================================
-    // Application Use Cases - Session
+    // Query Handlers - Collection
     // ==========================================
-    factory { OpenSessionUsecase(get(), get(), get(), get()) }
+    factory { ListCollectionsQueryHandler() }
+    factory { FindCollectionByIdentityQueryHandler() }
+    factory { FindCollectionByIdQueryHandler() }
 
     // ==========================================
-    // Application Use Cases - Spin
+    // Query Handlers - Provider
     // ==========================================
-    factory { GetPresetUsecase(get(), get()) }
-    factory { CreateFreespinUsecase(get(), get()) }
-    factory { CancelFreespinUsecase(get(), get()) }
-    factory { GetRoundsDetailsUsecase(get()) }
+    factory { ListProvidersQueryHandler() }
+    factory { FindProviderByIdentityQueryHandler() }
+    factory { FindProviderByIdQueryHandler() }
 
     // ==========================================
-    // Application Use Cases - Collection
+    // Query Handlers - Aggregator
     // ==========================================
-    factory { AddCollectionUsecase(get()) }
-    factory { UpdateCollectionUsecase(get()) }
-    factory { AddGameCollectionUsecase(get(), get()) }
-    factory { RemoveGameCollectionUsecase(get(), get()) }
-    factory { ChangeGameOrderUsecase(get(), get()) }
-    factory { ListCollectionUsecase(get()) }
+    factory { ListAggregatorsQueryHandler() }
+    factory { ListActiveAggregatorsQueryHandler() }
+    factory { FindAggregatorByIdentityQueryHandler() }
+    factory { FindAggregatorByIdQueryHandler() }
+    factory { FindAggregatorByTypeQueryHandler() }
+    factory { ListGameVariantsQueryHandler() }
 
     // ==========================================
-    // Application Use Cases - Provider
+    // Query Handlers - Round
     // ==========================================
-    factory { ProviderListUsecase(get(), get()) }
-    factory { UpdateProviderUsecase(get()) }
-    factory { UpdateProviderImageUsecase(get(), get()) }
-    factory { AssignProviderToAggregatorUsecase(get(), get()) }
+    factory { GetRoundsDetailsQueryHandler() }
 
     // ==========================================
-    // Application Use Cases - Aggregator
+    // Command Handlers - Game
     // ==========================================
-    factory { AddAggregatorUsecase(get()) }
-    factory { ListAggregatorUsecase(get()) }
-    factory { ListAllActiveAggregatorUsecase(get()) }
-    factory { ListGameVariantsUsecase(get()) }
-    factory { SyncGameUsecase(get(), get(), get(), get(), get(), get()) }
+    factory { UpdateGameCommandHandler() }
+    factory { UpdateGameImageCommandHandler(get()) }
+    factory { AddGameTagCommandHandler() }
+    factory { RemoveGameTagCommandHandler() }
+    factory { AddGameFavouriteCommandHandler(get()) }
+    factory { RemoveGameFavouriteCommandHandler(get()) }
+    factory { AddGameWinCommandHandler(get()) }
+
+    // ==========================================
+    // Command Handlers - Collection
+    // ==========================================
+    factory { AddCollectionCommandHandler() }
+    factory { UpdateCollectionCommandHandler() }
+    factory { AddGameToCollectionCommandHandler() }
+    factory { RemoveGameFromCollectionCommandHandler() }
+    factory { ChangeGameOrderInCollectionCommandHandler() }
+
+    // ==========================================
+    // Command Handlers - Provider
+    // ==========================================
+    factory { UpdateProviderCommandHandler() }
+    factory { UpdateProviderImageCommandHandler(get()) }
+    factory { AssignProviderToAggregatorCommandHandler() }
+
+    // ==========================================
+    // Command Handlers - Aggregator
+    // ==========================================
+    factory { AddAggregatorCommandHandler() }
 }
 
 private val sagaModule = module {
     // ==========================================
     // Application Sagas - Distributed Transactions
     // ==========================================
-    factory { PlaceSpinSaga(get(), get(), get(), get(), get(), get(), get()) }
-    factory { SettleSpinSaga(get(), get(), get(), get(), get()) }
-    factory { EndSpinSaga(get(), get(), get()) }
-    factory { RollbackSpinSaga(get(), get(), get(), get(), get()) }
+    factory { PlaceSpinSaga(get(), get(), get(), get(), get()) }
+    factory { SettleSpinSaga(get(), get(), get()) }
+    factory { EndSpinSaga(get(), get()) }
+    factory { RollbackSpinSaga(get(), get(), get()) }
 }
 
 /**

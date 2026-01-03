@@ -8,8 +8,6 @@ import application.saga.SagaOrchestrator
 import application.saga.spin.place.step.*
 import application.service.AggregatorService
 import application.service.GameService
-import domain.session.repository.RoundRepository
-import domain.session.repository.SpinRepository
 
 /**
  * Saga definition for placing a spin (bet) operation.
@@ -32,18 +30,16 @@ class PlaceSpinSaga(
     private val gameService: GameService,
     private val walletAdapter: WalletAdapter,
     private val playerAdapter: PlayerAdapter,
-    private val roundRepository: RoundRepository,
-    private val spinRepository: SpinRepository,
     private val eventPublisher: EventPublisherAdapter
 ) {
     private val orchestrator = SagaOrchestrator(
         sagaName = "PlaceSpinSaga",
         steps = listOf(
             ValidateGameStep(aggregatorService, gameService),
-            FindOrCreateRoundStep(roundRepository),
+            FindOrCreateRoundStep(),
             ValidateBalanceStep(walletAdapter, playerAdapter),
             WalletWithdrawStep(walletAdapter),
-            SavePlaceSpinStep(spinRepository),
+            SavePlaceSpinStep(),
             PublishSpinPlacedEventStep(eventPublisher)
         ),
         retryPolicy = RetryPolicy.default()

@@ -4,19 +4,31 @@ import domain.session.model.Session
 import domain.session.repository.SessionRepository
 import infrastructure.persistence.exposed.mapper.toSession
 import infrastructure.persistence.exposed.table.SessionTable
-import org.jetbrains.exposed.sql.ResultRow
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insertAndGetId
+import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import java.util.UUID
 
 /**
  * Exposed implementation of SessionRepository.
  */
-class ExposedSessionRepository : BaseExposedRepository<Session, SessionTable>(SessionTable), SessionRepository {
+class ExposedSessionRepository : SessionRepository {
 
-    override fun ResultRow.toEntity(): Session = toSession()
+    override suspend fun findById(id: UUID): Session? = newSuspendedTransaction {
+        SessionTable.selectAll()
+            .where { SessionTable.id eq id }
+            .singleOrNull()
+            ?.toSession()
+    }
 
-    override suspend fun findByToken(token: String): Session? = findOneBy(SessionTable.token, token)
+    override suspend fun findByToken(token: String): Session? = newSuspendedTransaction {
+        SessionTable.selectAll()
+            .where { SessionTable.token eq token }
+            .singleOrNull()
+            ?.toSession()
+    }
 
     override suspend fun save(session: Session): Session = newSuspendedTransaction {
         val id = SessionTable.insertAndGetId {
@@ -30,5 +42,9 @@ class ExposedSessionRepository : BaseExposedRepository<Session, SessionTable>(Se
             it[platform] = session.platform
         }
         session.copy(id = id.value)
+    }
+
+    override suspend fun delete(id: UUID): Boolean = newSuspendedTransaction {
+        SessionTable.deleteWhere { SessionTable.id eq id } > 0
     }
 }

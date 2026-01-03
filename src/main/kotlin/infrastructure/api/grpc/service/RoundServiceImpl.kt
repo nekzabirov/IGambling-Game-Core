@@ -1,25 +1,23 @@
 package infrastructure.api.grpc.service
 
-import application.usecase.spin.GetRoundsDetailsUsecase
+import application.port.inbound.query.*
 import com.google.protobuf.Timestamp
+import com.nekzabirov.igambling.proto.service.GameWithDetailsDto
 import com.nekzabirov.igambling.proto.service.GetRoundsDetailsCommand
 import com.nekzabirov.igambling.proto.service.GetRoundsDetailsResult
 import com.nekzabirov.igambling.proto.service.RoundGrpcKt
-import domain.session.model.RoundDetails
 import domain.session.repository.RoundFilter
-import infrastructure.api.grpc.mapper.toAggregatorProto
-import infrastructure.api.grpc.mapper.toProviderProto
+import infrastructure.handler.query.*
 import io.ktor.server.application.*
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 import org.koin.ktor.ext.get
 import shared.value.Pageable
-import com.nekzabirov.igambling.proto.service.GameWithDetailsDto
 import com.nekzabirov.igambling.proto.service.RoundDetailsDto
 
 class RoundServiceImpl(application: Application) : RoundGrpcKt.RoundCoroutineImplBase() {
-    private val getRoundsDetailsUsecase = application.get<GetRoundsDetailsUsecase>()
+    private val getRoundsDetailsQueryHandler = application.get<GetRoundsDetailsQueryHandler>()
 
     override suspend fun getRoundsDetails(request: GetRoundsDetailsCommand): GetRoundsDetailsResult {
         val filter = RoundFilter.builder().apply {
@@ -31,9 +29,11 @@ class RoundServiceImpl(application: Application) : RoundGrpcKt.RoundCoroutineImp
             }
         }.build()
 
-        val page = getRoundsDetailsUsecase(
-            pageable = Pageable(request.pageNumber, request.pageSize),
-            filter = filter
+        val page = getRoundsDetailsQueryHandler.handle(
+            GetRoundsDetailsQuery(
+                pageable = Pageable(request.pageNumber, request.pageSize),
+                filter = filter
+            )
         )
 
         return GetRoundsDetailsResult.newBuilder()
@@ -44,13 +44,18 @@ class RoundServiceImpl(application: Application) : RoundGrpcKt.RoundCoroutineImp
             .build()
     }
 
-    private fun RoundDetails.toRoundDetailsProto(): RoundDetailsDto {
+    private fun RoundDetailsReadModel.toRoundDetailsProto(): RoundDetailsDto {
+        val gameDto = GameWithDetailsDto.newBuilder()
+            .setIdentity(this.gameIdentity)
+            .setName(this.gameName)
+            .build()
+
         val builder = RoundDetailsDto.newBuilder()
             .setId(this.id.toString())
             .setPlaceAmount(this.placeAmount.toString())
             .setSettleAmount(this.settleAmount.toString())
-            .setCurrency(this.currency.value)
-            .setGame(this.game.toGameWithDetailsProto())
+            .setCurrency(this.currency)
+            .setGame(gameDto)
             .setIsFinished(this.isFinished)
             .setCreatedAt(this.createdAt.toTimestamp())
 
@@ -67,26 +72,4 @@ class RoundServiceImpl(application: Application) : RoundGrpcKt.RoundCoroutineImp
             .setNanos(instant.nanosecondsOfSecond)
             .build()
     }
-
-    private fun domain.game.model.GameWithDetails.toGameWithDetailsProto(): GameWithDetailsDto =
-        GameWithDetailsDto.newBuilder()
-            .setId(this.id.toString())
-            .setIdentity(this.identity)
-            .setName(this.name)
-            .putAllImages(this.images.data)
-            .setBonusBetEnable(this.bonusBetEnable)
-            .setBonusWageringEnable(this.bonusWageringEnable)
-            .addAllTags(this.tags)
-            .setSymbol(this.symbol)
-            .setFreeSpinEnable(this.freeSpinEnable)
-            .setFreeChipEnable(this.freeChipEnable)
-            .setJackpotEnable(this.jackpotEnable)
-            .setDemoEnable(this.demoEnable)
-            .setBonusBuyEnable(this.bonusBuyEnable)
-            .addAllLocales(this.locales.map { it.value })
-            .addAllPlatforms(this.platforms.map { it.name })
-            .setPlayLines(this.playLines)
-            .setProvider(this.provider.toProviderProto())
-            .setAggregator(this.aggregator.toAggregatorProto())
-            .build()
 }

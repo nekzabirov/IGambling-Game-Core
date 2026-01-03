@@ -6,8 +6,6 @@ import application.saga.RetryPolicy
 import application.saga.SagaOrchestrator
 import application.saga.spin.settle.step.*
 import application.service.GameService
-import domain.session.repository.RoundRepository
-import domain.session.repository.SpinRepository
 import java.math.BigInteger
 
 /**
@@ -24,18 +22,16 @@ import java.math.BigInteger
 class SettleSpinSaga(
     private val gameService: GameService,
     private val walletAdapter: WalletAdapter,
-    private val roundRepository: RoundRepository,
-    private val spinRepository: SpinRepository,
     private val eventPublisher: EventPublisherAdapter
 ) {
     private val orchestrator = SagaOrchestrator(
         sagaName = "SettleSpinSaga",
         steps = listOf(
-            FindRoundStep(roundRepository),
-            FindPlaceSpinStep(spinRepository),
+            FindRoundStep(),
+            FindPlaceSpinStep(),
             CalculateWinAmountsStep(),
             WalletDepositStep(walletAdapter),
-            SaveSettleSpinStep(spinRepository),
+            SaveSettleSpinStep(),
             PublishSpinSettledEventStep(eventPublisher, gameService)
         ),
         retryPolicy = RetryPolicy.default()

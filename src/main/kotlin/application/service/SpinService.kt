@@ -4,13 +4,21 @@ import application.port.outbound.PlayerAdapter
 import application.port.outbound.WalletAdapter
 import domain.common.error.*
 import domain.game.model.Game
+import domain.session.model.Round
 import domain.session.model.Session
 import domain.session.model.Spin
-import domain.session.repository.RoundRepository
-import domain.session.repository.SpinRepository
 import domain.common.value.SpinType
+import infrastructure.persistence.exposed.mapper.toRound
+import infrastructure.persistence.exposed.mapper.toSpin
+import infrastructure.persistence.exposed.table.RoundTable
+import infrastructure.persistence.exposed.table.SpinTable
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import java.math.BigInteger
 import java.util.UUID
 
@@ -48,9 +56,7 @@ data class SpinCommand(
  */
 class SpinService(
     private val walletAdapter: WalletAdapter,
-    private val playerAdapter: PlayerAdapter,
-    private val roundRepository: RoundRepository,
-    private val spinRepository: SpinRepository
+    private val playerAdapter: PlayerAdapter
 ) {
     /**
      * Place a spin (bet).
@@ -60,7 +66,7 @@ class SpinService(
         val isFreeSpin = command.freeSpinId != null
 
         // Create or get round
-        val round = roundRepository.findOrCreate(session.id, game.id, command.extRoundId)
+        val round = findOrCreateRound(session.id, game.id, command.extRoundId)
 
         if (isFreeSpin) {
             // FreeSpin mode: just save to DB, no wallet operations
@@ -75,7 +81,7 @@ class SpinService(
                 freeSpinId = command.freeSpinId
             )
 
-            spinRepository.save(spin)
+            saveSpin(spin)
             return Result.success(Unit)
         }
 
@@ -129,7 +135,7 @@ class SpinService(
             realAmount = betRealAmount,
             bonusAmount = betBonusAmount,
             extId = command.transactionId
-        ).let { spinRepository.save(it) }
+        ).let { saveSpin(it) }
 
         // Withdraw from wallet
         walletAdapter.withdraw(
@@ -153,11 +159,11 @@ class SpinService(
         val isFreeSpin = command.freeSpinId != null
 
         // Find the round
-        val round = roundRepository.findByExtId(session.id, extRoundId)
+        val round = findRoundByExtId(session.id, extRoundId)
             ?: return Result.failure(RoundNotFoundError(extRoundId))
 
         // Find the place spin
-        val placeSpin = spinRepository.findPlaceSpinByRoundId(round.id)
+        val placeSpin = findPlaceSpinByRoundId(round.id)
             ?: return Result.failure(RoundFinishedError(extRoundId))
 
         if (isFreeSpin) {
@@ -174,7 +180,7 @@ class SpinService(
                 freeSpinId = command.freeSpinId
             )
 
-            spinRepository.save(settleSpin)
+            saveSpin(settleSpin)
             return Result.success(Unit)
         }
 
@@ -196,7 +202,7 @@ class SpinService(
             bonusAmount = bonusAmount,
             extId = command.transactionId,
             referenceId = placeSpin.id
-        ).let { spinRepository.save(it) }
+        ).let { saveSpin(it) }
 
         // Deposit winnings
         walletAdapter.deposit(
@@ -218,11 +224,11 @@ class SpinService(
      */
     suspend fun rollback(session: Session, command: SpinCommand): Result<Unit> {
         // Find the round
-        val round = roundRepository.findByExtId(session.id, command.extRoundId)
+        val round = findRoundByExtId(session.id, command.extRoundId)
             ?: return Result.failure(RoundNotFoundError(command.extRoundId))
 
         // Find the spin to rollback
-        val spin = spinRepository.findByRoundId(round.id).firstOrNull()
+        val spin = findSpinsByRoundId(round.id).firstOrNull()
             ?: return Result.failure(RoundNotFoundError(command.extRoundId))
 
         val isFreeSpin = spin.freeSpinId != null
@@ -240,7 +246,7 @@ class SpinService(
             freeSpinId = command.freeSpinId
         )
 
-        spinRepository.save(rollbackSpin)
+        saveSpin(rollbackSpin)
 
         if (!isFreeSpin) {
             // Normal mode: rollback in wallet
@@ -254,11 +260,80 @@ class SpinService(
      * Close a round.
      */
     suspend fun closeRound(session: Session, extRoundId: String): Result<Unit> {
-        val round = roundRepository.findByExtId(session.id, extRoundId)
+        val round = findRoundByExtId(session.id, extRoundId)
             ?: return Result.failure(RoundNotFoundError(extRoundId))
 
-        roundRepository.finish(round.id)
+        finishRound(round.id)
 
         return Result.success(Unit)
     }
+
+    // Private helper methods using direct Exposed DSL
+
+    private suspend fun findOrCreateRound(sessionId: UUID, gameId: UUID, extId: String): Round =
+        newSuspendedTransaction {
+            val existing = RoundTable.selectAll()
+                .where { (RoundTable.sessionId eq sessionId) and (RoundTable.extId eq extId) }
+                .singleOrNull()
+                ?.toRound()
+
+            existing ?: run {
+                val row = RoundTable.upsertReturning(
+                    keys = arrayOf(RoundTable.sessionId, RoundTable.extId),
+                    onUpdateExclude = listOf(RoundTable.id, RoundTable.gameId, RoundTable.finished)
+                ) {
+                    it[RoundTable.sessionId] = sessionId
+                    it[RoundTable.gameId] = gameId
+                    it[RoundTable.extId] = extId
+                    it[finished] = false
+                }.single()
+                row.toRound()
+            }
+        }
+
+    private suspend fun findRoundByExtId(sessionId: UUID, extId: String): Round? =
+        newSuspendedTransaction {
+            RoundTable.selectAll()
+                .where { (RoundTable.sessionId eq sessionId) and (RoundTable.extId eq extId) }
+                .singleOrNull()
+                ?.toRound()
+        }
+
+    private suspend fun findPlaceSpinByRoundId(roundId: UUID): Spin? =
+        newSuspendedTransaction {
+            SpinTable.selectAll()
+                .where { (SpinTable.roundId eq roundId) and (SpinTable.type eq SpinType.PLACE) }
+                .singleOrNull()
+                ?.toSpin()
+        }
+
+    private suspend fun findSpinsByRoundId(roundId: UUID): List<Spin> =
+        newSuspendedTransaction {
+            SpinTable.selectAll()
+                .where { SpinTable.roundId eq roundId }
+                .map { it.toSpin() }
+        }
+
+    private suspend fun saveSpin(spin: Spin): Spin =
+        newSuspendedTransaction {
+            val id = SpinTable.insertAndGetId {
+                it[roundId] = spin.roundId
+                it[type] = spin.type
+                it[amount] = spin.amount.toLong()
+                it[realAmount] = spin.realAmount.toLong()
+                it[bonusAmount] = spin.bonusAmount.toLong()
+                it[extId] = spin.extId
+                it[referenceId] = spin.referenceId
+                it[freeSpinId] = spin.freeSpinId
+            }
+            spin.copy(id = id.value)
+        }
+
+    private suspend fun finishRound(roundId: UUID): Unit =
+        newSuspendedTransaction {
+            RoundTable.update({ RoundTable.id eq roundId }) {
+                it[finished] = true
+                it[finishedAt] = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+            }
+        }
 }

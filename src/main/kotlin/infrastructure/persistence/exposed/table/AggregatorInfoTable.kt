@@ -1,6 +1,6 @@
 package infrastructure.persistence.exposed.table
 
-import infrastructure.persistence.exposed.repository.IdentityTable
+import infrastructure.persistence.exposed.table.IdentityTable
 import domain.common.value.Aggregator
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.json.jsonb

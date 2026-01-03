@@ -6,8 +6,6 @@ import application.saga.RetryPolicy
 import application.saga.SagaOrchestrator
 import application.saga.spin.rollback.step.*
 import application.service.GameService
-import domain.session.repository.RoundRepository
-import domain.session.repository.SpinRepository
 
 /**
  * Saga definition for rolling back a spin (refunding a bet).
@@ -22,17 +20,15 @@ import domain.session.repository.SpinRepository
 class RollbackSpinSaga(
     private val gameService: GameService,
     private val walletAdapter: WalletAdapter,
-    private val roundRepository: RoundRepository,
-    private val spinRepository: SpinRepository,
     private val eventPublisher: EventPublisherAdapter
 ) {
     private val orchestrator = SagaOrchestrator(
         sagaName = "RollbackSpinSaga",
         steps = listOf(
-            FindRoundStep(roundRepository),
-            FindOriginalSpinStep(spinRepository),
+            FindRoundStep(),
+            FindOriginalSpinStep(),
             WalletRefundStep(walletAdapter),
-            SaveRollbackSpinStep(spinRepository),
+            SaveRollbackSpinStep(),
             PublishRollbackEventStep(eventPublisher, gameService)
         ),
         retryPolicy = RetryPolicy.default()

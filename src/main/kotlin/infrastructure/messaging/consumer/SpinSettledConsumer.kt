@@ -1,7 +1,8 @@
 package infrastructure.messaging.consumer
 
 import domain.common.event.SpinSettledEvent
-import application.usecase.game.AddGameWinUsecase
+import application.port.inbound.command.AddGameWinCommand
+import infrastructure.handler.command.AddGameWinCommandHandler
 import io.github.damir.denis.tudor.ktor.server.rabbitmq.dsl.*
 import io.ktor.server.application.*
 import kotlinx.serialization.json.Json
@@ -16,7 +17,7 @@ private val json = Json { ignoreUnknownKeys = true }
  * Configures RabbitMQ consumer for SpinSettledEvent messages.
  */
 fun Application.consumeSpinSettled(exchangeName: String) = rabbitmq {
-    val addGameWinUsecase = getKoin().get<AddGameWinUsecase>()
+    val addGameWinCommandHandler = getKoin().get<AddGameWinCommandHandler>()
 
     queueBind {
         queue = SPIN_EVENTS_QUEUE
@@ -45,11 +46,13 @@ fun Application.consumeSpinSettled(exchangeName: String) = rabbitmq {
 
             // Skip free spins
             if (event.freeSpinId == null) {
-                addGameWinUsecase(
-                    gameIdentity = event.gameIdentity,
-                    playerId = event.playerId,
-                    amount = event.amount,
-                    currency = event.currency
+                addGameWinCommandHandler.handle(
+                    AddGameWinCommand(
+                        gameIdentity = event.gameIdentity,
+                        playerId = event.playerId,
+                        amount = event.amount,
+                        currency = event.currency.value
+                    )
                 )
             }
         }

@@ -2,14 +2,16 @@ package application.service
 
 import application.port.outbound.CacheAdapter
 import domain.aggregator.model.AggregatorInfo
-import domain.aggregator.repository.AggregatorRepository
 import domain.common.error.NotFoundError
 import infrastructure.persistence.cache.CachingRepository
+import infrastructure.persistence.exposed.mapper.toAggregatorInfo
+import infrastructure.persistence.exposed.table.AggregatorInfoTable
+import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import java.util.UUID
 import kotlin.time.Duration.Companion.minutes
 
 class AggregatorService(
-    private val aggregatorRepository: AggregatorRepository,
     cacheAdapter: CacheAdapter
 ) {
     companion object {
@@ -27,7 +29,14 @@ class AggregatorService(
         cache.getOrLoadResult(
             key = id.toString(),
             notFoundError = { NotFoundError("Aggregator", id.toString()) },
-            loader = { aggregatorRepository.findById(id) }
+            loader = {
+                newSuspendedTransaction {
+                    AggregatorInfoTable.selectAll()
+                        .where { AggregatorInfoTable.id eq id }
+                        .singleOrNull()
+                        ?.toAggregatorInfo()
+                }
+            }
         )
 
     /**
