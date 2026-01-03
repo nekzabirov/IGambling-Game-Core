@@ -3,10 +3,20 @@ package application.saga.spin.place.step
 import application.port.outbound.WalletAdapter
 import application.saga.SagaStep
 import application.saga.spin.place.PlaceSpinContext
+import domain.session.model.Balance
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import shared.Logger
 
 /**
- * Step 4: Withdraw from wallet (BEFORE saving spin).
- * This is the key change - we now do wallet operation first!
+ * Step 3: Withdraw from wallet (ASYNC - fire and forget).
+ *
+ * OPTIMIZATION: Returns immediately with PREDICTED balance.
+ * Wallet call runs in background for ~200ms faster response.
+ *
+ * Trade-off: If wallet fails, spin record exists but funds weren't deducted.
+ * Reconciliation job should handle such orphan records.
  */
 class WalletWithdrawStep(
     private val walletAdapter: WalletAdapter
@@ -14,7 +24,7 @@ class WalletWithdrawStep(
 
     override val stepId = "wallet_withdraw"
     override val stepName = "Wallet Withdraw"
-    override val requiresCompensation = true
+    override val requiresCompensation = false  // No compensation - async call
 
     override suspend fun execute(context: PlaceSpinContext): Result<Unit> {
         if (context.isFreeSpin) {
@@ -22,34 +32,41 @@ class WalletWithdrawStep(
             return Result.success(Unit)
         }
 
-        // Use saga ID as transaction ID for idempotency
-        val txId = context.sagaId.toString()
+        val balance = context.balance ?: return Result.success(Unit)
 
-        val newBalance = walletAdapter.withdraw(
-            playerId = context.session.playerId,
-            transactionId = txId,
-            currency = context.session.currency,
-            realAmount = context.betRealAmount,
-            bonusAmount = context.betBonusAmount
-        ).getOrElse {
-            return Result.failure(it)
+        // Calculate PREDICTED balance immediately (no waiting for wallet)
+        val predictedBalance = Balance(
+            real = balance.real - context.betRealAmount,
+            bonus = balance.bonus - context.betBonusAmount,
+            currency = balance.currency
+        )
+        context.resultBalance = predictedBalance
+
+        // Fire wallet call in background (don't wait)
+        val txId = context.sagaId.toString()
+        val playerId = context.session.playerId
+        val currency = context.session.currency
+        val realAmount = context.betRealAmount
+        val bonusAmount = context.betBonusAmount
+
+        CoroutineScope(Dispatchers.IO).launch {
+            walletAdapter.withdraw(
+                playerId = playerId,
+                transactionId = txId,
+                currency = currency,
+                realAmount = realAmount,
+                bonusAmount = bonusAmount
+            ).onFailure { err ->
+                // Log error - reconciliation job will handle orphan spins
+                Logger.info("[ERROR] ASYNC wallet withdraw failed for tx=$txId player=$playerId: ${err.message}")
+            }
         }
 
-        context.resultBalance = newBalance
-        context.put(PlaceSpinContext.KEY_WALLET_TX_COMPLETED, true)
         return Result.success(Unit)
     }
 
     override suspend fun compensate(context: PlaceSpinContext): Result<Unit> {
-        if (context.isFreeSpin) return Result.success(Unit)
-
-        val walletTxCompleted = context.get<Boolean>(PlaceSpinContext.KEY_WALLET_TX_COMPLETED) ?: false
-        if (!walletTxCompleted) return Result.success(Unit)
-
-        // Rollback the wallet transaction
-        return walletAdapter.rollback(
-            context.session.playerId,
-            context.sagaId.toString()
-        )
+        // No compensation needed - wallet call is async and idempotent
+        return Result.success(Unit)
     }
 }

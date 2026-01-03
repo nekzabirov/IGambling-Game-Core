@@ -6,6 +6,7 @@ import io.ktor.http.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.koin.ktor.ext.inject
+import shared.Logger
 import shared.value.SessionToken
 import kotlin.getValue
 
@@ -30,30 +31,32 @@ internal fun Route.oneGameHubWebhookRoute() {
 
         val mainToken = SessionToken(sessionToken)
 
-        val response = when (action) {
-            "balance" -> handler.balance(mainToken)
+        val response = Logger.profileSuspend("OneGameHub.webhook.$action") {
+            when (action) {
+                "balance" -> handler.balance(mainToken)
 
-            "bet" -> handler.bet(
-                mainToken,
-                payload = OneGameHubBetDto(
+                "bet" -> handler.bet(
+                    mainToken,
+                    payload = OneGameHubBetDto(
+                        gameSymbol = call.parameters.gameSymbol,
+                        roundId = call.parameters.roundId,
+                        transactionId = call.parameters.transactionId,
+                        freeSpinId = call.parameters.freespinId,
+                        amount = call.parameters.amount
+                    )
+                )
+
+                "win" -> handler.win(mainToken, payload = OneGameHubBetDto(
                     gameSymbol = call.parameters.gameSymbol,
                     roundId = call.parameters.roundId,
                     transactionId = call.parameters.transactionId,
                     freeSpinId = call.parameters.freespinId,
-                    amount = call.parameters.amount
-                )
-            )
+                    amount = call.parameters.amount,
+                    finishRound = call.parameters.isRoundEnd
+                ))
 
-            "win" -> handler.win(mainToken, payload = OneGameHubBetDto(
-                gameSymbol = call.parameters.gameSymbol,
-                roundId = call.parameters.roundId,
-                transactionId = call.parameters.transactionId,
-                freeSpinId = call.parameters.freespinId,
-                amount = call.parameters.amount,
-                finishRound = call.parameters.isRoundEnd
-            ))
-
-            else -> OneGameHubResponse.Error.UNEXPECTED_ERROR
+                else -> OneGameHubResponse.Error.UNEXPECTED_ERROR
+            }
         }
 
         call.respond(response)
