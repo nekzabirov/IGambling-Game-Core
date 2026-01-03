@@ -1,6 +1,8 @@
 package application.saga.spin.settle
 
 import application.port.outbound.EventPublisherAdapter
+import application.port.outbound.RoundRepository
+import application.port.outbound.SpinRepository
 import application.port.outbound.WalletAdapter
 import application.saga.RetryPolicy
 import application.saga.SagaOrchestrator
@@ -22,16 +24,18 @@ import java.math.BigInteger
 class SettleSpinSaga(
     private val gameService: GameService,
     private val walletAdapter: WalletAdapter,
-    private val eventPublisher: EventPublisherAdapter
+    private val eventPublisher: EventPublisherAdapter,
+    private val roundRepository: RoundRepository,
+    private val spinRepository: SpinRepository
 ) {
     private val orchestrator = SagaOrchestrator(
         sagaName = "SettleSpinSaga",
         steps = listOf(
-            FindRoundStep(),
-            FindPlaceSpinStep(),
+            FindRoundStep(roundRepository),
+            FindPlaceSpinStep(spinRepository),
             CalculateWinAmountsStep(),
             WalletDepositStep(walletAdapter),
-            SaveSettleSpinStep(),
+            SaveSettleSpinStep(spinRepository),
             PublishSpinSettledEventStep(eventPublisher, gameService)
         ),
         retryPolicy = RetryPolicy.default()

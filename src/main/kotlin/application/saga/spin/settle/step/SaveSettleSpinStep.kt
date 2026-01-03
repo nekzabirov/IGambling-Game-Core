@@ -1,21 +1,20 @@
 package application.saga.spin.settle.step
 
+import application.port.outbound.SpinRepository
 import application.saga.SagaStep
 import application.saga.spin.settle.SettleSpinContext
 import domain.common.error.IllegalStateError
 import domain.common.value.SpinType
 import domain.session.model.Spin
-import infrastructure.persistence.exposed.table.SpinTable
-import org.jetbrains.exposed.sql.insertAndGetId
-import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import java.math.BigInteger
 import java.util.UUID
 
 /**
  * Step 5: Save settle spin record (AFTER successful wallet operation).
- * Uses direct Exposed DSL for database access.
  */
-class SaveSettleSpinStep : SagaStep<SettleSpinContext> {
+class SaveSettleSpinStep(
+    private val spinRepository: SpinRepository
+) : SagaStep<SettleSpinContext> {
 
     override val stepId = "save_settle_spin"
     override val stepName = "Save Settle Spin Record"
@@ -41,21 +40,7 @@ class SaveSettleSpinStep : SagaStep<SettleSpinContext> {
             freeSpinId = context.freeSpinId
         )
 
-        val savedSpin = newSuspendedTransaction {
-            val id = SpinTable.insertAndGetId {
-                it[roundId] = settleSpin.roundId
-                it[type] = settleSpin.type
-                it[amount] = settleSpin.amount.toLong()
-                it[realAmount] = settleSpin.realAmount.toLong()
-                it[bonusAmount] = settleSpin.bonusAmount.toLong()
-                it[extId] = settleSpin.extId
-                it[referenceId] = settleSpin.referenceId
-                it[freeSpinId] = settleSpin.freeSpinId
-            }
-            settleSpin.copy(id = id.value)
-        }
-        context.settleSpin = savedSpin
-
+        context.settleSpin = spinRepository.save(settleSpin)
         return Result.success(Unit)
     }
 
@@ -63,18 +48,18 @@ class SaveSettleSpinStep : SagaStep<SettleSpinContext> {
         val settleSpin = context.settleSpin ?: return Result.success(Unit)
 
         // Create a rollback spin record for audit trail
-        newSuspendedTransaction {
-            SpinTable.insertAndGetId {
-                it[roundId] = settleSpin.roundId
-                it[type] = SpinType.ROLLBACK
-                it[amount] = 0L
-                it[realAmount] = 0L
-                it[bonusAmount] = 0L
-                it[extId] = "${settleSpin.extId}_rollback_${context.sagaId}"
-                it[referenceId] = settleSpin.id
-                it[freeSpinId] = settleSpin.freeSpinId
-            }
-        }
+        val rollbackSpin = Spin(
+            id = UUID.randomUUID(),
+            roundId = settleSpin.roundId,
+            type = SpinType.ROLLBACK,
+            amount = BigInteger.ZERO,
+            realAmount = BigInteger.ZERO,
+            bonusAmount = BigInteger.ZERO,
+            extId = "${settleSpin.extId}_rollback_${context.sagaId}",
+            referenceId = settleSpin.id,
+            freeSpinId = settleSpin.freeSpinId
+        )
+        spinRepository.save(rollbackSpin)
         return Result.success(Unit)
     }
 }

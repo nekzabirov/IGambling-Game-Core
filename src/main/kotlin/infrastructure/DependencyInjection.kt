@@ -58,10 +58,10 @@ private val serviceModule = module {
     // ==========================================
     single { GameService(get(), get(), get()) }
     single { SessionService(get(), get(), get(), get(), get()) }
-    single { SpinService(get(), get()) }
-    single { AggregatorService(get()) }
+    single { SpinService(get(), get(), get(), get()) }
+    single { AggregatorService(get(), get()) }
     single { FreespinService(get(), get()) }
-    single { GameSyncService(get(), get()) }
+    single { GameSyncService(get(), get(), get(), get()) }
 }
 
 private val handlerModule = module {
@@ -140,10 +140,10 @@ private val sagaModule = module {
     // ==========================================
     // Application Sagas - Distributed Transactions
     // ==========================================
-    factory { PlaceSpinSaga(get(), get(), get(), get(), get()) }
-    factory { SettleSpinSaga(get(), get(), get()) }
-    factory { EndSpinSaga(get(), get()) }
-    factory { RollbackSpinSaga(get(), get(), get()) }
+    factory { PlaceSpinSaga(get(), get(), get(), get(), get(), get(), get()) }
+    factory { SettleSpinSaga(get(), get(), get(), get(), get()) }
+    factory { EndSpinSaga(get(), get(), get()) }
+    factory { RollbackSpinSaga(get(), get(), get(), get(), get()) }
 }
 
 /**

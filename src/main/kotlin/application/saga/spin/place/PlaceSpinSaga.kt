@@ -2,6 +2,8 @@ package application.saga.spin.place
 
 import application.port.outbound.EventPublisherAdapter
 import application.port.outbound.PlayerAdapter
+import application.port.outbound.RoundRepository
+import application.port.outbound.SpinRepository
 import application.port.outbound.WalletAdapter
 import application.saga.RetryPolicy
 import application.saga.SagaOrchestrator
@@ -30,16 +32,18 @@ class PlaceSpinSaga(
     private val gameService: GameService,
     private val walletAdapter: WalletAdapter,
     private val playerAdapter: PlayerAdapter,
-    private val eventPublisher: EventPublisherAdapter
+    private val eventPublisher: EventPublisherAdapter,
+    private val roundRepository: RoundRepository,
+    private val spinRepository: SpinRepository
 ) {
     private val orchestrator = SagaOrchestrator(
         sagaName = "PlaceSpinSaga",
         steps = listOf(
             ValidateGameStep(aggregatorService, gameService),
-            FindOrCreateRoundStep(),
+            FindOrCreateRoundStep(roundRepository),
             ValidateBalanceStep(walletAdapter, playerAdapter),
             WalletWithdrawStep(walletAdapter),
-            SavePlaceSpinStep(),
+            SavePlaceSpinStep(spinRepository),
             PublishSpinPlacedEventStep(eventPublisher)
         ),
         retryPolicy = RetryPolicy.default()

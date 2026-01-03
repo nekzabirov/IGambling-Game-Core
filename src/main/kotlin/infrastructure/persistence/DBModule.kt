@@ -1,13 +1,21 @@
 package infrastructure.persistence
 
+import application.port.outbound.AggregatorInfoRepository
 import application.port.outbound.CacheAdapter
 import application.port.outbound.GameSyncAdapter
+import application.port.outbound.GameVariantRepository
+import application.port.outbound.RoundRepository
+import application.port.outbound.SpinRepository
 import domain.game.repository.GameRepository
 import domain.session.repository.SessionRepository
 import infrastructure.persistence.cache.InMemoryCacheAdapter
 import infrastructure.persistence.exposed.adapter.ExposedGameSyncAdapter
+import infrastructure.persistence.exposed.repository.ExposedAggregatorInfoRepository
 import infrastructure.persistence.exposed.repository.ExposedGameRepository
+import infrastructure.persistence.exposed.repository.ExposedGameVariantRepository
+import infrastructure.persistence.exposed.repository.ExposedRoundRepository
 import infrastructure.persistence.exposed.repository.ExposedSessionRepository
+import infrastructure.persistence.exposed.repository.ExposedSpinRepository
 import org.jetbrains.exposed.sql.Database
 import org.koin.core.module.Module
 import org.koin.dsl.module
@@ -50,10 +58,14 @@ private fun Module.databaseModule() {
 
 private fun Module.repositoryModule() {
     // ==========================================
-    // Essential Repositories (still used by services)
+    // Essential Repositories
     // ==========================================
     single<GameRepository> { ExposedGameRepository() }
     single<SessionRepository> { ExposedSessionRepository() }
+    single<RoundRepository> { ExposedRoundRepository() }
+    single<SpinRepository> { ExposedSpinRepository() }
+    single<AggregatorInfoRepository> { ExposedAggregatorInfoRepository() }
+    single<GameVariantRepository> { ExposedGameVariantRepository() }
 
     // ==========================================
     // Adapters

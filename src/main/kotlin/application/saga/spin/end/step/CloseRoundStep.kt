@@ -1,20 +1,16 @@
 package application.saga.spin.end.step
 
+import application.port.outbound.RoundRepository
 import application.saga.SagaStep
 import application.saga.spin.end.EndSpinContext
 import domain.common.error.IllegalStateError
-import infrastructure.persistence.exposed.table.RoundTable
-import kotlinx.datetime.Clock
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
-import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
-import org.jetbrains.exposed.sql.update
 
 /**
  * Step 2: Close/finish the round.
- * Uses direct Exposed DSL for database access.
  */
-class CloseRoundStep : SagaStep<EndSpinContext> {
+class CloseRoundStep(
+    private val roundRepository: RoundRepository
+) : SagaStep<EndSpinContext> {
 
     override val stepId = "close_round"
     override val stepName = "Close Round"
@@ -25,12 +21,7 @@ class CloseRoundStep : SagaStep<EndSpinContext> {
             IllegalStateError("close_round", "round not set")
         )
 
-        newSuspendedTransaction {
-            RoundTable.update({ RoundTable.id eq round.id }) {
-                it[finished] = true
-                it[finishedAt] = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-            }
-        }
+        roundRepository.finish(round.id)
         return Result.success(Unit)
     }
 

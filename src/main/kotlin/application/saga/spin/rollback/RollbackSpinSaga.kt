@@ -1,6 +1,8 @@
 package application.saga.spin.rollback
 
 import application.port.outbound.EventPublisherAdapter
+import application.port.outbound.RoundRepository
+import application.port.outbound.SpinRepository
 import application.port.outbound.WalletAdapter
 import application.saga.RetryPolicy
 import application.saga.SagaOrchestrator
@@ -20,15 +22,17 @@ import application.service.GameService
 class RollbackSpinSaga(
     private val gameService: GameService,
     private val walletAdapter: WalletAdapter,
-    private val eventPublisher: EventPublisherAdapter
+    private val eventPublisher: EventPublisherAdapter,
+    private val roundRepository: RoundRepository,
+    private val spinRepository: SpinRepository
 ) {
     private val orchestrator = SagaOrchestrator(
         sagaName = "RollbackSpinSaga",
         steps = listOf(
-            FindRoundStep(),
-            FindOriginalSpinStep(),
+            FindRoundStep(roundRepository),
+            FindOriginalSpinStep(spinRepository),
             WalletRefundStep(walletAdapter),
-            SaveRollbackSpinStep(),
+            SaveRollbackSpinStep(spinRepository),
             PublishRollbackEventStep(eventPublisher, gameService)
         ),
         retryPolicy = RetryPolicy.default()
