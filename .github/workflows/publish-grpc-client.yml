@@ -59,7 +59,7 @@ jobs:
         run: |
           echo "## Published gRPC Client" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Artifact:** \`com.nekgamebling:igambling-grpc-client:${{ steps.version.outputs.VERSION }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Artifact:** \`com.nekgamebling:game-grpc-client:${{ steps.version.outputs.VERSION }}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Usage" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -76,6 +76,6 @@ jobs:
           echo "}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "dependencies {" >> $GITHUB_STEP_SUMMARY
-          echo "    implementation(\"com.nekgamebling:igambling-grpc-client:${{ steps.version.outputs.VERSION }}\")" >> $GITHUB_STEP_SUMMARY
+          echo "    implementation(\"com.nekgamebling:game-grpc-client:${{ steps.version.outputs.VERSION }}\")" >> $GITHUB_STEP_SUMMARY
           echo "}" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY

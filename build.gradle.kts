@@ -87,7 +87,7 @@ protobuf {
 
 // gRPC Client JAR - contains only generated proto stubs for external services
 val grpcClientJar by tasks.registering(Jar::class) {
-    archiveBaseName.set("igambling-grpc-client")
+    archiveBaseName.set("game-grpc-client")
     archiveVersion.set(grpcClientVersion)
     archiveClassifier.set("")
 
@@ -95,8 +95,8 @@ val grpcClientJar by tasks.registering(Jar::class) {
 
     // Include compiled proto classes from the main output
     from(sourceSets.main.get().output) {
-        // Include all generated proto packages (com.nekzabirov.igambling.proto.*)
-        include("com/nekzabirov/igambling/proto/**")
+        // Include all generated proto packages (com.nekgamebling.game.*)
+        include("com/nekgamebling/game/**")
     }
 
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
@@ -104,7 +104,7 @@ val grpcClientJar by tasks.registering(Jar::class) {
 
 // Sources JAR for the gRPC client
 val grpcClientSourcesJar by tasks.registering(Jar::class) {
-    archiveBaseName.set("igambling-grpc-client")
+    archiveBaseName.set("game-grpc-client")
     archiveVersion.set(grpcClientVersion)
     archiveClassifier.set("sources")
 
@@ -130,7 +130,7 @@ publishing {
     publications {
         create<MavenPublication>("grpcClient") {
             groupId = "com.nekgamebling"
-            artifactId = "game-core-grpc-client"
+            artifactId = "game-grpc-client"
             version = grpcClientVersion
 
             artifact(grpcClientJar)
@@ -171,6 +171,7 @@ publishing {
     }
 
     repositories {
+        mavenLocal()
         maven {
             name = "GitHubPackages"
             url = uri("https://maven.pkg.github.com/${System.getenv("GITHUB_REPOSITORY") ?: "nekzabirov/igambling-core"}")

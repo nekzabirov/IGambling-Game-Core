@@ -39,7 +39,7 @@ repositories {
 
 dependencies {
     // Game Core gRPC Client
-    implementation("com.nekgamebling:game-core-grpc-client:1.0.0")
+    implementation("com.nekgamebling:game-grpc-client:1.0.0")
 
     // gRPC Runtime (required)
     implementation("io.grpc:grpc-netty-shaded:1.68.2")
@@ -71,7 +71,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.nekgamebling:game-core-grpc-client:1.0.0'
+    implementation 'com.nekgamebling:game-grpc-client:1.0.0'
     implementation 'io.grpc:grpc-netty-shaded:1.68.2'
     implementation 'io.grpc:grpc-stub:1.68.2'
     implementation 'io.grpc:grpc-protobuf:1.68.2'

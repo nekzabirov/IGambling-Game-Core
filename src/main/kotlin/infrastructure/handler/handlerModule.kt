@@ -48,6 +48,7 @@ import infrastructure.handler.GameDemoUrlQueryHandler
 import infrastructure.handler.RemoveGameTagCommandHandler
 import infrastructure.handler.UpdateGameCommandHandler
 import infrastructure.handler.UpdateGameImageCommandHandler
+import org.koin.core.qualifier.named
 import org.koin.dsl.module
 
 /**
@@ -58,26 +59,26 @@ val handlerModule = module {
     // ==========================================
     // Query Handlers
     // ==========================================
-    single<QueryHandler<FindGameQuery, FindGameResponse>> { FindGameQueryHandler() }
-    single<QueryHandler<FindAllGameQuery, FindAllGameResponse>> { FindAllGameQueryHandler() }
-    single<QueryHandler<GameDemoUrlQuery, GameDemoUrlResponse>> { GameDemoUrlQueryHandler(get()) }
-    single<QueryHandler<FindaProviderQuery, FindaProviderResponse>> { FindaProviderQueryHandler() }
-    single<QueryHandler<FindAllProvidersQuery, FindAllProvidersResponse>> { FindAllProvidersQueryHandler() }
-    single<QueryHandler<FindCollectionQuery, FindCollectionResponse>> { FindCollectionQueryHandler() }
-    single<QueryHandler<FindAllCollectionsQuery, FindAllCollectionsResponse>> { FindAllCollectionsQueryHandler() }
-    single<QueryHandler<FindRoundQuery, FindRoundQueryResult>> { FindRoundQueryHandler() }
-    single<QueryHandler<FindAllRoundQuery, FindAllRoundQueryResult>> { FindAllRoundQueryHandler() }
+    single<QueryHandler<FindGameQuery, FindGameResponse>>(named("findGame")) { FindGameQueryHandler() }
+    single<QueryHandler<FindAllGameQuery, FindAllGameResponse>>(named("findAllGames")) { FindAllGameQueryHandler() }
+    single<QueryHandler<GameDemoUrlQuery, GameDemoUrlResponse>>(named("gameDemoUrl")) { GameDemoUrlQueryHandler(get()) }
+    single<QueryHandler<FindaProviderQuery, FindaProviderResponse>>(named("findProvider")) { FindaProviderQueryHandler() }
+    single<QueryHandler<FindAllProvidersQuery, FindAllProvidersResponse>>(named("findAllProviders")) { FindAllProvidersQueryHandler() }
+    single<QueryHandler<FindCollectionQuery, FindCollectionResponse>>(named("findCollection")) { FindCollectionQueryHandler() }
+    single<QueryHandler<FindAllCollectionsQuery, FindAllCollectionsResponse>>(named("findAllCollections")) { FindAllCollectionsQueryHandler() }
+    single<QueryHandler<FindRoundQuery, FindRoundQueryResult>>(named("findRound")) { FindRoundQueryHandler() }
+    single<QueryHandler<FindAllRoundQuery, FindAllRoundQueryResult>>(named("findAllRounds")) { FindAllRoundQueryHandler() }
 
     // ==========================================
     // Command Handlers
     // ==========================================
-    single<CommandHandler<UpdateGameCommand, Unit>> { UpdateGameCommandHandler() }
-    single<CommandHandler<UpdateGameImageCommand, Unit>> { UpdateGameImageCommandHandler(get()) }
-    single<CommandHandler<AddGameTagCommand, Unit>> { AddGameTagCommandHandler() }
-    single<CommandHandler<RemoveGameTagCommand, Unit>> { RemoveGameTagCommandHandler() }
-    single<CommandHandler<UpdateProviderCommand, Unit>> { UpdateProviderCommandHandler() }
-    single<CommandHandler<UpdateProviderImageCommand, Unit>> { UpdateProviderImageCommandHandler(get()) }
-    single<CommandHandler<UpdateCollectionCommand, Unit>> { UpdateCollectionCommandHandler() }
-    single<CommandHandler<UpdateCollectionGamesCommand, Unit>> { UpdateCollectionGamesCommandHandler() }
-    single<CommandHandler<PlayGameCommand, PlayGameResponse>> { PlayGameCommandHandler(get()) }
+    single<CommandHandler<UpdateGameCommand, Unit>>(named("updateGame")) { UpdateGameCommandHandler() }
+    single<CommandHandler<UpdateGameImageCommand, Unit>>(named("updateGameImage")) { UpdateGameImageCommandHandler(get()) }
+    single<CommandHandler<AddGameTagCommand, Unit>>(named("addGameTag")) { AddGameTagCommandHandler() }
+    single<CommandHandler<RemoveGameTagCommand, Unit>>(named("removeGameTag")) { RemoveGameTagCommandHandler() }
+    single<CommandHandler<UpdateProviderCommand, Unit>>(named("updateProvider")) { UpdateProviderCommandHandler() }
+    single<CommandHandler<UpdateProviderImageCommand, Unit>>(named("updateProviderImage")) { UpdateProviderImageCommandHandler(get()) }
+    single<CommandHandler<UpdateCollectionCommand, Unit>>(named("updateCollection")) { UpdateCollectionCommandHandler() }
+    single<CommandHandler<UpdateCollectionGamesCommand, Unit>>(named("updateCollectionGames")) { UpdateCollectionGamesCommandHandler() }
+    single<CommandHandler<PlayGameCommand, PlayGameResponse>>(named("playGame")) { PlayGameCommandHandler(get()) }
 }

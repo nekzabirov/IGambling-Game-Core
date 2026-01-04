@@ -98,7 +98,15 @@ class GameGrpcService(
             jackpotEnable = if (request.hasJackpotEnable()) request.jackpotEnable else null
         )
 
-        return findAllGameQueryHandler.handle(query)
+        val result = try {
+            findAllGameQueryHandler.handle(query)
+        } catch (e: Exception) {
+            throw StatusException(
+                Status.INTERNAL.withDescription("Database error: ${e.message}").withCause(e)
+            )
+        }
+
+        return result
             .map { response ->
                 // Build lookup map for provider identity by id
                 val providerIdentityById = response.providers.associate { it.id to it.identity }
