@@ -59,9 +59,10 @@ message RoundItemDto {
   string provider_identity = 2;
   string game_identity = 3;
   string player_id = 4;
+  string currency = 5;
 
-  int64 total_place_real = 5;
-  int64 total_place_bonus = 6;
-  int64 total_settle_real = 7;
-  int64 total_settle_bonus = 8;
+  int64 total_place_real = 6;
+  int64 total_place_bonus = 7;
+  int64 total_settle_real = 8;
+  int64 total_settle_bonus = 9;
 }

@@ -14,6 +14,7 @@ import infrastructure.persistence.exposed.table.SpinTable
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
+import shared.value.Currency
 import java.util.UUID
 
 class FindRoundQueryHandler : QueryHandler<FindRoundQuery, FindRoundQueryResult> {
@@ -68,6 +69,7 @@ class FindRoundQueryHandler : QueryHandler<FindRoundQuery, FindRoundQueryResult>
                 providerIdentity = row[ProviderTable.identity],
                 gameIdentity = row[GameTable.identity],
                 playerId = row[SessionTable.playerId],
+                currency = Currency(row[SessionTable.currency]),
                 totalPlaceReal = placeAmounts.first,
                 totalPlaceBonus = placeAmounts.second,
                 totalSettleReal = settleAmounts.first,

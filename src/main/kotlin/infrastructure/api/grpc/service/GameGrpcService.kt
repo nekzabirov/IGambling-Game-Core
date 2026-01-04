@@ -201,7 +201,8 @@ class GameGrpcService(
         val command = UpdateGameCommand(
             identity = request.identity,
             bonusBetEnable = if (request.hasBonusBetEnable()) request.bonusBetEnable else null,
-            bonusWageringEnable = if (request.hasBonusWageringEnable()) request.bonusWageringEnable else null
+            bonusWageringEnable = if (request.hasBonusWageringEnable()) request.bonusWageringEnable else null,
+            active = if (request.hasActive()) request.active else null
         )
 
         return updateGameCommandHandler.handle(command)

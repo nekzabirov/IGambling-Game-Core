@@ -4,6 +4,7 @@ import application.port.inbound.Query
 import domain.game.model.Game
 import domain.provider.model.Provider
 import domain.session.model.Round
+import shared.value.Currency
 import shared.value.Page
 import shared.value.Pageable
 
@@ -30,6 +31,7 @@ data class RoundItem(
     val gameIdentity: String,
 
     val playerId: String,
+    val currency: Currency,
 
     val totalPlaceReal: Long,
     val totalPlaceBonus: Long,

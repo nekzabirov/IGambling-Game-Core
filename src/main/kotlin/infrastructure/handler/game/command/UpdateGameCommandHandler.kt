@@ -24,6 +24,7 @@ class UpdateGameCommandHandler : CommandHandler<UpdateGameCommand, Unit> {
         GameTable.update({ GameTable.identity eq command.identity }) {
             command.bonusBetEnable?.let { value -> it[bonusBetEnable] = value }
             command.bonusWageringEnable?.let { value -> it[bonusWageringEnable] = value }
+            command.active?.let { value -> it[active] = value }
         }
 
         Result.success(Unit)

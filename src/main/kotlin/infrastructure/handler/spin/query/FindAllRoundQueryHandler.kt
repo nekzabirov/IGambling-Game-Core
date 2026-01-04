@@ -16,6 +16,7 @@ import infrastructure.persistence.exposed.table.SpinTable
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
+import shared.value.Currency
 import shared.value.Page
 import java.util.UUID
 
@@ -119,7 +120,8 @@ class FindAllRoundQueryHandler : QueryHandler<FindAllRoundQuery, FindAllRoundQue
             val providerId: UUID,
             val gameIdentity: String,
             val providerIdentity: String,
-            val playerId: String
+            val playerId: String,
+            val currency: Currency
         )
 
         // Get rounds with all details
@@ -145,7 +147,8 @@ class FindAllRoundQueryHandler : QueryHandler<FindAllRoundQuery, FindAllRoundQue
                     providerId = row[ProviderTable.id].value,
                     gameIdentity = row[GameTable.identity],
                     providerIdentity = row[ProviderTable.identity],
-                    playerId = row[SessionTable.playerId]
+                    playerId = row[SessionTable.playerId],
+                    currency = Currency(row[SessionTable.currency])
                 )
             }
 
@@ -189,6 +192,7 @@ class FindAllRoundQueryHandler : QueryHandler<FindAllRoundQuery, FindAllRoundQue
                 providerIdentity = details.providerIdentity,
                 gameIdentity = details.gameIdentity,
                 playerId = details.playerId,
+                currency = details.currency,
                 totalPlaceReal = placeAmt.first,
                 totalPlaceBonus = placeAmt.second,
                 totalSettleReal = settleAmt.first,

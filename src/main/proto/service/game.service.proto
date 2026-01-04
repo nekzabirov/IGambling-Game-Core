@@ -127,6 +127,7 @@ message UpdateGameCommand {
   string identity = 1;
   optional bool bonus_bet_enable = 2;
   optional bool bonus_wagering_enable = 3;
+  optional bool active = 4;
 }
 
 message UpdateGameResult {
