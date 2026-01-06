@@ -1,10 +1,34 @@
-FROM gradle:8.5-jdk21 AS builder
-WORKDIR /app
-COPY . .
-RUN gradle build -x test --no-daemon
+ # Runtime Dockerfile for game-core
+# Build the application first using: ./build.sh
 
 FROM eclipse-temurin:21-jre-alpine
+
+LABEL maintainer="NekGambling"
+LABEL description="iGambling Game Core Service"
+
+# Create non-root user for security
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+
 WORKDIR /app
-COPY --from=builder /app/build/libs/*.jar app.jar
+
+# Copy pre-built distribution
+COPY build/distributions/game-core-*.tar /tmp/
+
+# Extract and setup
+RUN tar -xf /tmp/game-core-*.tar -C /app --strip-components=1 && \
+    rm /tmp/game-core-*.tar && \
+    chmod +x /app/bin/game-core && \
+    chown -R appuser:appgroup /app
+
+# Switch to non-root user
+USER appuser
+
+# Expose ports (HTTP and gRPC)
 EXPOSE 80 5050
-ENTRYPOINT ["java", "-jar", "app.jar"]
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:8080/health || exit 1
+
+# Run the application
+ENTRYPOINT ["/app/bin/game-core"]
