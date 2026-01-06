@@ -4,10 +4,11 @@ import application.port.inbound.CommandHandler
 import application.port.inbound.QueryHandler
 import application.port.inbound.command.AddGameTagCommand
 import application.port.inbound.command.RemoveGameTagCommand
-import com.nekgamebling.application.port.inbound.game.command.PlayGameCommand
-import com.nekgamebling.application.port.inbound.game.command.PlayGameResponse
 import application.port.inbound.command.UpdateGameCommand
 import application.port.inbound.command.UpdateGameImageCommand
+import application.service.FreespinService
+import com.nekgamebling.application.port.inbound.game.command.PlayGameCommand
+import com.nekgamebling.application.port.inbound.game.command.PlayGameResponse
 import com.nekgamebling.application.port.inbound.game.query.FindAllGameQuery
 import com.nekgamebling.application.port.inbound.game.query.FindAllGameResponse
 import com.nekgamebling.application.port.inbound.game.query.FindGameQuery
@@ -15,22 +16,15 @@ import com.nekgamebling.application.port.inbound.game.query.FindGameResponse
 import com.nekgamebling.application.port.inbound.game.query.GameDemoUrlQuery
 import com.nekgamebling.application.port.inbound.game.query.GameDemoUrlResponse
 import com.nekgamebling.game.dto.PaginationMetaDto
-import com.nekgamebling.game.service.FindAllGameResult
-import com.nekgamebling.game.service.FindGameResult
-import com.nekgamebling.game.service.GameItemDto
-import com.nekgamebling.game.service.GameServiceGrpcKt
-import com.nekgamebling.game.service.UpdateGameImageResult
-import com.nekgamebling.game.service.UpdateGameResult
-import com.nekgamebling.game.service.AddGameTagResult
-import com.nekgamebling.game.service.RemoveGameTagResult
-import com.nekgamebling.game.service.GameDemoUrlResult
-import com.nekgamebling.game.service.PlayGameResult
+import com.nekgamebling.game.dto.PlatformDto
+import com.nekgamebling.game.service.*
 import domain.common.value.Locale
 import domain.common.value.Platform
+import infrastructure.api.grpc.mapper.toDomain
 import infrastructure.api.grpc.mapper.toProto
-import shared.value.Currency
 import io.grpc.Status
 import io.grpc.StatusException
+import shared.value.Currency
 import shared.value.Pageable
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
@@ -42,7 +36,6 @@ import com.nekgamebling.game.service.AddGameTagCommand as AddGameTagCommandProto
 import com.nekgamebling.game.service.RemoveGameTagCommand as RemoveGameTagCommandProto
 import com.nekgamebling.game.service.GameDemoUrlQuery as GameDemoUrlQueryProto
 import com.nekgamebling.game.service.PlayGameCommand as PlayGameCommandProto
-import com.nekgamebling.game.dto.PlatformDto
 
 class GameGrpcService(
     private val findGameQueryHandler: QueryHandler<FindGameQuery, FindGameResponse>,
@@ -53,6 +46,7 @@ class GameGrpcService(
     private val updateGameImageCommandHandler: CommandHandler<UpdateGameImageCommand, Unit>,
     private val addGameTagCommandHandler: CommandHandler<AddGameTagCommand, Unit>,
     private val removeGameTagCommandHandler: CommandHandler<RemoveGameTagCommand, Unit>,
+    private val freespinService: FreespinService,
     coroutineContext: CoroutineContext = EmptyCoroutineContext
 ) : GameServiceGrpcKt.GameServiceCoroutineImplBase(coroutineContext) {
 
@@ -254,6 +248,51 @@ class GameGrpcService(
 
         return removeGameTagCommandHandler.handle(command)
             .map { RemoveGameTagResult.newBuilder().build() }
+            .getOrElse { error ->
+                throw StatusException(
+                    Status.NOT_FOUND.withDescription(error.message)
+                )
+            }
+    }
+
+    override suspend fun getFreespinPreset(request: GetFreespinPresetQuery): GetFreespinPresetResult {
+        return freespinService.getPreset(request.gameIdentity)
+            .map { result ->
+                GetFreespinPresetResult.newBuilder()
+                    .putAllPreset(result.preset.mapValues { it.value?.toString() ?: "" })
+                    .build()
+            }
+            .getOrElse { error ->
+                throw StatusException(
+                    Status.NOT_FOUND.withDescription(error.message)
+                )
+            }
+    }
+
+    override suspend fun createFreespin(request: CreateFreespinCommand): CreateFreespinResult {
+        return freespinService.create(
+            presetValue = request.presetValuesMap,
+            referenceId = request.referenceId,
+            playerId = request.playerId,
+            gameIdentity = request.gameIdentity,
+            currency = Currency(request.currency),
+            startAt = request.startAt.toDomain(),
+            endAt = request.endAt.toDomain()
+        )
+            .map { CreateFreespinResult.newBuilder().build() }
+            .getOrElse { error ->
+                throw StatusException(
+                    Status.INVALID_ARGUMENT.withDescription(error.message)
+                )
+            }
+    }
+
+    override suspend fun cancelFreespin(request: CancelFreespinCommand): CancelFreespinResult {
+        return freespinService.cancel(
+            referenceId = request.referenceId,
+            gameIdentity = request.gameIdentity
+        )
+            .map { CancelFreespinResult.newBuilder().build() }
             .getOrElse { error ->
                 throw StatusException(
                     Status.NOT_FOUND.withDescription(error.message)

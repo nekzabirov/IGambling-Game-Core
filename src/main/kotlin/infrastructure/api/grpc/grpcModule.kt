@@ -24,7 +24,8 @@ val grpcModule = module {
             updateGameCommandHandler = get(named("updateGame")),
             updateGameImageCommandHandler = get(named("updateGameImage")),
             addGameTagCommandHandler = get(named("addGameTag")),
-            removeGameTagCommandHandler = get(named("removeGameTag"))
+            removeGameTagCommandHandler = get(named("removeGameTag")),
+            freespinService = get()
         )
     }
 

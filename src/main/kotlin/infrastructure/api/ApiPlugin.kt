@@ -76,7 +76,7 @@ private fun Application.installGrpc() {
     val aggregatorService: AggregatorGrpcService by getKoin().inject()
 
     val server: Server = NettyServerBuilder
-        .forPort(5050)
+        .forPort(System.getenv("GRPC_PORT").toIntOrNull() ?: 5050)
         .maxInboundMessageSize(50 * 1024 * 1024) // 50 MB
         .addService(gameService)
         .addService(providerService)

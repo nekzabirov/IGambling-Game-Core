@@ -9,9 +9,11 @@ import domain.game.model.Game
 import domain.game.model.GameVariant
 import domain.provider.model.Provider
 import domain.session.model.Round
+import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
+import kotlinx.datetime.toLocalDateTime
 
 fun Game.toProto(providerIdentity: String): GameDto = GameDto.newBuilder()
     .setIdentity(identity)
@@ -97,6 +99,11 @@ fun LocalDateTime.toProto(): TimestampDto {
         .setSeconds(instant.epochSeconds)
         .setNanos(instant.nanosecondsOfSecond)
         .build()
+}
+
+fun TimestampDto.toDomain(): LocalDateTime {
+    val instant = Instant.fromEpochSeconds(seconds, nanos)
+    return instant.toLocalDateTime(TimeZone.UTC)
 }
 
 fun Round.toProto(): RoundDto {

@@ -20,6 +20,11 @@ service GameService {
   rpc UpdateImage(UpdateGameImageCommand) returns (UpdateGameImageResult);
   rpc AddTag(AddGameTagCommand) returns (AddGameTagResult);
   rpc RemoveTag(RemoveGameTagCommand) returns (RemoveGameTagResult);
+
+  // Freespin operations
+  rpc GetFreespinPreset(GetFreespinPresetQuery) returns (GetFreespinPresetResult);
+  rpc CreateFreespin(CreateFreespinCommand) returns (CreateFreespinResult);
+  rpc CancelFreespin(CancelFreespinCommand) returns (CancelFreespinResult);
 }
 
 // ============================================
@@ -172,5 +177,51 @@ message RemoveGameTagCommand {
 }
 
 message RemoveGameTagResult {
+  // Empty response - success indicated by no error
+}
+
+// ============================================
+// Get Freespin Preset
+// ============================================
+
+message GetFreespinPresetQuery {
+  string game_identity = 1;
+}
+
+message GetFreespinPresetResult {
+  // Preset configuration as key-value pairs
+  // Keys are preset field names, values are the preset options/values
+  map<string, string> preset = 1;
+}
+
+// ============================================
+// Create Freespin
+// ============================================
+
+message CreateFreespinCommand {
+  string game_identity = 1;
+  string player_id = 2;
+  string reference_id = 3;
+  string currency = 4;
+  dto.TimestampDto start_at = 5;
+  dto.TimestampDto end_at = 6;
+  // Preset values selected by the operator (key -> value)
+  map<string, int32> preset_values = 7;
+}
+
+message CreateFreespinResult {
+  // Empty response - success indicated by no error
+}
+
+// ============================================
+// Cancel Freespin
+// ============================================
+
+message CancelFreespinCommand {
+  string game_identity = 1;
+  string reference_id = 2;
+}
+
+message CancelFreespinResult {
   // Empty response - success indicated by no error
 }
