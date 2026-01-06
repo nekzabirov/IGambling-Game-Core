@@ -101,7 +101,8 @@ class ProviderGrpcService(
         val command = UpdateProviderCommand(
             identity = request.identity,
             active = if (request.hasActive()) request.active else null,
-            order = if (request.hasOrder()) request.order else null
+            order = if (request.hasOrder()) request.order else null,
+            aggregatorIdentity = if (request.hasAggregatorIdentity()) request.aggregatorIdentity else null
         )
 
         return updateProviderCommandHandler.handle(command)

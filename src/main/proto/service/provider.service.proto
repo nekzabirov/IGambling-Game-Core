@@ -71,6 +71,7 @@ message UpdateProviderCommand {
   string identity = 1;
   optional bool active = 2;
   optional int32 order = 3;
+  optional string aggregator_identity = 4;
 }
 
 message UpdateProviderResult {

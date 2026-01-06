@@ -1,5 +1,6 @@
 package infrastructure.api.grpc
 
+import infrastructure.api.grpc.service.AggregatorGrpcService
 import infrastructure.api.grpc.service.CollectionGrpcService
 import infrastructure.api.grpc.service.RoundGrpcService
 import infrastructure.api.grpc.service.GameGrpcService
@@ -49,6 +50,15 @@ val grpcModule = module {
         RoundGrpcService(
             findRoundQueryHandler = get(named("findRound")),
             findAllRoundQueryHandler = get(named("findAllRounds"))
+        )
+    }
+
+    single {
+        AggregatorGrpcService(
+            createAggregatorCommandHandler = get(named("createAggregator")),
+            findAggregatorQueryHandler = get(named("findAggregator")),
+            findAllAggregatorQueryHandler = get(named("findAllAggregators")),
+            updateAggregatorCommandHandler = get(named("updateAggregator"))
         )
     }
 }

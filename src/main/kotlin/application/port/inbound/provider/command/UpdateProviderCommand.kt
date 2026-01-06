@@ -5,5 +5,6 @@ import application.port.inbound.Command
 data class UpdateProviderCommand(
     val identity: String,
     val active: Boolean? = null,
-    val order: Int? = null
+    val order: Int? = null,
+    val aggregatorIdentity: String? = null
 ) : Command<Unit>

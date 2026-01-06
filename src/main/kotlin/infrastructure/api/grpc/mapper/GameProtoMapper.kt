@@ -77,6 +77,14 @@ fun Aggregator.toProto(): AggregatorTypeDto = when (this) {
     Aggregator.PATEPLAY -> AggregatorTypeDto.AGGREGATOR_PATEPLAY
 }
 
+fun AggregatorTypeDto.toDomain(): Aggregator = when (this) {
+    AggregatorTypeDto.AGGREGATOR_ONEGAMEHUB -> Aggregator.ONEGAMEHUB
+    AggregatorTypeDto.AGGREGATOR_PRAGMATIC -> Aggregator.PRAGMATIC
+    AggregatorTypeDto.AGGREGATOR_PATEPLAY -> Aggregator.PATEPLAY
+    AggregatorTypeDto.AGGREGATOR_UNSPECIFIED, AggregatorTypeDto.UNRECOGNIZED ->
+        throw IllegalArgumentException("Invalid aggregator type: $this")
+}
+
 fun Platform.toProto(): PlatformDto = when (this) {
     Platform.DESKTOP -> PlatformDto.PLATFORM_DESKTOP
     Platform.MOBILE -> PlatformDto.PLATFORM_MOBILE

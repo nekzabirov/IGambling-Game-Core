@@ -12,6 +12,13 @@ import com.nekgamebling.application.port.inbound.game.query.FindGameQuery
 import com.nekgamebling.application.port.inbound.game.query.FindGameResponse
 import com.nekgamebling.application.port.inbound.game.query.GameDemoUrlQuery
 import com.nekgamebling.application.port.inbound.game.query.GameDemoUrlResponse
+import com.nekgamebling.application.port.inbound.aggregator.CreateAggregatorCommand
+import com.nekgamebling.application.port.inbound.aggregator.CreateAggregatorResponse
+import com.nekgamebling.application.port.inbound.aggregator.FindAggregatorQuery
+import com.nekgamebling.application.port.inbound.aggregator.FindAggregatorResponse
+import com.nekgamebling.application.port.inbound.aggregator.FindAllAggregatorQuery
+import com.nekgamebling.application.port.inbound.aggregator.FindAllAggregatorResponse
+import com.nekgamebling.application.port.inbound.aggregator.UpdateAggregatorCommand
 import com.nekgamebling.application.port.inbound.provider.query.FindAllProvidersQuery
 import com.nekgamebling.application.port.inbound.provider.query.FindAllProvidersResponse
 import com.nekgamebling.application.port.inbound.provider.query.FindaProviderQuery
@@ -40,6 +47,10 @@ import com.nekgamebling.infrastructure.handler.spin.query.FindRoundQueryHandler
 import com.nekgamebling.infrastructure.handler.collection.query.FindAllCollectionsQueryHandler
 import com.nekgamebling.infrastructure.handler.collection.query.FindCollectionQueryHandler
 import com.nekgamebling.infrastructure.handler.game.query.FindAllGameQueryHandler
+import com.nekgamebling.infrastructure.handler.aggregator.command.CreateAggregatorCommandHandler
+import com.nekgamebling.infrastructure.handler.aggregator.command.UpdateAggregatorCommandHandler
+import com.nekgamebling.infrastructure.handler.aggregator.query.FindAggregatorQueryHandler
+import com.nekgamebling.infrastructure.handler.aggregator.query.FindAllAggregatorQueryHandler
 import com.nekgamebling.infrastructure.handler.provider.query.FindAllProvidersQueryHandler
 import com.nekgamebling.infrastructure.handler.provider.query.FindaProviderQueryHandler
 import com.nekgamebling.infrastructure.handler.game.query.FindGameQueryHandler
@@ -64,6 +75,8 @@ val handlerModule = module {
     single<QueryHandler<GameDemoUrlQuery, GameDemoUrlResponse>>(named("gameDemoUrl")) { GameDemoUrlQueryHandler(get()) }
     single<QueryHandler<FindaProviderQuery, FindaProviderResponse>>(named("findProvider")) { FindaProviderQueryHandler() }
     single<QueryHandler<FindAllProvidersQuery, FindAllProvidersResponse>>(named("findAllProviders")) { FindAllProvidersQueryHandler() }
+    single<QueryHandler<FindAggregatorQuery, FindAggregatorResponse>>(named("findAggregator")) { FindAggregatorQueryHandler() }
+    single<QueryHandler<FindAllAggregatorQuery, FindAllAggregatorResponse>>(named("findAllAggregators")) { FindAllAggregatorQueryHandler() }
     single<QueryHandler<FindCollectionQuery, FindCollectionResponse>>(named("findCollection")) { FindCollectionQueryHandler() }
     single<QueryHandler<FindAllCollectionsQuery, FindAllCollectionsResponse>>(named("findAllCollections")) { FindAllCollectionsQueryHandler() }
     single<QueryHandler<FindRoundQuery, FindRoundQueryResult>>(named("findRound")) { FindRoundQueryHandler() }
@@ -72,6 +85,8 @@ val handlerModule = module {
     // ==========================================
     // Command Handlers
     // ==========================================
+    single<CommandHandler<CreateAggregatorCommand, CreateAggregatorResponse>>(named("createAggregator")) { CreateAggregatorCommandHandler() }
+    single<CommandHandler<UpdateAggregatorCommand, Unit>>(named("updateAggregator")) { UpdateAggregatorCommandHandler() }
     single<CommandHandler<UpdateGameCommand, Unit>>(named("updateGame")) { UpdateGameCommandHandler() }
     single<CommandHandler<UpdateGameImageCommand, Unit>>(named("updateGameImage")) { UpdateGameImageCommandHandler(get()) }
     single<CommandHandler<AddGameTagCommand, Unit>>(named("addGameTag")) { AddGameTagCommandHandler() }

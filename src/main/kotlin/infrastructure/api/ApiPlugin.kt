@@ -73,6 +73,7 @@ private fun Application.installGrpc() {
     val providerService: ProviderGrpcService by getKoin().inject()
     val collectionService: CollectionGrpcService by getKoin().inject()
     val roundService: RoundGrpcService by getKoin().inject()
+    val aggregatorService: AggregatorGrpcService by getKoin().inject()
 
     val server: Server = NettyServerBuilder
         .forPort(5050)
@@ -81,6 +82,7 @@ private fun Application.installGrpc() {
         .addService(providerService)
         .addService(collectionService)
         .addService(roundService)
+        .addService(aggregatorService)
         .build()
         .start()
 
