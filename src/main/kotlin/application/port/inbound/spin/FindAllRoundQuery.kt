@@ -5,6 +5,7 @@ import domain.game.model.Game
 import domain.provider.model.Provider
 import domain.session.model.Round
 import shared.value.Currency
+import kotlinx.datetime.LocalDateTime
 import shared.value.Page
 import shared.value.Pageable
 
@@ -15,7 +16,10 @@ data class FindAllRoundQuery(
     val providerIdentity: String?,
     val finished: Boolean?,
     val playerId: String?,
-    val freeSpinId: String?
+    val freeSpinId: String?,
+
+    val startAt: LocalDateTime? = null,
+    val endAt: LocalDateTime? = null
 ) : Query<FindAllRoundQueryResult>
 
 data class FindAllRoundQueryResult(

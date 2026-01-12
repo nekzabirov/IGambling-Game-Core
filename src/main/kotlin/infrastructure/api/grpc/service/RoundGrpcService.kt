@@ -13,6 +13,9 @@ import com.nekgamebling.game.service.RoundServiceGrpcKt
 import infrastructure.api.grpc.mapper.toProto
 import io.grpc.Status
 import io.grpc.StatusException
+import kotlinx.datetime.Instant
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import shared.value.Pageable
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
@@ -67,7 +70,15 @@ class RoundGrpcService(
             providerIdentity = if (request.hasProviderIdentity()) request.providerIdentity else null,
             finished = if (request.hasFinished()) request.finished else null,
             playerId = if (request.hasPlayerId()) request.playerId else null,
-            freeSpinId = if (request.hasFreeSpinId()) request.freeSpinId else null
+            freeSpinId = if (request.hasFreeSpinId()) request.freeSpinId else null,
+            startAt = if (request.hasStartAt()) {
+                Instant.fromEpochSeconds(request.startAt.seconds, request.startAt.nanos)
+                    .toLocalDateTime(TimeZone.UTC)
+            } else null,
+            endAt = if (request.hasEndAt()) {
+                Instant.fromEpochSeconds(request.endAt.seconds, request.endAt.nanos)
+                    .toLocalDateTime(TimeZone.UTC)
+            } else null
         )
 
         return findAllRoundQueryHandler.handle(query)

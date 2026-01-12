@@ -15,6 +15,8 @@ import infrastructure.persistence.exposed.table.SessionTable
 import infrastructure.persistence.exposed.table.SpinTable
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.greaterEq
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.lessEq
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import shared.value.Currency
 import shared.value.Page
@@ -57,6 +59,14 @@ class FindAllRoundQueryHandler : QueryHandler<FindAllRoundQuery, FindAllRoundQue
 
         query.freeSpinId?.let { freeSpinId ->
             conditions.add(SpinTable.freeSpinId eq freeSpinId)
+        }
+
+        query.startAt?.let { startAt ->
+            conditions.add(RoundTable.createdAt greaterEq startAt)
+        }
+
+        query.endAt?.let { endAt ->
+            conditions.add(RoundTable.createdAt lessEq endAt)
         }
 
         val whereClause = if (conditions.isNotEmpty()) {

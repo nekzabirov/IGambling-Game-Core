@@ -5,6 +5,7 @@ package game.service;
 option java_package = "com.nekgamebling.game.service";
 option java_multiple_files = true;
 
+import "google/protobuf/timestamp.proto";
 import "dto/common.dto.proto";
 import "dto/session.dto.proto";
 import "dto/game.dto.proto";
@@ -41,6 +42,10 @@ message FindAllRoundQuery {
   optional bool finished = 4;
   optional string player_id = 5;
   optional string free_spin_id = 6;
+
+  // Date range filter for created_at
+  optional google.protobuf.Timestamp start_at = 7;
+  optional google.protobuf.Timestamp end_at = 8;
 }
 
 message FindAllRoundResult {
