@@ -358,6 +358,10 @@ service Game {
   rpc AddFavourite (GameFavouriteCommand) returns (EmptyResult);
   rpc RemoveFavourite (GameFavouriteCommand) returns (EmptyResult);
   rpc DemoGame (DemoGameCommand) returns (DemoGameResult);
+  // Freespin operations
+  rpc GetFreespinPreset (GetFreespinPresetCommand) returns (GetFreespinPresetResult);
+  rpc CreateFreespin (CreateFreespinCommand) returns (EmptyResult);
+  rpc CancelFreespin (CancelFreespinCommand) returns (EmptyResult);
 }
 
 message UpdateGameImageCommand {
@@ -454,6 +458,7 @@ message UpdateProviderImageCommand {
 ```protobuf
 service Round {
   rpc GetRoundsDetails (GetRoundsDetailsCommand) returns (GetRoundsDetailsResult);
+  rpc FindAll (FindAllRoundCommand) returns (FindAllRoundResult);
 }
 
 message GetRoundsDetailsCommand {
@@ -461,6 +466,15 @@ message GetRoundsDetailsCommand {
   int32 page_size = 2;
   optional string player_id = 3;           // Filter by player
   optional string game_identity = 4;       // Filter by game
+}
+
+message FindAllRoundCommand {
+  int32 page_number = 1;
+  int32 page_size = 2;
+  optional string player_id = 3;
+  optional string game_identity = 4;
+  optional google.protobuf.Timestamp start_at = 5;  // Filter by start date
+  optional google.protobuf.Timestamp end_at = 6;    // Filter by end date
 }
 
 message GetRoundsDetailsResult {
@@ -496,6 +510,46 @@ message AddAggregatorCommand {
   string identity = 1;                     // Unique aggregator identifier
   string type = 2;                         // PRAGMATIC, ONEGAMEHUB, PATEPLAY
   map<string, string> config = 3;          // Aggregator-specific configuration
+}
+```
+
+### Aggregator Service
+
+```protobuf
+service Aggregator {
+  rpc Create (CreateAggregatorCommand) returns (AggregatorResult);
+  rpc Find (FindAggregatorCommand) returns (AggregatorResult);
+  rpc FindAll (FindAllAggregatorCommand) returns (FindAllAggregatorResult);
+  rpc Update (UpdateAggregatorCommand) returns (AggregatorResult);
+}
+
+message CreateAggregatorCommand {
+  string identity = 1;                     // Unique aggregator identifier
+  string type = 2;                         // PRAGMATIC, ONEGAMEHUB, PATEPLAY
+  map<string, string> config = 3;          // Aggregator-specific configuration
+  bool active = 4;                         // Enable/disable aggregator
+}
+
+message FindAggregatorCommand {
+  string identity = 1;                     // Aggregator identifier to find
+}
+
+message FindAllAggregatorCommand {
+  int32 page_number = 1;
+  int32 page_size = 2;
+  optional bool active = 3;                // Filter by active status
+}
+
+message UpdateAggregatorCommand {
+  string identity = 1;
+  optional bool active = 2;
+  map<string, string> config = 3;
+}
+
+message AggregatorResult {
+  string identity = 1;
+  string type = 2;
+  bool active = 3;
 }
 ```
 
@@ -1065,12 +1119,30 @@ data class SessionOpenedEvent(
 | `DATABASE_DRIVER` | JDBC driver class | `org.h2.Driver` |
 | `DATABASE_USER` | Database username | (empty) |
 | `DATABASE_PASSWORD` | Database password | (empty) |
+| `GRPC_PORT` | gRPC server port | `5050` |
+| `HTTP_PORT` | HTTP server port | `8080` |
+| `S3_ENDPOINT` | S3-compatible storage endpoint | (required for images) |
+| `S3_ACCESS_KEY` | S3 access key | (required for images) |
+| `S3_SECRET_KEY` | S3 secret key | (required for images) |
+| `S3_BUCKET` | S3 bucket name | (required for images) |
+| `S3_REGION` | S3 region | (required for images) |
 
 ### RabbitMQ Configuration
 
 Configure in `messagingModule`:
 - Exchange: Domain events exchange
 - Queues: Spin settled consumer, etc.
+
+### Performance Optimizations
+
+**Balance Caching**: The service includes an in-memory balance cache with 10-second TTL to reduce redundant wallet HTTP calls during high-frequency betting operations. Cached balances are automatically updated after wallet operations.
+
+**Async Processing**:
+- Wallet withdrawals support async processing with predicted balance
+- Round creation and balance validation run in parallel
+- Event publishing is asynchronous to minimize latency
+
+**Repository Pattern**: All persistence uses repository-based access with optimized single-query steps for round and spin handling.
 
 ---
 

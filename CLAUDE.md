@@ -77,10 +77,34 @@ src/main/kotlin/
 ## Proto Files
 
 gRPC service definitions are in `src/main/proto/`:
-- `service/` - Service definitions (Session, Game, Freespin, Collection, Provider, Sync)
+- `service/` - Service definitions (Session, Game, Freespin, Collection, Provider, Round, Aggregator, Sync)
 - `dto/` - Data transfer objects
 
 After modifying `.proto` files, run `./gradlew generateProto`.
+
+## Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `DATABASE_URL` | JDBC database URL | `jdbc:h2:mem:test` |
+| `DATABASE_DRIVER` | JDBC driver class | `org.h2.Driver` |
+| `DATABASE_USER` | Database username | (empty) |
+| `DATABASE_PASSWORD` | Database password | (empty) |
+| `GRPC_PORT` | gRPC server port | `5050` |
+| `HTTP_PORT` | HTTP server port | `8080` |
+| `S3_ENDPOINT` | S3-compatible storage endpoint | (required for images) |
+| `S3_ACCESS_KEY` | S3 access key | (required for images) |
+| `S3_SECRET_KEY` | S3 secret key | (required for images) |
+| `S3_BUCKET` | S3 bucket name | (required for images) |
+| `S3_REGION` | S3 region | (required for images) |
+
+## Performance Optimizations
+
+**Balance Caching**: The service includes an in-memory balance cache (`BalanceCache`) with 10-second TTL to reduce redundant wallet HTTP calls during high-frequency betting operations.
+
+**Async Processing**: Wallet withdrawals support async processing with predicted balance for faster response times. Round creation and balance validation run in parallel where possible.
+
+**Repository Pattern**: All persistence uses repository-based access with optimized single-query steps for round and spin handling.
 
 ## Required Custom Adapters
 
