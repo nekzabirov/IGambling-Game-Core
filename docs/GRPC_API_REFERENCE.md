@@ -19,6 +19,11 @@ Complete API reference for the Game Core gRPC services.
 - [Enums](#enums)
 - [Common DTOs](#common-dtos)
 - [Error Handling](#error-handling)
+  - [Error Codes](#error-codes)
+  - [gRPC Status Mapping](#grpc-status-mapping)
+  - [Error Metadata](#error-metadata)
+  - [Error Types Reference](#error-types-reference)
+  - [Client Examples](#client-examples)
 
 ---
 
@@ -66,6 +71,12 @@ Get a single game with full details including provider, variant, and aggregator 
 | `aggregator` | `AggregatorInfoDto` | Aggregator configuration |
 | `collections` | `CollectionDto[]` | Collections containing this game |
 
+**Errors:**
+
+| Error Code | gRPC Status | Condition |
+|------------|-------------|-----------|
+| `NOT_FOUND` (1000) | `NOT_FOUND` | Game with specified identity does not exist |
+
 ---
 
 #### FindAll
@@ -98,6 +109,12 @@ List games with pagination and filters.
 | `aggregators` | `AggregatorInfoDto[]` | Related aggregators from results |
 | `collections` | `CollectionDto[]` | Related collections from results |
 
+**Errors:**
+
+| Error Code | gRPC Status | Condition |
+|------------|-------------|-----------|
+| `VALIDATION_ERROR` (1001) | `INVALID_ARGUMENT` | Invalid pagination parameters |
+
 ---
 
 #### Play
@@ -122,9 +139,15 @@ Open a game session for real money play. Returns a launch URL.
 | `launch_url` | `string` | URL to launch the game |
 
 **Errors:**
-- `NOT_FOUND` (1000) - Game not found
-- `GAME_UNAVAILABLE` (4000) - Game is disabled or unavailable
-- `SESSION_INVALID` (3000) - Session creation failed
+
+| Error Code | gRPC Status | Condition |
+|------------|-------------|-----------|
+| `NOT_FOUND` (1000) | `NOT_FOUND` | Game not found |
+| `GAME_UNAVAILABLE` (4000) | `UNAVAILABLE` | Game is disabled or unavailable |
+| `SESSION_INVALID` (3000) | `UNAUTHENTICATED` | Session creation failed |
+| `AGGREGATOR_NOT_SUPPORTED` (5000) | `UNIMPLEMENTED` | Game's aggregator not supported |
+| `AGGREGATOR_ERROR` (5001) | `INTERNAL` | Aggregator returned an error |
+| `EXTERNAL_SERVICE_ERROR` (6000) | `UNAVAILABLE` | External service (wallet, etc.) failed |
 
 ---
 
@@ -148,6 +171,15 @@ Get a demo URL for playing without real money.
 |-------|------|-------------|
 | `launch_url` | `string` | Demo game URL |
 
+**Errors:**
+
+| Error Code | gRPC Status | Condition |
+|------------|-------------|-----------|
+| `NOT_FOUND` (1000) | `NOT_FOUND` | Game not found |
+| `GAME_UNAVAILABLE` (4000) | `UNAVAILABLE` | Game or demo mode not available |
+| `AGGREGATOR_NOT_SUPPORTED` (5000) | `UNIMPLEMENTED` | Aggregator not supported |
+| `AGGREGATOR_ERROR` (5001) | `INTERNAL` | Aggregator returned an error |
+
 ---
 
 #### Update
@@ -166,6 +198,13 @@ Update game configuration.
 **Response: `UpdateGameResult`**
 
 Empty response. Success indicated by no error.
+
+**Errors:**
+
+| Error Code | gRPC Status | Condition |
+|------------|-------------|-----------|
+| `NOT_FOUND` (1000) | `NOT_FOUND` | Game not found |
+| `VALIDATION_ERROR` (1001) | `INVALID_ARGUMENT` | Invalid field values |
 
 ---
 
@@ -186,6 +225,14 @@ Upload or update a game image.
 
 Empty response. Success indicated by no error.
 
+**Errors:**
+
+| Error Code | gRPC Status | Condition |
+|------------|-------------|-----------|
+| `NOT_FOUND` (1000) | `NOT_FOUND` | Game not found |
+| `VALIDATION_ERROR` (1001) | `INVALID_ARGUMENT` | Invalid image data or extension |
+| `EXTERNAL_SERVICE_ERROR` (6000) | `UNAVAILABLE` | Image storage service failed |
+
 ---
 
 #### AddTag / RemoveTag
@@ -202,6 +249,14 @@ Add or remove a tag from a game.
 **Response: `AddGameTagResult` / `RemoveGameTagResult`**
 
 Empty response. Success indicated by no error.
+
+**Errors:**
+
+| Error Code | gRPC Status | Condition |
+|------------|-------------|-----------|
+| `NOT_FOUND` (1000) | `NOT_FOUND` | Game not found |
+| `VALIDATION_ERROR` (1001) | `INVALID_ARGUMENT` | Invalid tag name |
+| `DUPLICATE_ENTITY` (1002) | `ALREADY_EXISTS` | Tag already exists on game (AddTag only) |
 
 ---
 
@@ -220,6 +275,14 @@ Get available freespin preset configuration for a game.
 | Field | Type | Description |
 |-------|------|-------------|
 | `preset` | `map<string, string>` | Preset field names and their available values |
+
+**Errors:**
+
+| Error Code | gRPC Status | Condition |
+|------------|-------------|-----------|
+| `NOT_FOUND` (1000) | `NOT_FOUND` | Game not found |
+| `AGGREGATOR_NOT_SUPPORTED` (5000) | `UNIMPLEMENTED` | Aggregator doesn't support freespins |
+| `AGGREGATOR_ERROR` (5001) | `INTERNAL` | Aggregator returned an error |
 
 ---
 
@@ -244,9 +307,15 @@ Create a freespin bonus for a player.
 Empty response. Success indicated by no error.
 
 **Errors:**
-- `NOT_FOUND` (1000) - Game not found
-- `INVALID_PRESET` (4003) - Invalid preset configuration
-- `AGGREGATOR_NOT_SUPPORTED` (5000) - Aggregator doesn't support freespins
+
+| Error Code | gRPC Status | Condition |
+|------------|-------------|-----------|
+| `NOT_FOUND` (1000) | `NOT_FOUND` | Game not found |
+| `VALIDATION_ERROR` (1001) | `INVALID_ARGUMENT` | Invalid request parameters |
+| `INVALID_PRESET` (4003) | `INVALID_ARGUMENT` | Invalid preset configuration |
+| `DUPLICATE_ENTITY` (1002) | `ALREADY_EXISTS` | Freespin with reference_id already exists |
+| `AGGREGATOR_NOT_SUPPORTED` (5000) | `UNIMPLEMENTED` | Aggregator doesn't support freespins |
+| `AGGREGATOR_ERROR` (5001) | `INTERNAL` | Aggregator returned an error |
 
 ---
 
@@ -264,6 +333,15 @@ Cancel an existing freespin.
 **Response: `CancelFreespinResult`**
 
 Empty response. Success indicated by no error.
+
+**Errors:**
+
+| Error Code | gRPC Status | Condition |
+|------------|-------------|-----------|
+| `NOT_FOUND` (1000) | `NOT_FOUND` | Game or freespin not found |
+| `ILLEGAL_STATE` (1003) | `FAILED_PRECONDITION` | Freespin already used or cancelled |
+| `AGGREGATOR_NOT_SUPPORTED` (5000) | `UNIMPLEMENTED` | Aggregator doesn't support freespin cancellation |
+| `AGGREGATOR_ERROR` (5001) | `INTERNAL` | Aggregator returned an error |
 
 ---
 
@@ -296,6 +374,12 @@ Get a single round by ID.
 |-------|------|-------------|
 | `item` | `RoundItemDto` | Round with aggregated data |
 
+**Errors:**
+
+| Error Code | gRPC Status | Condition |
+|------------|-------------|-----------|
+| `ROUND_NOT_FOUND` (4002) | `NOT_FOUND` | Round with specified ID does not exist |
+
 ---
 
 #### FindAll
@@ -323,6 +407,12 @@ List rounds with pagination and filters.
 | `pagination` | `PaginationMetaDto` | Pagination metadata |
 | `providers` | `ProviderDto[]` | Related providers |
 | `games` | `GameDto[]` | Related games |
+
+**Errors:**
+
+| Error Code | gRPC Status | Condition |
+|------------|-------------|-----------|
+| `VALIDATION_ERROR` (1001) | `INVALID_ARGUMENT` | Invalid pagination or date parameters |
 
 ---
 
@@ -360,6 +450,12 @@ Get a single provider with game counts.
 | `active_games` | `int32` | Count of active games |
 | `total_games` | `int32` | Total game count |
 
+**Errors:**
+
+| Error Code | gRPC Status | Condition |
+|------------|-------------|-----------|
+| `NOT_FOUND` (1000) | `NOT_FOUND` | Provider not found |
+
 ---
 
 #### FindAll
@@ -383,6 +479,12 @@ List providers with pagination and filters.
 | `pagination` | `PaginationMetaDto` | Pagination metadata |
 | `aggregators` | `AggregatorInfoDto[]` | Related aggregators |
 
+**Errors:**
+
+| Error Code | gRPC Status | Condition |
+|------------|-------------|-----------|
+| `VALIDATION_ERROR` (1001) | `INVALID_ARGUMENT` | Invalid pagination parameters |
+
 ---
 
 #### Update
@@ -402,6 +504,13 @@ Update provider configuration.
 
 Empty response. Success indicated by no error.
 
+**Errors:**
+
+| Error Code | gRPC Status | Condition |
+|------------|-------------|-----------|
+| `NOT_FOUND` (1000) | `NOT_FOUND` | Provider or aggregator not found |
+| `VALIDATION_ERROR` (1001) | `INVALID_ARGUMENT` | Invalid field values |
+
 ---
 
 #### UpdateImage
@@ -420,6 +529,14 @@ Upload or update a provider image.
 **Response: `UpdateProviderImageResult`**
 
 Empty response. Success indicated by no error.
+
+**Errors:**
+
+| Error Code | gRPC Status | Condition |
+|------------|-------------|-----------|
+| `NOT_FOUND` (1000) | `NOT_FOUND` | Provider not found |
+| `VALIDATION_ERROR` (1001) | `INVALID_ARGUMENT` | Invalid image data or extension |
+| `EXTERNAL_SERVICE_ERROR` (6000) | `UNAVAILABLE` | Image storage service failed |
 
 ---
 
@@ -456,6 +573,12 @@ Get a single collection with counts.
 | `provider_count` | `int32` | Number of unique providers |
 | `game_count` | `int32` | Number of games |
 
+**Errors:**
+
+| Error Code | gRPC Status | Condition |
+|------------|-------------|-----------|
+| `NOT_FOUND` (1000) | `NOT_FOUND` | Collection not found |
+
 ---
 
 #### FindAll
@@ -477,6 +600,12 @@ List collections with pagination and filters.
 | `items` | `CollectionItemDto[]` | List of collections |
 | `pagination` | `PaginationMetaDto` | Pagination metadata |
 
+**Errors:**
+
+| Error Code | gRPC Status | Condition |
+|------------|-------------|-----------|
+| `VALIDATION_ERROR` (1001) | `INVALID_ARGUMENT` | Invalid pagination parameters |
+
 ---
 
 #### Update
@@ -495,6 +624,13 @@ Update collection configuration.
 
 Empty response. Success indicated by no error.
 
+**Errors:**
+
+| Error Code | gRPC Status | Condition |
+|------------|-------------|-----------|
+| `NOT_FOUND` (1000) | `NOT_FOUND` | Collection not found |
+| `VALIDATION_ERROR` (1001) | `INVALID_ARGUMENT` | Invalid field values |
+
 ---
 
 #### UpdateGames
@@ -512,6 +648,13 @@ Add or remove games from a collection.
 **Response: `UpdateCollectionGamesResult`**
 
 Empty response. Success indicated by no error.
+
+**Errors:**
+
+| Error Code | gRPC Status | Condition |
+|------------|-------------|-----------|
+| `NOT_FOUND` (1000) | `NOT_FOUND` | Collection or game not found |
+| `DUPLICATE_ENTITY` (1002) | `ALREADY_EXISTS` | Game already in collection |
 
 ---
 
@@ -550,8 +693,11 @@ Create a new aggregator configuration.
 | `aggregator` | `AggregatorInfoDto` | Created aggregator |
 
 **Errors:**
-- `DUPLICATE_ENTITY` (1002) - Aggregator with this identity exists
-- `VALIDATION_ERROR` (1001) - Invalid configuration
+
+| Error Code | gRPC Status | Condition |
+|------------|-------------|-----------|
+| `DUPLICATE_ENTITY` (1002) | `ALREADY_EXISTS` | Aggregator with this identity exists |
+| `VALIDATION_ERROR` (1001) | `INVALID_ARGUMENT` | Invalid configuration or missing required fields |
 
 ---
 
@@ -570,6 +716,12 @@ Get a single aggregator by identity.
 | Field | Type | Description |
 |-------|------|-------------|
 | `aggregator` | `AggregatorInfoDto` | Aggregator details |
+
+**Errors:**
+
+| Error Code | gRPC Status | Condition |
+|------------|-------------|-----------|
+| `NOT_FOUND` (1000) | `NOT_FOUND` | Aggregator not found |
 
 ---
 
@@ -592,6 +744,12 @@ List aggregators with pagination and filters.
 | `items` | `AggregatorInfoDto[]` | List of aggregators |
 | `pagination` | `PaginationMetaDto` | Pagination metadata |
 
+**Errors:**
+
+| Error Code | gRPC Status | Condition |
+|------------|-------------|-----------|
+| `VALIDATION_ERROR` (1001) | `INVALID_ARGUMENT` | Invalid pagination parameters |
+
 ---
 
 #### Update
@@ -609,6 +767,13 @@ Update aggregator configuration.
 **Response: `UpdateAggregatorResult`**
 
 Empty response. Success indicated by no error.
+
+**Errors:**
+
+| Error Code | gRPC Status | Condition |
+|------------|-------------|-----------|
+| `NOT_FOUND` (1000) | `NOT_FOUND` | Aggregator not found |
+| `VALIDATION_ERROR` (1001) | `INVALID_ARGUMENT` | Invalid configuration |
 
 ---
 
@@ -656,29 +821,6 @@ Round completion status.
 | `ROUND_STATUS_UNSPECIFIED` | 0 | Not specified |
 | `ROUND_STATUS_ACTIVE` | 1 | Round in progress |
 | `ROUND_STATUS_FINISHED` | 2 | Round completed |
-
-### ErrorCodeDto
-
-Error codes for structured error handling.
-
-| Name | Value | Category | Description |
-|------|-------|----------|-------------|
-| `ERROR_CODE_UNSPECIFIED` | 0 | - | Not specified |
-| `ERROR_CODE_NOT_FOUND` | 1000 | General | Entity not found |
-| `ERROR_CODE_VALIDATION_ERROR` | 1001 | General | Validation failed |
-| `ERROR_CODE_DUPLICATE_ENTITY` | 1002 | General | Entity already exists |
-| `ERROR_CODE_ILLEGAL_STATE` | 1003 | General | Invalid operation state |
-| `ERROR_CODE_INSUFFICIENT_BALANCE` | 2000 | Balance | Insufficient funds |
-| `ERROR_CODE_BET_LIMIT_EXCEEDED` | 2001 | Balance | Bet exceeds limit |
-| `ERROR_CODE_SESSION_INVALID` | 3000 | Session | Session expired/invalid |
-| `ERROR_CODE_GAME_UNAVAILABLE` | 4000 | Game | Game not available |
-| `ERROR_CODE_ROUND_FINISHED` | 4001 | Game | Round already completed |
-| `ERROR_CODE_ROUND_NOT_FOUND` | 4002 | Game | Round not found |
-| `ERROR_CODE_INVALID_PRESET` | 4003 | Game | Invalid freespin preset |
-| `ERROR_CODE_AGGREGATOR_NOT_SUPPORTED` | 5000 | Aggregator | Aggregator not supported |
-| `ERROR_CODE_AGGREGATOR_ERROR` | 5001 | Aggregator | Aggregator returned error |
-| `ERROR_CODE_EXTERNAL_SERVICE_ERROR` | 6000 | External | External service failed |
-| `ERROR_CODE_INTERNAL_ERROR` | 9999 | Internal | Internal server error |
 
 ---
 
@@ -880,91 +1022,433 @@ Spin/transaction entity.
 
 ## Error Handling
 
-All errors are returned as gRPC `StatusException` with structured metadata.
+All errors are returned as gRPC `StatusException` with structured metadata. The system uses domain-specific error codes mapped to appropriate gRPC status codes, providing rich error context through metadata headers.
+
+### Error Codes
+
+Error codes are organized into ranges by category:
+
+| Range | Category | Description |
+|-------|----------|-------------|
+| 1xxx | General | Common errors like not found, validation, duplicates |
+| 2xxx | Balance/Betting | Financial operation errors |
+| 3xxx | Session | Session and authentication errors |
+| 4xxx | Game | Game and round specific errors |
+| 5xxx | Aggregator | Aggregator integration errors |
+| 6xxx | External | External service errors |
+| 9xxx | Internal | Internal server errors |
+
+**Complete Error Code List:**
+
+| Code | Name | Description |
+|------|------|-------------|
+| 1000 | `NOT_FOUND` | Entity not found |
+| 1001 | `VALIDATION_ERROR` | Validation failed |
+| 1002 | `DUPLICATE_ENTITY` | Entity already exists |
+| 1003 | `ILLEGAL_STATE` | Operation not allowed in current state |
+| 2000 | `INSUFFICIENT_BALANCE` | Insufficient funds |
+| 2001 | `BET_LIMIT_EXCEEDED` | Bet exceeds limit |
+| 3000 | `SESSION_INVALID` | Session expired/invalid |
+| 4000 | `GAME_UNAVAILABLE` | Game not available |
+| 4001 | `ROUND_FINISHED` | Round already completed |
+| 4002 | `ROUND_NOT_FOUND` | Round not found |
+| 4003 | `INVALID_PRESET` | Invalid freespin preset |
+| 5000 | `AGGREGATOR_NOT_SUPPORTED` | Aggregator not supported |
+| 5001 | `AGGREGATOR_ERROR` | Aggregator returned error |
+| 6000 | `EXTERNAL_SERVICE_ERROR` | External service failed |
+| 9999 | `INTERNAL_ERROR` | Internal server error |
 
 ### gRPC Status Mapping
 
-| Error Code | gRPC Status |
-|------------|-------------|
-| `NOT_FOUND` (1000) | `NOT_FOUND` |
-| `ROUND_NOT_FOUND` (4002) | `NOT_FOUND` |
-| `VALIDATION_ERROR` (1001) | `INVALID_ARGUMENT` |
-| `INVALID_PRESET` (4003) | `INVALID_ARGUMENT` |
-| `DUPLICATE_ENTITY` (1002) | `ALREADY_EXISTS` |
-| `INSUFFICIENT_BALANCE` (2000) | `FAILED_PRECONDITION` |
-| `BET_LIMIT_EXCEEDED` (2001) | `FAILED_PRECONDITION` |
-| `ROUND_FINISHED` (4001) | `FAILED_PRECONDITION` |
-| `ILLEGAL_STATE` (1003) | `FAILED_PRECONDITION` |
-| `SESSION_INVALID` (3000) | `UNAUTHENTICATED` |
-| `GAME_UNAVAILABLE` (4000) | `UNAVAILABLE` |
-| `EXTERNAL_SERVICE_ERROR` (6000) | `UNAVAILABLE` |
-| `AGGREGATOR_NOT_SUPPORTED` (5000) | `UNIMPLEMENTED` |
-| `AGGREGATOR_ERROR` (5001) | `INTERNAL` |
-| `INTERNAL_ERROR` (9999) | `INTERNAL` |
+Each domain error code maps to a specific gRPC status code:
 
-### Error Metadata Headers
+| Error Code | gRPC Status | HTTP Equivalent |
+|------------|-------------|-----------------|
+| `NOT_FOUND` (1000) | `NOT_FOUND` | 404 |
+| `ROUND_NOT_FOUND` (4002) | `NOT_FOUND` | 404 |
+| `VALIDATION_ERROR` (1001) | `INVALID_ARGUMENT` | 400 |
+| `INVALID_PRESET` (4003) | `INVALID_ARGUMENT` | 400 |
+| `DUPLICATE_ENTITY` (1002) | `ALREADY_EXISTS` | 409 |
+| `INSUFFICIENT_BALANCE` (2000) | `FAILED_PRECONDITION` | 412 |
+| `BET_LIMIT_EXCEEDED` (2001) | `FAILED_PRECONDITION` | 412 |
+| `ROUND_FINISHED` (4001) | `FAILED_PRECONDITION` | 412 |
+| `ILLEGAL_STATE` (1003) | `FAILED_PRECONDITION` | 412 |
+| `SESSION_INVALID` (3000) | `UNAUTHENTICATED` | 401 |
+| `GAME_UNAVAILABLE` (4000) | `UNAVAILABLE` | 503 |
+| `EXTERNAL_SERVICE_ERROR` (6000) | `UNAVAILABLE` | 503 |
+| `AGGREGATOR_NOT_SUPPORTED` (5000) | `UNIMPLEMENTED` | 501 |
+| `AGGREGATOR_ERROR` (5001) | `INTERNAL` | 500 |
+| `INTERNAL_ERROR` (9999) | `INTERNAL` | 500 |
 
-All errors include these metadata headers (gRPC trailers):
+### Error Metadata
 
-| Header | Description |
-|--------|-------------|
-| `x-error-code` | Error code name (e.g., `NOT_FOUND`) |
-| `x-error-code-value` | Numeric code (e.g., `1000`) |
+All errors include metadata headers in gRPC trailers. These provide structured error details for programmatic handling.
 
-Additional context headers by error type:
+**Common Headers (present on all errors):**
+
+| Header | Type | Description |
+|--------|------|-------------|
+| `x-error-code` | string | Error code name (e.g., `NOT_FOUND`) |
+| `x-error-code-value` | string | Numeric code (e.g., `1000`) |
+
+**Error-Specific Headers:**
 
 | Header | Used By | Description |
 |--------|---------|-------------|
-| `x-entity-type` | NOT_FOUND, DUPLICATE_ENTITY | Entity type |
-| `x-identifier` | NOT_FOUND, ROUND_NOT_FOUND, etc. | Entity ID |
-| `x-field` | VALIDATION_ERROR, ILLEGAL_STATE | Field/operation name |
-| `x-reason` | Multiple | Additional context |
-| `x-player-id` | INSUFFICIENT_BALANCE, BET_LIMIT_EXCEEDED | Player ID |
-| `x-required-amount` | INSUFFICIENT_BALANCE | Required amount |
-| `x-available-amount` | INSUFFICIENT_BALANCE | Available balance |
-| `x-bet-amount` | BET_LIMIT_EXCEEDED | Attempted bet |
-| `x-limit` | BET_LIMIT_EXCEEDED | Configured limit |
-| `x-service` | EXTERNAL_SERVICE_ERROR | Service name |
+| `x-entity-type` | `NOT_FOUND`, `DUPLICATE_ENTITY` | Entity type (e.g., "Game", "Provider") |
+| `x-identifier` | `NOT_FOUND`, `ROUND_NOT_FOUND`, `SESSION_INVALID`, `GAME_UNAVAILABLE`, `ROUND_FINISHED`, `INVALID_PRESET`, `AGGREGATOR_NOT_SUPPORTED` | Entity identifier |
+| `x-field` | `VALIDATION_ERROR`, `ILLEGAL_STATE` | Field or operation name |
+| `x-reason` | `VALIDATION_ERROR`, `SESSION_INVALID`, `GAME_UNAVAILABLE`, `INVALID_PRESET`, `EXTERNAL_SERVICE_ERROR`, `ILLEGAL_STATE` | Additional context |
+| `x-player-id` | `INSUFFICIENT_BALANCE`, `BET_LIMIT_EXCEEDED` | Player identifier |
+| `x-required-amount` | `INSUFFICIENT_BALANCE` | Amount required (in minor units) |
+| `x-available-amount` | `INSUFFICIENT_BALANCE` | Available balance (in minor units) |
+| `x-bet-amount` | `BET_LIMIT_EXCEEDED` | Attempted bet amount |
+| `x-limit` | `BET_LIMIT_EXCEEDED` | Configured bet limit |
+| `x-service` | `EXTERNAL_SERVICE_ERROR` | External service name |
 
-### Example: Parsing Errors
+### Error Types Reference
 
-**Go:**
+Detailed breakdown of each error type with its metadata:
+
+#### NOT_FOUND (1000)
+
+Entity was not found in the system.
+
+```
+gRPC Status: NOT_FOUND
+Metadata:
+  x-error-code: NOT_FOUND
+  x-error-code-value: 1000
+  x-entity-type: <entity type>  # e.g., "Game", "Provider", "Collection"
+  x-identifier: <identifier>     # The identifier that was not found
+```
+
+#### ROUND_NOT_FOUND (4002)
+
+Round was not found. Separate error code for round-specific queries.
+
+```
+gRPC Status: NOT_FOUND
+Metadata:
+  x-error-code: ROUND_NOT_FOUND
+  x-error-code-value: 4002
+  x-entity-type: Round
+  x-identifier: <round_id>
+```
+
+#### VALIDATION_ERROR (1001)
+
+Input validation failed.
+
+```
+gRPC Status: INVALID_ARGUMENT
+Metadata:
+  x-error-code: VALIDATION_ERROR
+  x-error-code-value: 1001
+  x-field: <field name>
+  x-reason: <validation failure reason>
+```
+
+#### DUPLICATE_ENTITY (1002)
+
+Entity already exists.
+
+```
+gRPC Status: ALREADY_EXISTS
+Metadata:
+  x-error-code: DUPLICATE_ENTITY
+  x-error-code-value: 1002
+  x-entity-type: <entity type>
+  x-identifier: <identifier>
+```
+
+#### ILLEGAL_STATE (1003)
+
+Operation not allowed in current state.
+
+```
+gRPC Status: FAILED_PRECONDITION
+Metadata:
+  x-error-code: ILLEGAL_STATE
+  x-error-code-value: 1003
+  x-field: <operation name>
+  x-reason: <current state>
+```
+
+#### INSUFFICIENT_BALANCE (2000)
+
+Player has insufficient balance.
+
+```
+gRPC Status: FAILED_PRECONDITION
+Metadata:
+  x-error-code: INSUFFICIENT_BALANCE
+  x-error-code-value: 2000
+  x-player-id: <player_id>
+  x-required-amount: <required amount in minor units>
+  x-available-amount: <available balance in minor units>
+```
+
+#### BET_LIMIT_EXCEEDED (2001)
+
+Bet amount exceeds configured limit.
+
+```
+gRPC Status: FAILED_PRECONDITION
+Metadata:
+  x-error-code: BET_LIMIT_EXCEEDED
+  x-error-code-value: 2001
+  x-player-id: <player_id>
+  x-bet-amount: <attempted bet amount>
+  x-limit: <configured limit>
+```
+
+#### SESSION_INVALID (3000)
+
+Session is invalid or expired.
+
+```
+gRPC Status: UNAUTHENTICATED
+Metadata:
+  x-error-code: SESSION_INVALID
+  x-error-code-value: 3000
+  x-identifier: <session token>
+  x-reason: <reason>
+```
+
+#### GAME_UNAVAILABLE (4000)
+
+Game is not available for play.
+
+```
+gRPC Status: UNAVAILABLE
+Metadata:
+  x-error-code: GAME_UNAVAILABLE
+  x-error-code-value: 4000
+  x-identifier: <game_identity>
+  x-reason: <reason>
+```
+
+#### ROUND_FINISHED (4001)
+
+Round has already been completed.
+
+```
+gRPC Status: FAILED_PRECONDITION
+Metadata:
+  x-error-code: ROUND_FINISHED
+  x-error-code-value: 4001
+  x-identifier: <round_id>
+```
+
+#### INVALID_PRESET (4003)
+
+Invalid freespin preset configuration.
+
+```
+gRPC Status: INVALID_ARGUMENT
+Metadata:
+  x-error-code: INVALID_PRESET
+  x-error-code-value: 4003
+  x-identifier: <preset_id>
+  x-reason: <reason>
+```
+
+#### AGGREGATOR_NOT_SUPPORTED (5000)
+
+Aggregator is not supported for the operation.
+
+```
+gRPC Status: UNIMPLEMENTED
+Metadata:
+  x-error-code: AGGREGATOR_NOT_SUPPORTED
+  x-error-code-value: 5000
+  x-identifier: <aggregator>
+```
+
+#### AGGREGATOR_ERROR (5001)
+
+Aggregator returned an error.
+
+```
+gRPC Status: INTERNAL
+Metadata:
+  x-error-code: AGGREGATOR_ERROR
+  x-error-code-value: 5001
+```
+
+#### EXTERNAL_SERVICE_ERROR (6000)
+
+External service (wallet, storage, etc.) failed.
+
+```
+gRPC Status: UNAVAILABLE
+Metadata:
+  x-error-code: EXTERNAL_SERVICE_ERROR
+  x-error-code-value: 6000
+  x-service: <service name>
+  x-reason: <error details>
+```
+
+#### INTERNAL_ERROR (9999)
+
+Internal server error.
+
+```
+gRPC Status: INTERNAL
+Metadata:
+  x-error-code: INTERNAL_ERROR
+  x-error-code-value: 9999
+```
+
+### Client Examples
+
+#### Go
+
 ```go
-status := status.Convert(err)
-if status.Code() == codes.NotFound {
-    for _, detail := range status.Details() {
-        // handle metadata
+import (
+    "google.golang.org/grpc/status"
+    "google.golang.org/grpc/codes"
+)
+
+response, err := client.Find(ctx, request)
+if err != nil {
+    st := status.Convert(err)
+
+    switch st.Code() {
+    case codes.NotFound:
+        // Handle not found
+        md := st.Trailer()
+        errorCode := md.Get("x-error-code")
+        identifier := md.Get("x-identifier")
+        entityType := md.Get("x-entity-type")
+
+    case codes.FailedPrecondition:
+        // Handle precondition failures (balance, limits, etc.)
+        md := st.Trailer()
+        errorCode := md.Get("x-error-code")
+        if errorCode[0] == "INSUFFICIENT_BALANCE" {
+            required := md.Get("x-required-amount")
+            available := md.Get("x-available-amount")
+        }
+
+    case codes.InvalidArgument:
+        // Handle validation errors
+        md := st.Trailer()
+        field := md.Get("x-field")
+        reason := md.Get("x-reason")
     }
 }
 ```
 
-**Python:**
+#### Python
+
 ```python
+import grpc
+
 try:
     response = stub.Find(request)
 except grpc.RpcError as e:
     if e.code() == grpc.StatusCode.NOT_FOUND:
         metadata = dict(e.trailing_metadata())
         error_code = metadata.get('x-error-code')
+        identifier = metadata.get('x-identifier')
+        entity_type = metadata.get('x-entity-type')
+
+    elif e.code() == grpc.StatusCode.FAILED_PRECONDITION:
+        metadata = dict(e.trailing_metadata())
+        error_code = metadata.get('x-error-code')
+        if error_code == 'INSUFFICIENT_BALANCE':
+            required = metadata.get('x-required-amount')
+            available = metadata.get('x-available-amount')
+
+    elif e.code() == grpc.StatusCode.INVALID_ARGUMENT:
+        metadata = dict(e.trailing_metadata())
+        field = metadata.get('x-field')
+        reason = metadata.get('x-reason')
 ```
 
-**Node.js:**
+#### Node.js
+
 ```javascript
+const grpc = require('@grpc/grpc-js');
+
 client.Find(request, (err, response) => {
     if (err) {
         const metadata = err.metadata.getMap();
         const errorCode = metadata['x-error-code'];
+        const errorCodeValue = parseInt(metadata['x-error-code-value']);
+
+        switch (err.code) {
+            case grpc.status.NOT_FOUND:
+                const identifier = metadata['x-identifier'];
+                const entityType = metadata['x-entity-type'];
+                break;
+
+            case grpc.status.FAILED_PRECONDITION:
+                if (errorCode === 'INSUFFICIENT_BALANCE') {
+                    const required = metadata['x-required-amount'];
+                    const available = metadata['x-available-amount'];
+                }
+                break;
+
+            case grpc.status.INVALID_ARGUMENT:
+                const field = metadata['x-field'];
+                const reason = metadata['x-reason'];
+                break;
+        }
     }
 });
 ```
 
-**Java/Kotlin:**
+#### Java/Kotlin
+
 ```kotlin
+import io.grpc.Status
+import io.grpc.StatusException
+import io.grpc.Metadata
+
 try {
     val response = stub.find(request)
 } catch (e: StatusException) {
     val metadata = Status.trailersFromThrowable(e)
-    val errorCode = metadata?.get(Metadata.Key.of("x-error-code", Metadata.ASCII_STRING_MARSHALLER))
+    val errorCode = metadata?.get(
+        Metadata.Key.of("x-error-code", Metadata.ASCII_STRING_MARSHALLER)
+    )
+    val errorCodeValue = metadata?.get(
+        Metadata.Key.of("x-error-code-value", Metadata.ASCII_STRING_MARSHALLER)
+    )?.toIntOrNull()
+
+    when (e.status.code) {
+        Status.Code.NOT_FOUND -> {
+            val identifier = metadata?.get(
+                Metadata.Key.of("x-identifier", Metadata.ASCII_STRING_MARSHALLER)
+            )
+            val entityType = metadata?.get(
+                Metadata.Key.of("x-entity-type", Metadata.ASCII_STRING_MARSHALLER)
+            )
+        }
+        Status.Code.FAILED_PRECONDITION -> {
+            when (errorCode) {
+                "INSUFFICIENT_BALANCE" -> {
+                    val required = metadata?.get(
+                        Metadata.Key.of("x-required-amount", Metadata.ASCII_STRING_MARSHALLER)
+                    )
+                    val available = metadata?.get(
+                        Metadata.Key.of("x-available-amount", Metadata.ASCII_STRING_MARSHALLER)
+                    )
+                }
+            }
+        }
+        Status.Code.INVALID_ARGUMENT -> {
+            val field = metadata?.get(
+                Metadata.Key.of("x-field", Metadata.ASCII_STRING_MARSHALLER)
+            )
+            val reason = metadata?.get(
+                Metadata.Key.of("x-reason", Metadata.ASCII_STRING_MARSHALLER)
+            )
+        }
+    }
 }
 ```
 
