@@ -15,9 +15,8 @@ import com.nekgamebling.game.service.ProviderItemDto
 import com.nekgamebling.game.service.ProviderServiceGrpcKt
 import com.nekgamebling.game.service.UpdateProviderResult
 import com.nekgamebling.game.service.UpdateProviderImageResult
+import infrastructure.api.grpc.error.mapOrThrowGrpc
 import infrastructure.api.grpc.mapper.toProto
-import io.grpc.Status
-import io.grpc.StatusException
 import shared.value.Pageable
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
@@ -38,18 +37,13 @@ class ProviderGrpcService(
         val query = FindaProviderQuery(identity = request.identity)
 
         return findProviderQueryHandler.handle(query)
-            .map { response ->
+            .mapOrThrowGrpc { response ->
                 FindProviderResult.newBuilder()
                     .setProvider(response.provider.toProto(response.aggregator.identity))
                     .setAggregator(response.aggregator.toProto())
                     .setActiveGames(response.activeGames)
                     .setTotalGames(response.totalGames)
                     .build()
-            }
-            .getOrElse { error ->
-                throw StatusException(
-                    Status.NOT_FOUND.withDescription(error.message)
-                )
             }
     }
 
@@ -69,7 +63,7 @@ class ProviderGrpcService(
         )
 
         return findAllProvidersQueryHandler.handle(query)
-            .map { response ->
+            .mapOrThrowGrpc { response ->
                 FindAllProviderResult.newBuilder()
                     .addAllItems(response.result.items.map { item ->
                         ProviderItemDto.newBuilder()
@@ -90,11 +84,6 @@ class ProviderGrpcService(
                     .addAllAggregators(response.aggregators.map { it.toProto() })
                     .build()
             }
-            .getOrElse { error ->
-                throw StatusException(
-                    Status.INTERNAL.withDescription(error.message)
-                )
-            }
     }
 
     override suspend fun update(request: UpdateProviderCommandProto): UpdateProviderResult {
@@ -106,12 +95,7 @@ class ProviderGrpcService(
         )
 
         return updateProviderCommandHandler.handle(command)
-            .map { UpdateProviderResult.newBuilder().build() }
-            .getOrElse { error ->
-                throw StatusException(
-                    Status.NOT_FOUND.withDescription(error.message)
-                )
-            }
+            .mapOrThrowGrpc { UpdateProviderResult.newBuilder().build() }
     }
 
     override suspend fun updateImage(request: UpdateProviderImageCommandProto): UpdateProviderImageResult {
@@ -123,11 +107,6 @@ class ProviderGrpcService(
         )
 
         return updateProviderImageCommandHandler.handle(command)
-            .map { UpdateProviderImageResult.newBuilder().build() }
-            .getOrElse { error ->
-                throw StatusException(
-                    Status.NOT_FOUND.withDescription(error.message)
-                )
-            }
+            .mapOrThrowGrpc { UpdateProviderImageResult.newBuilder().build() }
     }
 }

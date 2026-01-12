@@ -15,9 +15,8 @@ import com.nekgamebling.game.service.FindAllCollectionResult
 import com.nekgamebling.game.service.FindCollectionResult
 import com.nekgamebling.game.service.UpdateCollectionResult
 import com.nekgamebling.game.service.UpdateCollectionGamesResult
+import infrastructure.api.grpc.error.mapOrThrowGrpc
 import infrastructure.api.grpc.mapper.toProto
-import io.grpc.Status
-import io.grpc.StatusException
 import shared.value.Pageable
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
@@ -38,17 +37,12 @@ class CollectionGrpcService(
         val query = FindCollectionQuery(identity = request.identity)
 
         return findCollectionQueryHandler.handle(query)
-            .map { response ->
+            .mapOrThrowGrpc { response ->
                 FindCollectionResult.newBuilder()
                     .setCollection(response.collection.toProto())
                     .setProviderCount(response.providerCount)
                     .setGameCount(response.gameCount)
                     .build()
-            }
-            .getOrElse { error ->
-                throw StatusException(
-                    Status.NOT_FOUND.withDescription(error.message)
-                )
             }
     }
 
@@ -67,7 +61,7 @@ class CollectionGrpcService(
         )
 
         return findAllCollectionsQueryHandler.handle(query)
-            .map { response ->
+            .mapOrThrowGrpc { response ->
                 FindAllCollectionResult.newBuilder()
                     .addAllItems(response.result.items.map { item ->
                         CollectionItemDto.newBuilder()
@@ -86,11 +80,6 @@ class CollectionGrpcService(
                     )
                     .build()
             }
-            .getOrElse { error ->
-                throw StatusException(
-                    Status.INTERNAL.withDescription(error.message)
-                )
-            }
     }
 
     override suspend fun update(request: UpdateCollectionCommandProto): UpdateCollectionResult {
@@ -101,12 +90,7 @@ class CollectionGrpcService(
         )
 
         return updateCollectionCommandHandler.handle(command)
-            .map { UpdateCollectionResult.newBuilder().build() }
-            .getOrElse { error ->
-                throw StatusException(
-                    Status.NOT_FOUND.withDescription(error.message)
-                )
-            }
+            .mapOrThrowGrpc { UpdateCollectionResult.newBuilder().build() }
     }
 
     override suspend fun updateGames(request: UpdateCollectionGamesCommandProto): UpdateCollectionGamesResult {
@@ -117,11 +101,6 @@ class CollectionGrpcService(
         )
 
         return updateCollectionGamesCommandHandler.handle(command)
-            .map { UpdateCollectionGamesResult.newBuilder().build() }
-            .getOrElse { error ->
-                throw StatusException(
-                    Status.NOT_FOUND.withDescription(error.message)
-                )
-            }
+            .mapOrThrowGrpc { UpdateCollectionGamesResult.newBuilder().build() }
     }
 }

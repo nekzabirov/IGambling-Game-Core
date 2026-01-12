@@ -10,9 +10,8 @@ import com.nekgamebling.game.service.FindAllRoundResult
 import com.nekgamebling.game.service.FindRoundResult
 import com.nekgamebling.game.service.RoundItemDto
 import com.nekgamebling.game.service.RoundServiceGrpcKt
+import infrastructure.api.grpc.error.mapOrThrowGrpc
 import infrastructure.api.grpc.mapper.toProto
-import io.grpc.Status
-import io.grpc.StatusException
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -32,7 +31,7 @@ class RoundGrpcService(
         val query = FindRoundQuery(id = request.id)
 
         return findRoundQueryHandler.handle(query)
-            .map { response ->
+            .mapOrThrowGrpc { response ->
                 FindRoundResult.newBuilder()
                     .setItem(
                         RoundItemDto.newBuilder()
@@ -48,11 +47,6 @@ class RoundGrpcService(
                             .build()
                     )
                     .build()
-            }
-            .getOrElse { error ->
-                throw StatusException(
-                    Status.NOT_FOUND.withDescription(error.message)
-                )
             }
     }
 
@@ -82,7 +76,7 @@ class RoundGrpcService(
         )
 
         return findAllRoundQueryHandler.handle(query)
-            .map { response ->
+            .mapOrThrowGrpc { response ->
                 FindAllRoundResult.newBuilder()
                     .addAllItems(response.items.items.map { item ->
                         RoundItemDto.newBuilder()
@@ -112,11 +106,6 @@ class RoundGrpcService(
                         game.toProto(providerIdentity)
                     })
                     .build()
-            }
-            .getOrElse { error ->
-                throw StatusException(
-                    Status.INTERNAL.withDescription(error.message)
-                )
             }
     }
 }

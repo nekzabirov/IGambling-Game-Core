@@ -15,10 +15,9 @@ import com.nekgamebling.game.service.CreateAggregatorResult
 import com.nekgamebling.game.service.FindAggregatorResult
 import com.nekgamebling.game.service.FindAllAggregatorResult
 import com.nekgamebling.game.service.UpdateAggregatorResult
+import infrastructure.api.grpc.error.mapOrThrowGrpc
 import infrastructure.api.grpc.mapper.toDomain
 import infrastructure.api.grpc.mapper.toProto
-import io.grpc.Status
-import io.grpc.StatusException
 import shared.value.Pageable
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
@@ -44,15 +43,10 @@ class AggregatorGrpcService(
         )
 
         return createAggregatorCommandHandler.handle(command)
-            .map { response ->
+            .mapOrThrowGrpc { response ->
                 CreateAggregatorResult.newBuilder()
                     .setAggregator(response.aggregator.toProto())
                     .build()
-            }
-            .getOrElse { error ->
-                throw StatusException(
-                    Status.ALREADY_EXISTS.withDescription(error.message)
-                )
             }
     }
 
@@ -60,15 +54,10 @@ class AggregatorGrpcService(
         val query = FindAggregatorQuery(identity = request.identity)
 
         return findAggregatorQueryHandler.handle(query)
-            .map { response ->
+            .mapOrThrowGrpc { response ->
                 FindAggregatorResult.newBuilder()
                     .setAggregator(response.aggregator.toProto())
                     .build()
-            }
-            .getOrElse { error ->
-                throw StatusException(
-                    Status.NOT_FOUND.withDescription(error.message)
-                )
             }
     }
 
@@ -87,7 +76,7 @@ class AggregatorGrpcService(
         )
 
         return findAllAggregatorQueryHandler.handle(query)
-            .map { response ->
+            .mapOrThrowGrpc { response ->
                 FindAllAggregatorResult.newBuilder()
                     .addAllItems(response.result.items.map { it.toProto() })
                     .setPagination(
@@ -100,11 +89,6 @@ class AggregatorGrpcService(
                     )
                     .build()
             }
-            .getOrElse { error ->
-                throw StatusException(
-                    Status.INTERNAL.withDescription(error.message)
-                )
-            }
     }
 
     override suspend fun update(request: UpdateAggregatorCommandProto): UpdateAggregatorResult {
@@ -115,11 +99,6 @@ class AggregatorGrpcService(
         )
 
         return updateAggregatorCommandHandler.handle(command)
-            .map { UpdateAggregatorResult.newBuilder().build() }
-            .getOrElse { error ->
-                throw StatusException(
-                    Status.NOT_FOUND.withDescription(error.message)
-                )
-            }
+            .mapOrThrowGrpc { UpdateAggregatorResult.newBuilder().build() }
     }
 }

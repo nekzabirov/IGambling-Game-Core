@@ -9,8 +9,11 @@ sealed class DomainError(
     override val cause: Throwable? = null
 ) : Exception(message, cause) {
 
-    /** Error code for external systems */
-    abstract val code: String
+    /** Type-safe error code enum */
+    abstract val errorCode: ErrorCode
+
+    /** String representation for backward compatibility and logging */
+    val code: String get() = errorCode.name
 }
 
 /**
@@ -21,7 +24,7 @@ data class NotFoundError(
     val identifier: String,
     override val cause: Throwable? = null
 ) : DomainError("$entity not found: $identifier") {
-    override val code: String = "NOT_FOUND"
+    override val errorCode: ErrorCode = ErrorCode.NOT_FOUND
 }
 
 /**
@@ -32,7 +35,7 @@ data class ValidationError(
     val reason: String,
     override val cause: Throwable? = null
 ) : DomainError("Validation failed for $field: $reason") {
-    override val code: String = "VALIDATION_ERROR"
+    override val errorCode: ErrorCode = ErrorCode.VALIDATION_ERROR
 }
 
 /**
@@ -44,7 +47,7 @@ data class InsufficientBalanceError(
     val available: Long,
     override val cause: Throwable? = null
 ) : DomainError("Insufficient balance for player $playerId: required $required, available $available") {
-    override val code: String = "INSUFFICIENT_BALANCE"
+    override val errorCode: ErrorCode = ErrorCode.INSUFFICIENT_BALANCE
 }
 
 /**
@@ -56,7 +59,7 @@ data class BetLimitExceededError(
     val limit: Long,
     override val cause: Throwable? = null
 ) : DomainError("Bet limit exceeded for player $playerId: bet $betAmount, limit $limit") {
-    override val code: String = "BET_LIMIT_EXCEEDED"
+    override val errorCode: ErrorCode = ErrorCode.BET_LIMIT_EXCEEDED
 }
 
 /**
@@ -67,7 +70,7 @@ data class SessionInvalidError(
     val reason: String = "Session is invalid or expired",
     override val cause: Throwable? = null
 ) : DomainError("$reason: $sessionToken") {
-    override val code: String = "SESSION_INVALID"
+    override val errorCode: ErrorCode = ErrorCode.SESSION_INVALID
 }
 
 /**
@@ -78,7 +81,7 @@ data class GameUnavailableError(
     val reason: String = "Game is not available",
     override val cause: Throwable? = null
 ) : DomainError("$reason: $gameIdentity") {
-    override val code: String = "GAME_UNAVAILABLE"
+    override val errorCode: ErrorCode = ErrorCode.GAME_UNAVAILABLE
 }
 
 /**
@@ -88,7 +91,7 @@ data class RoundFinishedError(
     val roundId: String,
     override val cause: Throwable? = null
 ) : DomainError("Round already finished: $roundId") {
-    override val code: String = "ROUND_FINISHED"
+    override val errorCode: ErrorCode = ErrorCode.ROUND_FINISHED
 }
 
 /**
@@ -98,7 +101,7 @@ data class RoundNotFoundError(
     val roundId: String,
     override val cause: Throwable? = null
 ) : DomainError("Round not found: $roundId") {
-    override val code: String = "ROUND_NOT_FOUND"
+    override val errorCode: ErrorCode = ErrorCode.ROUND_NOT_FOUND
 }
 
 /**
@@ -109,7 +112,7 @@ data class InvalidPresetError(
     val reason: String,
     override val cause: Throwable? = null
 ) : DomainError("Invalid preset $presetId: $reason") {
-    override val code: String = "INVALID_PRESET"
+    override val errorCode: ErrorCode = ErrorCode.INVALID_PRESET
 }
 
 /**
@@ -120,7 +123,7 @@ data class ExternalServiceError(
     val details: String,
     override val cause: Throwable? = null
 ) : DomainError("External service error from $service: $details") {
-    override val code: String = "EXTERNAL_SERVICE_ERROR"
+    override val errorCode: ErrorCode = ErrorCode.EXTERNAL_SERVICE_ERROR
 }
 
 /**
@@ -131,7 +134,7 @@ data class IllegalStateError(
     val currentState: String,
     override val cause: Throwable? = null
 ) : DomainError("Operation '$operation' not allowed in state: $currentState") {
-    override val code: String = "ILLEGAL_STATE"
+    override val errorCode: ErrorCode = ErrorCode.ILLEGAL_STATE
 }
 
 /**
@@ -142,7 +145,7 @@ data class DuplicateEntityError(
     val identifier: String,
     override val cause: Throwable? = null
 ) : DomainError("$entity already exists: $identifier") {
-    override val code: String = "DUPLICATE_ENTITY"
+    override val errorCode: ErrorCode = ErrorCode.DUPLICATE_ENTITY
 }
 
 /**
@@ -152,5 +155,5 @@ data class AggregatorNotSupportedError(
     val aggregator: String,
     override val cause: Throwable? = null
 ) : DomainError("Aggregator not supported: $aggregator") {
-    override val code: String = "AGGREGATOR_NOT_SUPPORTED"
+    override val errorCode: ErrorCode = ErrorCode.AGGREGATOR_NOT_SUPPORTED
 }

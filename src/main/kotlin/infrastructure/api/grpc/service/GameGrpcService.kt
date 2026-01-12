@@ -20,10 +20,10 @@ import com.nekgamebling.game.dto.PlatformDto
 import com.nekgamebling.game.service.*
 import domain.common.value.Locale
 import domain.common.value.Platform
+import infrastructure.api.grpc.error.GrpcErrorMapper
+import infrastructure.api.grpc.error.mapOrThrowGrpc
 import infrastructure.api.grpc.mapper.toDomain
 import infrastructure.api.grpc.mapper.toProto
-import io.grpc.Status
-import io.grpc.StatusException
 import shared.value.Currency
 import shared.value.Pageable
 import kotlin.coroutines.CoroutineContext
@@ -54,7 +54,7 @@ class GameGrpcService(
         val query = FindGameQuery(identity = request.identity)
 
         return findGameQueryHandler.handle(query)
-            .map { response ->
+            .mapOrThrowGrpc { response ->
                 FindGameResult.newBuilder()
                     .setGame(response.game.toProto(response.provider.identity))
                     .setProvider(response.provider.toProto(response.aggregator.identity))
@@ -62,11 +62,6 @@ class GameGrpcService(
                     .setAggregator(response.aggregator.toProto())
                     .addAllCollections(response.collections.map { it.toProto() })
                     .build()
-            }
-            .getOrElse { error ->
-                throw StatusException(
-                    Status.NOT_FOUND.withDescription(error.message)
-                )
             }
     }
 
@@ -95,13 +90,11 @@ class GameGrpcService(
         val result = try {
             findAllGameQueryHandler.handle(query)
         } catch (e: Exception) {
-            throw StatusException(
-                Status.INTERNAL.withDescription("Database error: ${e.message}").withCause(e)
-            )
+            throw GrpcErrorMapper.toStatusException(e)
         }
 
         return result
-            .map { response ->
+            .mapOrThrowGrpc { response ->
                 // Build lookup map for provider identity by id
                 val providerIdentityById = response.providers.associate { it.id to it.identity }
                 // Build lookup map for aggregator identity by id
@@ -132,11 +125,6 @@ class GameGrpcService(
                     .addAllCollections(response.collections.map { it.toProto() })
                     .build()
             }
-            .getOrElse { error ->
-                throw StatusException(
-                    Status.INTERNAL.withDescription(error.message)
-                )
-            }
     }
 
     override suspend fun demoUrl(request: GameDemoUrlQueryProto): GameDemoUrlResult {
@@ -149,15 +137,10 @@ class GameGrpcService(
         )
 
         return gameDemoUrlQueryHandler.handle(query)
-            .map { response ->
+            .mapOrThrowGrpc { response ->
                 GameDemoUrlResult.newBuilder()
                     .setLaunchUrl(response.launchUrl)
                     .build()
-            }
-            .getOrElse { error ->
-                throw StatusException(
-                    Status.INVALID_ARGUMENT.withDescription(error.message)
-                )
             }
     }
 
@@ -179,15 +162,10 @@ class GameGrpcService(
         )
 
         return playGameCommandHandler.handle(command)
-            .map { response ->
+            .mapOrThrowGrpc { response ->
                 PlayGameResult.newBuilder()
                     .setLaunchUrl(response.launchUrl)
                     .build()
-            }
-            .getOrElse { error ->
-                throw StatusException(
-                    Status.INVALID_ARGUMENT.withDescription(error.message)
-                )
             }
     }
 
@@ -200,12 +178,7 @@ class GameGrpcService(
         )
 
         return updateGameCommandHandler.handle(command)
-            .map { UpdateGameResult.newBuilder().build() }
-            .getOrElse { error ->
-                throw StatusException(
-                    Status.NOT_FOUND.withDescription(error.message)
-                )
-            }
+            .mapOrThrowGrpc { UpdateGameResult.newBuilder().build() }
     }
 
     override suspend fun updateImage(request: UpdateGameImageCommandProto): UpdateGameImageResult {
@@ -217,12 +190,7 @@ class GameGrpcService(
         )
 
         return updateGameImageCommandHandler.handle(command)
-            .map { UpdateGameImageResult.newBuilder().build() }
-            .getOrElse { error ->
-                throw StatusException(
-                    Status.NOT_FOUND.withDescription(error.message)
-                )
-            }
+            .mapOrThrowGrpc { UpdateGameImageResult.newBuilder().build() }
     }
 
     override suspend fun addTag(request: AddGameTagCommandProto): AddGameTagResult {
@@ -232,12 +200,7 @@ class GameGrpcService(
         )
 
         return addGameTagCommandHandler.handle(command)
-            .map { AddGameTagResult.newBuilder().build() }
-            .getOrElse { error ->
-                throw StatusException(
-                    Status.NOT_FOUND.withDescription(error.message)
-                )
-            }
+            .mapOrThrowGrpc { AddGameTagResult.newBuilder().build() }
     }
 
     override suspend fun removeTag(request: RemoveGameTagCommandProto): RemoveGameTagResult {
@@ -247,25 +210,15 @@ class GameGrpcService(
         )
 
         return removeGameTagCommandHandler.handle(command)
-            .map { RemoveGameTagResult.newBuilder().build() }
-            .getOrElse { error ->
-                throw StatusException(
-                    Status.NOT_FOUND.withDescription(error.message)
-                )
-            }
+            .mapOrThrowGrpc { RemoveGameTagResult.newBuilder().build() }
     }
 
     override suspend fun getFreespinPreset(request: GetFreespinPresetQuery): GetFreespinPresetResult {
         return freespinService.getPreset(request.gameIdentity)
-            .map { result ->
+            .mapOrThrowGrpc { result ->
                 GetFreespinPresetResult.newBuilder()
                     .putAllPreset(result.preset.mapValues { it.value?.toString() ?: "" })
                     .build()
-            }
-            .getOrElse { error ->
-                throw StatusException(
-                    Status.NOT_FOUND.withDescription(error.message)
-                )
             }
     }
 
@@ -279,12 +232,7 @@ class GameGrpcService(
             startAt = request.startAt.toDomain(),
             endAt = request.endAt.toDomain()
         )
-            .map { CreateFreespinResult.newBuilder().build() }
-            .getOrElse { error ->
-                throw StatusException(
-                    Status.INVALID_ARGUMENT.withDescription(error.message)
-                )
-            }
+            .mapOrThrowGrpc { CreateFreespinResult.newBuilder().build() }
     }
 
     override suspend fun cancelFreespin(request: CancelFreespinCommand): CancelFreespinResult {
@@ -292,11 +240,6 @@ class GameGrpcService(
             referenceId = request.referenceId,
             gameIdentity = request.gameIdentity
         )
-            .map { CancelFreespinResult.newBuilder().build() }
-            .getOrElse { error ->
-                throw StatusException(
-                    Status.NOT_FOUND.withDescription(error.message)
-                )
-            }
+            .mapOrThrowGrpc { CancelFreespinResult.newBuilder().build() }
     }
 }
