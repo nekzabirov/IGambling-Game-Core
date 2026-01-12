@@ -60,7 +60,7 @@ class PateplayFreespinAdapter(
 
         // Convert stake from system format to provider format (real currency units as string)
         val stakeDecimal = providerCurrencyAdapter.convertSystemToProvider(
-            stake.toBigInteger(),
+            stake.toLong(),
             currency
         )
 

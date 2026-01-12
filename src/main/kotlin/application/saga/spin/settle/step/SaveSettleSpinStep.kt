@@ -6,7 +6,6 @@ import application.saga.spin.settle.SettleSpinContext
 import domain.common.error.IllegalStateError
 import domain.common.value.SpinType
 import domain.session.model.Spin
-import java.math.BigInteger
 import java.util.UUID
 
 /**
@@ -52,9 +51,9 @@ class SaveSettleSpinStep(
             id = UUID.randomUUID(),
             roundId = settleSpin.roundId,
             type = SpinType.ROLLBACK,
-            amount = BigInteger.ZERO,
-            realAmount = BigInteger.ZERO,
-            bonusAmount = BigInteger.ZERO,
+            amount = 0L,
+            realAmount = 0L,
+            bonusAmount = 0L,
             extId = "${settleSpin.extId}_rollback_${context.sagaId}",
             referenceId = settleSpin.id,
             freeSpinId = settleSpin.freeSpinId

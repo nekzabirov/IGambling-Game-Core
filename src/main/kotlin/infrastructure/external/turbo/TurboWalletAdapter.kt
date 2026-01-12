@@ -17,7 +17,6 @@ import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import shared.Logger
 import shared.value.Currency
-import java.math.BigInteger
 
 class TurboWalletAdapter : WalletAdapter {
 
@@ -45,8 +44,8 @@ class TurboWalletAdapter : WalletAdapter {
         val account = walletResponse.data.firstOrNull { it.status == 1 } ?: throw Exception("Failed to fetch balance from TurboWallet")
 
         val balance = Balance(
-            real = account.realBalance.toBigInteger() + account.lockedBalance.toBigInteger(),
-            bonus = account.bonusBalance.toBigInteger(),
+            real = account.realBalance + account.lockedBalance,
+            bonus = account.bonusBalance,
             currency = Currency(account.currency)
         )
 
@@ -60,12 +59,12 @@ class TurboWalletAdapter : WalletAdapter {
         playerId: String,
         transactionId: String,
         currency: Currency,
-        realAmount: BigInteger,
-        bonusAmount: BigInteger
+        realAmount: Long,
+        bonusAmount: Long
     ): Result<Balance> = runCatching {
         val request = BetTransactionRequest(
             playerId = playerId,
-            amount = (realAmount + bonusAmount).toLong(),
+            amount = realAmount + bonusAmount,
             currency = currency.value,
             externalId = transactionId,
             balanceTypeOrder = listOf(BalanceType.REAL, BalanceType.LOCKED, BalanceType.BONUS)
@@ -82,8 +81,8 @@ class TurboWalletAdapter : WalletAdapter {
             ?: throw Exception("No transaction data in withdraw response")
 
         val balance = Balance(
-            real = tx.realBalance.toBigInteger() + tx.lockedBalance.toBigInteger(),
-            bonus = tx.bonusBalance.toBigInteger(),
+            real = tx.realBalance + tx.lockedBalance,
+            bonus = tx.bonusBalance,
             currency = Currency(tx.currency)
         )
 
@@ -97,17 +96,17 @@ class TurboWalletAdapter : WalletAdapter {
         playerId: String,
         transactionId: String,
         currency: Currency,
-        realAmount: BigInteger,
-        bonusAmount: BigInteger
+        realAmount: Long,
+        bonusAmount: Long
     ): Result<Balance> = runCatching {
         // Zero-amount check is now handled at saga step level
         val request = SettleTransactionRequest(
             playerId = playerId,
-            amount = (realAmount + bonusAmount).toLong(),
+            amount = realAmount + bonusAmount,
             currency = currency.value,
             externalId = transactionId,
             referencedExternalId = transactionId,
-            balanceType = if (bonusAmount > BigInteger.ZERO) BalanceType.BONUS else BalanceType.REAL
+            balanceType = if (bonusAmount > 0L) BalanceType.BONUS else BalanceType.REAL
         )
 
         val response: TurboResponse<List<TransactionResponseDto>> = client.post("$urlAddress/bets/settle") {
@@ -119,8 +118,8 @@ class TurboWalletAdapter : WalletAdapter {
             ?: throw Exception("No transaction data in deposit response")
 
         val balance = Balance(
-            real = tx.realBalance.toBigInteger() + tx.lockedBalance.toBigInteger(),
-            bonus = tx.bonusBalance.toBigInteger(),
+            real = tx.realBalance + tx.lockedBalance,
+            bonus = tx.bonusBalance,
             currency = Currency(tx.currency)
         )
 

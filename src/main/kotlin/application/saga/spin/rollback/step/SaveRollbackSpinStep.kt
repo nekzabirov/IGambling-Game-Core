@@ -6,7 +6,6 @@ import application.saga.spin.rollback.RollbackSpinContext
 import domain.common.error.IllegalStateError
 import domain.common.value.SpinType
 import domain.session.model.Spin
-import java.math.BigInteger
 import java.util.UUID
 
 /**
@@ -32,9 +31,9 @@ class SaveRollbackSpinStep(
             id = UUID.randomUUID(),
             roundId = round.id,
             type = SpinType.ROLLBACK,
-            amount = BigInteger.ZERO,
-            realAmount = BigInteger.ZERO,
-            bonusAmount = BigInteger.ZERO,
+            amount = 0L,
+            realAmount = 0L,
+            bonusAmount = 0L,
             extId = context.transactionId,
             referenceId = originalSpin.id,
             freeSpinId = originalSpin.freeSpinId

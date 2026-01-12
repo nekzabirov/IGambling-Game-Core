@@ -6,7 +6,6 @@ import domain.session.model.Balance
 import domain.session.model.Round
 import domain.session.model.Session
 import domain.session.model.Spin
-import java.math.BigInteger
 
 /**
  * Context for PlaceSpin saga.
@@ -18,7 +17,7 @@ class PlaceSpinContext(
     val extRoundId: String,
     val transactionId: String,
     val freeSpinId: String?,
-    val amount: BigInteger,
+    val amount: Long,
     correlationId: String = transactionId
 ) : BaseSagaContext(correlationId = correlationId) {
 
@@ -26,10 +25,10 @@ class PlaceSpinContext(
     var game: Game? = null
     var round: Round? = null
     var balance: Balance? = null
-    var betLimit: BigInteger? = null
+    var betLimit: Long? = null
     var spin: Spin? = null
-    var betRealAmount: BigInteger = BigInteger.ZERO
-    var betBonusAmount: BigInteger = BigInteger.ZERO
+    var betRealAmount: Long = 0L
+    var betBonusAmount: Long = 0L
     var resultBalance: Balance? = null  // Balance after wallet operation
 
     val isFreeSpin: Boolean get() = freeSpinId != null

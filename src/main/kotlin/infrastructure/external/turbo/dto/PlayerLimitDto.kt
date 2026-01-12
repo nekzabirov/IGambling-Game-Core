@@ -21,8 +21,8 @@ data class PlayerLimitDto(
 
     fun isPlaceBet() = definition == 1
 
-    fun getRestAmount(): Int {
-        if (currentAmount == null) return amount.toInt()
-        return (amount - currentAmount).toInt()
+    fun getRestAmount(): Long {
+        if (currentAmount == null) return amount
+        return amount - currentAmount
     }
 }

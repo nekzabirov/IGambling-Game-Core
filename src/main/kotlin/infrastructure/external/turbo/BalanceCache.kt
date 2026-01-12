@@ -28,7 +28,7 @@ object BalanceCache {
         cache[playerId] = CachedBalance(balance, System.currentTimeMillis() + TTL_MS)
     }
 
-    fun update(playerId: String, realDelta: java.math.BigInteger, bonusDelta: java.math.BigInteger): Balance? {
+    fun update(playerId: String, realDelta: Long, bonusDelta: Long): Balance? {
         val cached = cache[playerId] ?: return null
         if (System.currentTimeMillis() > cached.expiresAt) {
             cache.remove(playerId)

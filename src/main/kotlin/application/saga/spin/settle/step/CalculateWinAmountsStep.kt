@@ -3,7 +3,6 @@ package application.saga.spin.settle.step
 import application.saga.ValidationStep
 import application.saga.spin.settle.SettleSpinContext
 import domain.common.error.IllegalStateError
-import java.math.BigInteger
 
 /**
  * Step 3: Calculate win amounts (real vs bonus).
@@ -20,14 +19,14 @@ class CalculateWinAmountsStep : ValidationStep<SettleSpinContext>(
         if (context.isFreeSpin) {
             // FreeSpin mode: all goes to real
             context.realAmount = context.winAmount
-            context.bonusAmount = BigInteger.ZERO
+            context.bonusAmount = 0L
         } else {
             // Determine if bonus was used in the original bet
-            val isBonusUsed = placeSpin.bonusAmount > BigInteger.ZERO
+            val isBonusUsed = placeSpin.bonusAmount > 0L
 
             // Winnings go to bonus if original bet used bonus
-            context.realAmount = if (isBonusUsed) BigInteger.ZERO else context.winAmount
-            context.bonusAmount = if (isBonusUsed) context.winAmount else BigInteger.ZERO
+            context.realAmount = if (isBonusUsed) 0L else context.winAmount
+            context.bonusAmount = if (isBonusUsed) context.winAmount else 0L
         }
 
         return Result.success(Unit)

@@ -1,9 +1,7 @@
 package domain.common.event
 
 import shared.value.Currency
-import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
-import java.math.BigInteger
 
 /**
  * Event emitted when a player adds a game to favorites.
@@ -37,8 +35,7 @@ data class GameWonEvent(
     val gameId: String,
     val gameIdentity: String,
     val playerId: String,
-    @Contextual
-    val amount: BigInteger,
+    val amount: Long,
     val currency: Currency
 ) : GameIntegrationEvent {
     override val routingKey: String = "game.won"

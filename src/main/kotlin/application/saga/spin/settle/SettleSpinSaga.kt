@@ -8,7 +8,6 @@ import application.saga.RetryPolicy
 import application.saga.SagaOrchestrator
 import application.saga.spin.settle.step.*
 import application.service.GameService
-import java.math.BigInteger
 
 /**
  * Saga definition for settling a spin (determining win/loss).
@@ -41,7 +40,7 @@ class SettleSpinSaga(
 
     suspend fun execute(context: SettleSpinContext): Result<Unit> {
         // Skip if no win amount
-        if (context.winAmount <= BigInteger.ZERO) {
+        if (context.winAmount <= 0L) {
             return Result.success(Unit)
         }
         return orchestrator.execute(context)

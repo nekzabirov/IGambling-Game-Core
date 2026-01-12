@@ -59,7 +59,7 @@ class PragmaticFreespinAdapter(
 
         // Convert totalBet from system format to provider format (real currency units)
         val totalBetDecimal = providerCurrencyAdapter.convertSystemToProvider(
-            totalBet.toBigInteger(),
+            totalBet.toLong(),
             currency
         ).toDouble()
 

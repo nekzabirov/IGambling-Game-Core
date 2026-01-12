@@ -10,7 +10,7 @@ import shared.Logger
 import shared.value.SessionToken
 import kotlin.getValue
 
-private val Parameters.amount get() = this["amount"]!!.toBigInteger()
+private val Parameters.amount get() = this["amount"]!!.toLong()
 private val Parameters.gameSymbol get() = this["game_id"]!!
 private val Parameters.transactionId get() = this["transaction_id"]!!
 private val Parameters.roundId get() = this["round_id"]!!

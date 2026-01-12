@@ -14,7 +14,6 @@ import domain.common.value.Locale
 import domain.common.value.Platform
 import domain.common.value.SpinType
 import kotlinx.datetime.toKotlinLocalDateTime
-import java.math.BigInteger
 import java.util.UUID
 
 /**
@@ -71,9 +70,9 @@ class SessionAggregate private constructor(
     fun placeBet(
         extRoundId: ExternalRoundId,
         transactionId: TransactionId,
-        amount: BigInteger,
-        realAmount: BigInteger,
-        bonusAmount: BigInteger,
+        amount: Long,
+        realAmount: Long,
+        bonusAmount: Long,
         freeSpinId: FreeSpinId? = null
     ): SpinEntity {
         val round = startRound(extRoundId)
@@ -103,9 +102,9 @@ class SessionAggregate private constructor(
     fun settle(
         extRoundId: ExternalRoundId,
         transactionId: TransactionId,
-        winAmount: BigInteger,
-        realAmount: BigInteger,
-        bonusAmount: BigInteger,
+        winAmount: Long,
+        realAmount: Long,
+        bonusAmount: Long,
         freeSpinId: FreeSpinId? = null
     ): SpinEntity {
         val round = findRound(extRoundId)
@@ -298,9 +297,9 @@ class RoundEntity private constructor(
      */
     fun placeBet(
         transactionId: TransactionId,
-        amount: BigInteger,
-        realAmount: BigInteger,
-        bonusAmount: BigInteger,
+        amount: Long,
+        realAmount: Long,
+        bonusAmount: Long,
         freeSpinId: FreeSpinId?
     ): SpinEntity {
         require(_status == RoundStatus.ACTIVE) { "Cannot place bet on finished round" }
@@ -323,9 +322,9 @@ class RoundEntity private constructor(
      */
     fun settle(
         transactionId: TransactionId,
-        winAmount: BigInteger,
-        realAmount: BigInteger,
-        bonusAmount: BigInteger,
+        winAmount: Long,
+        realAmount: Long,
+        bonusAmount: Long,
         freeSpinId: FreeSpinId?
     ): Pair<SpinEntity, SpinEntity> {
         require(_status == RoundStatus.ACTIVE) { "Cannot settle finished round" }
@@ -440,9 +439,9 @@ data class SpinEntity(
     val id: SpinId,
     val roundId: RoundId,
     val type: SpinType,
-    val amount: BigInteger,
-    val realAmount: BigInteger,
-    val bonusAmount: BigInteger,
+    val amount: Long,
+    val realAmount: Long,
+    val bonusAmount: Long,
     val transactionId: TransactionId,
     val referenceId: SpinId? = null,
     val freeSpinId: FreeSpinId? = null
@@ -466,9 +465,9 @@ data class SpinEntity(
         fun place(
             roundId: RoundId,
             transactionId: TransactionId,
-            amount: BigInteger,
-            realAmount: BigInteger,
-            bonusAmount: BigInteger,
+            amount: Long,
+            realAmount: Long,
+            bonusAmount: Long,
             freeSpinId: FreeSpinId?
         ): SpinEntity = SpinEntity(
             id = SpinId.generate(),
@@ -484,9 +483,9 @@ data class SpinEntity(
         fun settle(
             roundId: RoundId,
             transactionId: TransactionId,
-            amount: BigInteger,
-            realAmount: BigInteger,
-            bonusAmount: BigInteger,
+            amount: Long,
+            realAmount: Long,
+            bonusAmount: Long,
             referenceId: SpinId,
             freeSpinId: FreeSpinId?
         ): SpinEntity = SpinEntity(
@@ -510,9 +509,9 @@ data class SpinEntity(
             id = SpinId.generate(),
             roundId = roundId,
             type = SpinType.ROLLBACK,
-            amount = BigInteger.ZERO,
-            realAmount = BigInteger.ZERO,
-            bonusAmount = BigInteger.ZERO,
+            amount = 0L,
+            realAmount = 0L,
+            bonusAmount = 0L,
             transactionId = transactionId,
             referenceId = referenceId,
             freeSpinId = freeSpinId

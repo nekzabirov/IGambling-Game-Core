@@ -1,9 +1,7 @@
 package domain.common.event
 
-import shared.serializer.BigIntegerSerializer
 import shared.value.Currency
 import kotlinx.serialization.Serializable
-import java.math.BigInteger
 
 /**
  * Event emitted when a spin is placed (bet made).
@@ -11,8 +9,7 @@ import java.math.BigInteger
 @Serializable
 data class SpinPlacedEvent(
     val gameIdentity: String,
-    @Serializable(with = BigIntegerSerializer::class)
-    val amount: BigInteger,
+    val amount: Long,
     val currency: Currency,
     val playerId: String,
     val freeSpinId: String? = null
@@ -26,8 +23,7 @@ data class SpinPlacedEvent(
 @Serializable
 data class SpinSettledEvent(
     val gameIdentity: String,
-    @Serializable(with = BigIntegerSerializer::class)
-    val amount: BigInteger,
+    val amount: Long,
     val currency: Currency,
     val playerId: String,
     val freeSpinId: String? = null,
@@ -54,8 +50,7 @@ data class SpinEndEvent(
 data class SpinRollbackEvent(
     val gameIdentity: String,
     val playerId: String,
-    @Serializable(with = BigIntegerSerializer::class)
-    val refundAmount: BigInteger,
+    val refundAmount: Long,
     val currency: Currency,
     val freeSpinId: String? = null,
 ) : SpinIntegrationEvent {

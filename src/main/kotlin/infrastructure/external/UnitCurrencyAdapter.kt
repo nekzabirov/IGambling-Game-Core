@@ -3,7 +3,6 @@ package infrastructure.external
 import application.port.outbound.CurrencyAdapter
 import shared.value.Currency
 import java.math.BigDecimal
-import java.math.BigInteger
 import java.math.RoundingMode
 
 /**
@@ -13,15 +12,15 @@ class UnitCurrencyAdapter : CurrencyAdapter {
     override suspend fun convertToSystem(
         amount: BigDecimal,
         currency: Currency
-    ): BigInteger {
-        return amount.multiply(BigDecimal("100")).toBigInteger()
+    ): Long {
+        return amount.multiply(BigDecimal("100")).toLong()
     }
 
     override suspend fun convertFromSystem(
-        amount: BigInteger,
+        amount: Long,
         currency: Currency
     ): BigDecimal {
-        return amount.toBigDecimal().divide(BigDecimal("100"), 2, RoundingMode.HALF_UP)
+        return BigDecimal(amount).divide(BigDecimal("100"), 2, RoundingMode.HALF_UP)
     }
 
 }

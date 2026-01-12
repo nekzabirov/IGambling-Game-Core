@@ -3,7 +3,6 @@ package application.saga.spin.rollback.step
 import application.port.outbound.WalletAdapter
 import application.saga.SagaStep
 import application.saga.spin.rollback.RollbackSpinContext
-import java.math.BigInteger
 
 /**
  * Step 3: Refund the bet amount to wallet.
@@ -23,7 +22,7 @@ class WalletRefundStep(
         }
 
         // Skip if nothing to refund
-        if (context.refundRealAmount == BigInteger.ZERO && context.refundBonusAmount == BigInteger.ZERO) {
+        if (context.refundRealAmount == 0L && context.refundBonusAmount == 0L) {
             return Result.success(Unit)
         }
 

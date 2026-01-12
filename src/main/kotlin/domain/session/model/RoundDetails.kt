@@ -3,7 +3,6 @@ package domain.session.model
 import domain.game.model.GameWithDetails
 import kotlinx.datetime.LocalDateTime
 import shared.value.Currency
-import java.math.BigInteger
 import java.util.UUID
 
 /**
@@ -11,8 +10,8 @@ import java.util.UUID
  */
 data class RoundDetails(
     val id: UUID,
-    val placeAmount: BigInteger,
-    val settleAmount: BigInteger,
+    val placeAmount: Long,
+    val settleAmount: Long,
     val freeSpinId: String?,
     val currency: Currency,
     val game: GameWithDetails,

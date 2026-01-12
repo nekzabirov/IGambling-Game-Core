@@ -9,7 +9,6 @@ import domain.common.error.IllegalStateError
 import domain.common.error.InsufficientBalanceError
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
-import java.math.BigInteger
 
 /**
  * Step 3: Validate balance and bet limits (skip for freespins).
@@ -22,8 +21,8 @@ class ValidateBalanceStep(
     override suspend fun execute(context: PlaceSpinContext): Result<Unit> {
         if (context.isFreeSpin) {
             // FreeSpin mode: skip balance validation
-            context.betRealAmount = BigInteger.ZERO
-            context.betBonusAmount = BigInteger.ZERO
+            context.betRealAmount = 0L
+            context.betBonusAmount = 0L
             return Result.success(Unit)
         }
 
@@ -43,7 +42,7 @@ class ValidateBalanceStep(
 
         // Adjust balance if bonus bet is disabled
         val adjustedBalance = if (!game.bonusBetEnable) {
-            balance.copy(bonus = BigInteger.ZERO)
+            balance.copy(bonus = 0L)
         } else {
             balance
         }

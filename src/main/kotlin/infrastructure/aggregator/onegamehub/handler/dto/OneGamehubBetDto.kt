@@ -1,7 +1,5 @@
 package infrastructure.aggregator.onegamehub.handler.dto
 
-import java.math.BigInteger
-
 data class OneGameHubBetDto(
     val gameSymbol: String,
 
@@ -11,7 +9,7 @@ data class OneGameHubBetDto(
 
     val freeSpinId: String?,
 
-    val amount: BigInteger,
+    val amount: Long,
 
     val finishRound: Boolean = false
 )

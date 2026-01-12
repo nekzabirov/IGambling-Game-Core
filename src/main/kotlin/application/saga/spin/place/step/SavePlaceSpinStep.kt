@@ -6,7 +6,6 @@ import application.saga.spin.place.PlaceSpinContext
 import domain.common.error.IllegalStateError
 import domain.common.value.SpinType
 import domain.session.model.Spin
-import java.math.BigInteger
 import java.util.UUID
 
 /**
@@ -49,9 +48,9 @@ class SavePlaceSpinStep(
             id = UUID.randomUUID(),
             roundId = spin.roundId,
             type = SpinType.ROLLBACK,
-            amount = BigInteger.ZERO,
-            realAmount = BigInteger.ZERO,
-            bonusAmount = BigInteger.ZERO,
+            amount = 0L,
+            realAmount = 0L,
+            bonusAmount = 0L,
             extId = "${spin.extId}_rollback_${context.sagaId}",
             referenceId = spin.id,
             freeSpinId = spin.freeSpinId

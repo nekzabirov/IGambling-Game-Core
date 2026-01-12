@@ -209,8 +209,8 @@ class PragmaticHandler(
             return it.toErrorResponse()
         }
 
-        val resultBalance = if (realAmount < java.math.BigInteger.ZERO) {
-            val betAmount = realAmount.abs()
+        val resultBalance = if (realAmount < 0L) {
+            val betAmount = -realAmount
 
             val context = PlaceSpinContext(
                 session = session,

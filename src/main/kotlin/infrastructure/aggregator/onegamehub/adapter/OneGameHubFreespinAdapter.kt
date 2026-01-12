@@ -76,7 +76,7 @@ class OneGameHubFreespinAdapter(
 
                 gameId = gameSymbol,
 
-                bet = providerCurrencyAdapter.convertSystemToProvider(betAmount.toBigInteger(), currency).toInt(),
+                bet = providerCurrencyAdapter.convertSystemToProvider(betAmount.toLong(), currency).toInt(),
 
                 lineNumber = lines
             )

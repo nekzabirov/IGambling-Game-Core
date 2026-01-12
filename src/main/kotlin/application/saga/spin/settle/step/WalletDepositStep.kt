@@ -22,7 +22,7 @@ class WalletDepositStep(
         }
 
         // Skip wallet call for zero-win (no deposit needed)
-        if (context.realAmount == java.math.BigInteger.ZERO && context.bonusAmount == java.math.BigInteger.ZERO) {
+        if (context.realAmount == 0L && context.bonusAmount == 0L) {
             // resultBalance stays null - handler will fetch if needed
             return Result.success(Unit)
         }

@@ -5,7 +5,6 @@ import domain.session.model.Balance
 import domain.session.model.Round
 import domain.session.model.Session
 import domain.session.model.Spin
-import java.math.BigInteger
 
 /**
  * Context for RollbackSpin saga.
@@ -20,8 +19,8 @@ class RollbackSpinContext(
     var round: Round? = null
     var originalSpin: Spin? = null
     var rollbackSpin: Spin? = null
-    var refundRealAmount: BigInteger = BigInteger.ZERO
-    var refundBonusAmount: BigInteger = BigInteger.ZERO
+    var refundRealAmount: Long = 0L
+    var refundBonusAmount: Long = 0L
     var gameIdentity: String = ""
     var resultBalance: Balance? = null  // Balance after wallet refund
 

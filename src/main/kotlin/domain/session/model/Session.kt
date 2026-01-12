@@ -4,7 +4,6 @@ import kotlinx.datetime.LocalDateTime
 import shared.value.Currency
 import domain.common.value.Locale
 import domain.common.value.Platform
-import java.math.BigInteger
 import java.util.UUID
 
 /**
@@ -49,9 +48,9 @@ data class Spin(
     val id: UUID = UUID.randomUUID(),
     val roundId: UUID,
     val type: domain.common.value.SpinType,
-    val amount: BigInteger,
-    val realAmount: BigInteger,
-    val bonusAmount: BigInteger,
+    val amount: Long,
+    val realAmount: Long,
+    val bonusAmount: Long,
     val extId: String,
     val referenceId: UUID? = null,
     val freeSpinId: String? = null
@@ -61,20 +60,20 @@ data class Spin(
  * Bet amount breakdown.
  */
 data class BetAmount(
-    val real: BigInteger,
-    val bonus: BigInteger,
+    val real: Long,
+    val bonus: Long,
     val currency: Currency
 ) {
-    val total: BigInteger get() = real + bonus
+    val total: Long get() = real + bonus
 }
 
 /**
  * Player balance.
  */
 data class Balance(
-    val real: BigInteger,
-    val bonus: BigInteger,
+    val real: Long,
+    val bonus: Long,
     val currency: Currency
 ) {
-    val totalAmount: BigInteger get() = real + bonus
+    val totalAmount: Long get() = real + bonus
 }

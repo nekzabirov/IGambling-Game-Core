@@ -3,7 +3,6 @@ package domain.session.event
 import domain.common.event.SessionDomainEvent
 import domain.common.value.*
 import shared.value.Currency
-import java.math.BigInteger
 import java.time.Instant
 import java.util.UUID
 
@@ -30,9 +29,9 @@ data class BetPlacedEvent(
     val sessionId: SessionId,
     val roundId: RoundId,
     val spinId: SpinId,
-    val amount: BigInteger,
-    val realAmount: BigInteger,
-    val bonusAmount: BigInteger,
+    val amount: Long,
+    val realAmount: Long,
+    val bonusAmount: Long,
     val playerId: PlayerId,
     val currency: Currency,
     val freeSpinId: FreeSpinId?
@@ -49,15 +48,15 @@ data class BetSettledEvent(
     val sessionId: SessionId,
     val roundId: RoundId,
     val spinId: SpinId,
-    val betAmount: BigInteger,
-    val winAmount: BigInteger,
+    val betAmount: Long,
+    val winAmount: Long,
     val playerId: PlayerId,
     val currency: Currency,
     val freeSpinId: FreeSpinId?
 ) : SessionDomainEvent {
     override val aggregateId: String get() = sessionId.value.toString()
 
-    val isWin: Boolean get() = winAmount > BigInteger.ZERO
+    val isWin: Boolean get() = winAmount > 0L
 }
 
 /**

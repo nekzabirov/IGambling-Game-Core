@@ -10,7 +10,6 @@ import domain.common.error.IllegalStateError
 import domain.common.error.InsufficientBalanceError
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
-import java.math.BigInteger
 
 /**
  * Combined step: Find/create round AND validate balance in PARALLEL.
@@ -45,8 +44,8 @@ class PrepareRoundAndBalanceStep(
                 if (context.isFreeSpin) {
                     // FreeSpin mode: skip balance validation
                     BalanceValidation(
-                        betRealAmount = BigInteger.ZERO,
-                        betBonusAmount = BigInteger.ZERO,
+                        betRealAmount = 0L,
+                        betBonusAmount = 0L,
                         balance = null
                     )
                 } else {
@@ -89,7 +88,7 @@ class PrepareRoundAndBalanceStep(
 
         // Adjust balance if bonus bet is disabled
         val adjustedBalance = if (!game.bonusBetEnable) {
-            balance.copy(bonus = BigInteger.ZERO)
+            balance.copy(bonus = 0L)
         } else {
             balance
         }
@@ -129,8 +128,8 @@ class PrepareRoundAndBalanceStep(
     }
 
     private data class BalanceValidation(
-        val betRealAmount: BigInteger = BigInteger.ZERO,
-        val betBonusAmount: BigInteger = BigInteger.ZERO,
+        val betRealAmount: Long = 0L,
+        val betBonusAmount: Long = 0L,
         val balance: domain.session.model.Balance? = null,
         val error: Throwable? = null
     )
