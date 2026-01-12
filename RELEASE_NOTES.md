@@ -1,4 +1,190 @@
-# Release Notes - v1.0.1
+# Release Notes - v1.1.0
+
+**Release Date:** January 2026
+
+---
+
+## Overview
+
+iGambling Core Service v1.1.0 brings major performance optimizations, new gRPC services for Aggregator and Freespin management, enhanced round querying capabilities, and significant infrastructure improvements including Docker optimization and database migrations.
+
+---
+
+## New Features
+
+### Aggregator Management (gRPC)
+- **AggregatorService** - Full CRUD operations for game aggregators via gRPC
+  - `Create` - Register new aggregators with configuration
+  - `Find` - Retrieve aggregator by ID
+  - `FindAll` - List aggregators with pagination
+  - `Update` - Modify aggregator settings
+- Providers can now be associated with specific aggregators
+
+### Freespin Operations (gRPC)
+- **GetFreespinPreset** - Retrieve freespin configuration presets
+- **CreateFreespin** - Create new freespin awards for players
+- **CancelFreespin** - Cancel active freespin awards
+- Integrated into `GameGrpcService` for unified game management
+
+### Round Query Enhancements
+- **Date Range Filtering** - New `start_at` and `end_at` parameters for `FindAllRound`
+- Filter rounds by creation timestamp period
+- Enhanced pagination and filtering capabilities
+
+### Collection & Round Management (gRPC)
+- New gRPC services for collection management
+- Enhanced round management operations
+- Currency field added to round records
+
+### Provider Enhancements
+- **Game Counts** - Providers now include active game counts in listings
+- **Filtering Support** - Case-insensitive querying for provider searches
+- Provider-aggregator associations
+
+---
+
+## Performance Optimizations
+
+### In-Memory Balance Caching
+- **BalanceCache** implementation with 10-second TTL
+- Reduces redundant wallet HTTP calls during high-frequency operations
+- Predicted balance caching for faster response handling
+- Cache hit logging for monitoring
+
+### Async Processing
+- Wallet withdrawals now support async processing with predicted balance
+- Parallel execution for round creation and balance validation
+- Async event publishing for spin operations
+
+### Database Optimizations
+- Single-query steps for round and spin handling
+- Repository-based persistence replacing direct database access
+- Efficient querying patterns for aggregators
+
+---
+
+## Infrastructure Improvements
+
+### Docker Optimization
+- Production-ready Dockerfile with non-root user
+- Health check integration
+- Updated entrypoint configuration
+- Removed development Docker Compose files
+- New `.dockerignore` and build scripts
+
+### Database Migrations
+- Database migration runner implementation
+- Enhanced round management with migration support
+
+### Configuration
+- **GRPC_PORT** - Configurable gRPC server port (default: 5050)
+- **HTTP_PORT** - Environment variable for HTTP port configuration
+- gRPC client publishing script to Maven Local
+
+---
+
+## Refactoring
+
+### gRPC Client Error Handling
+- Improved error handling in `GameGrpcService`
+- Better error propagation for gRPC clients
+
+### Type Changes
+- Replaced `BigInt` with `Int` for improved compatibility
+- Simplified numeric handling across the codebase
+
+### Code Cleanup
+- Removed unused use cases, repositories, and tests
+- Removed aggregator and collection-related legacy modules
+- Cleaner codebase with repository-based persistence
+
+---
+
+## gRPC API Changes
+
+### New Service: AggregatorService
+
+| Operation | Description |
+|-----------|-------------|
+| **Create** | Create a new aggregator |
+| **Find** | Get aggregator by ID |
+| **FindAll** | List all aggregators with pagination |
+| **Update** | Update aggregator configuration |
+
+### Updated Services
+
+| Service | New Operations |
+|---------|----------------|
+| **GameService** | `GetFreespinPreset`, `CreateFreespin`, `CancelFreespin` |
+| **RoundService** | `start_at` and `end_at` date filters in `FindAll` |
+| **ProviderService** | Aggregator association support |
+
+---
+
+## Documentation
+
+- Added gRPC API documentation
+- Updated proto files with new service definitions
+
+---
+
+## Configuration
+
+### Environment Variables
+
+```bash
+# gRPC server port (default: 5050)
+GRPC_PORT=5050
+
+# HTTP server port
+HTTP_PORT=8080
+```
+
+### Balance Cache Settings
+
+The balance cache uses a 10-second TTL by default. This optimizes wallet operations during high-frequency betting scenarios.
+
+---
+
+## Migration Notes
+
+### From v1.0.1
+
+1. **Database Migrations** - Run the migration runner before deployment to ensure schema compatibility
+
+2. **gRPC Port** - The gRPC port is now configurable via `GRPC_PORT` environment variable. Update your deployment configurations if using a non-default port.
+
+3. **BigInt to Int** - If you have custom code using `BigInt` types from the gRPC API, update to use `Int` instead.
+
+4. **Removed Modules** - The following legacy modules have been removed:
+   - Standalone aggregator modules (now integrated into core)
+   - Collection-related legacy modules
+
+5. **Repository Pattern** - Direct database access has been replaced with repository-based persistence. Update any custom extensions accordingly.
+
+---
+
+## Dependencies
+
+No new external dependencies added. Internal optimizations improved performance without additional overhead.
+
+---
+
+## Known Issues
+
+- Balance cache TTL is not configurable (fixed at 10 seconds)
+- Turbo adapters require external Turbo service to be running
+
+---
+
+## Contributors
+
+- nekzabirov
+- Claude Code (AI-assisted development)
+
+---
+
+# Previous Release - v1.0.1
 
 **Release Date:** January 2026
 
