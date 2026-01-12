@@ -17,7 +17,7 @@ fun main() {
 
     embeddedServer(
         CIO,
-        port = 80,
+        port = System.getenv("HTTP_PORT").toIntOrNull() ?: 8080,
         host = "0.0.0.0",
         module = Application::module
     ).start(wait = true)
