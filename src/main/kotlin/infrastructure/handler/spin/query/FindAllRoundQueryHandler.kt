@@ -25,11 +25,9 @@ import java.util.UUID
 class FindAllRoundQueryHandler : QueryHandler<FindAllRoundQuery, FindAllRoundQueryResult> {
 
     override suspend fun handle(query: FindAllRoundQuery): Result<FindAllRoundQueryResult> = newSuspendedTransaction {
-        // Aggregation expressions for spin amounts
-        val totalPlaceReal = SpinTable.realAmount.sum()
-        val totalPlaceBonus = SpinTable.bonusAmount.sum()
-        val totalSettleReal = SpinTable.realAmount.sum()
-        val totalSettleBonus = SpinTable.bonusAmount.sum()
+        // Check if we need amount filtering (requires joining with spin aggregations)
+        val needsAmountFilter = query.minPlaceAmount != null || query.maxPlaceAmount != null ||
+                query.minSettleAmount != null || query.maxSettleAmount != null
 
         // Build base query with JOINs
         val baseQuery = RoundTable
@@ -75,43 +73,137 @@ class FindAllRoundQueryHandler : QueryHandler<FindAllRoundQuery, FindAllRoundQue
             Op.TRUE
         }
 
-        // Count total items for pagination
-        val totalItems = RoundTable
-            .innerJoin(SessionTable, { RoundTable.sessionId }, { SessionTable.id })
-            .innerJoin(GameTable, { RoundTable.gameId }, { GameTable.id })
-            .innerJoin(ProviderTable, { GameTable.providerId }, { ProviderTable.id })
-            .let { baseJoin ->
-                if (query.freeSpinId != null) {
-                    baseJoin.leftJoin(SpinTable, { RoundTable.id }, { SpinTable.roundId })
-                } else {
-                    baseJoin
+        // Helper function to build amount-filtered round IDs query
+        fun buildAmountFilteredQuery(): List<UUID> {
+            // First, get all round IDs matching base filters
+            val candidateRoundIds = RoundTable
+                .innerJoin(SessionTable, { RoundTable.sessionId }, { SessionTable.id })
+                .innerJoin(GameTable, { RoundTable.gameId }, { GameTable.id })
+                .innerJoin(ProviderTable, { GameTable.providerId }, { ProviderTable.id })
+                .let { baseJoin ->
+                    if (query.freeSpinId != null) {
+                        baseJoin.leftJoin(SpinTable, { RoundTable.id }, { SpinTable.roundId })
+                    } else {
+                        baseJoin
+                    }
                 }
+                .select(RoundTable.id)
+                .where { whereClause }
+                .withDistinct()
+                .map { it[RoundTable.id].value }
+
+            if (candidateRoundIds.isEmpty()) return emptyList()
+
+            // Get place amounts per round
+            val placeAmounts = SpinTable
+                .select(
+                    SpinTable.roundId,
+                    SpinTable.realAmount.sum(),
+                    SpinTable.bonusAmount.sum()
+                )
+                .where { (SpinTable.roundId inList candidateRoundIds) and (SpinTable.type eq SpinType.PLACE) }
+                .groupBy(SpinTable.roundId)
+                .associate { row ->
+                    row[SpinTable.roundId]!!.value to (
+                        (row[SpinTable.realAmount.sum()] ?: 0L) + (row[SpinTable.bonusAmount.sum()] ?: 0L)
+                    )
+                }
+
+            // Get settle amounts per round
+            val settleAmounts = SpinTable
+                .select(
+                    SpinTable.roundId,
+                    SpinTable.realAmount.sum(),
+                    SpinTable.bonusAmount.sum()
+                )
+                .where { (SpinTable.roundId inList candidateRoundIds) and (SpinTable.type eq SpinType.SETTLE) }
+                .groupBy(SpinTable.roundId)
+                .associate { row ->
+                    row[SpinTable.roundId]!!.value to (
+                        (row[SpinTable.realAmount.sum()] ?: 0L) + (row[SpinTable.bonusAmount.sum()] ?: 0L)
+                    )
+                }
+
+            // Filter by amount conditions
+            return candidateRoundIds.filter { roundId ->
+                val placeTotal = placeAmounts[roundId] ?: 0L
+                val settleTotal = settleAmounts[roundId] ?: 0L
+
+                val passesMinPlace = query.minPlaceAmount?.let { placeTotal >= it } ?: true
+                val passesMaxPlace = query.maxPlaceAmount?.let { placeTotal <= it } ?: true
+                val passesMinSettle = query.minSettleAmount?.let { settleTotal >= it } ?: true
+                val passesMaxSettle = query.maxSettleAmount?.let { settleTotal <= it } ?: true
+
+                passesMinPlace && passesMaxPlace && passesMinSettle && passesMaxSettle
             }
-            .select(RoundTable.id.countDistinct())
-            .where { whereClause }
-            .first()[RoundTable.id.countDistinct()]
+        }
+
+        // Get filtered round IDs (either with or without amount filtering)
+        val filteredRoundIds = if (needsAmountFilter) {
+            buildAmountFilteredQuery()
+        } else {
+            null // Will use standard query below
+        }
+
+        // Count total items for pagination
+        val totalItems = if (needsAmountFilter) {
+            filteredRoundIds!!.size.toLong()
+        } else {
+            RoundTable
+                .innerJoin(SessionTable, { RoundTable.sessionId }, { SessionTable.id })
+                .innerJoin(GameTable, { RoundTable.gameId }, { GameTable.id })
+                .innerJoin(ProviderTable, { GameTable.providerId }, { ProviderTable.id })
+                .let { baseJoin ->
+                    if (query.freeSpinId != null) {
+                        baseJoin.leftJoin(SpinTable, { RoundTable.id }, { SpinTable.roundId })
+                    } else {
+                        baseJoin
+                    }
+                }
+                .select(RoundTable.id.countDistinct())
+                .where { whereClause }
+                .first()[RoundTable.id.countDistinct()]
+        }
 
         val totalPages = query.pageable.getTotalPages(totalItems)
 
-        // Get round IDs with pagination first
-        val roundIds = RoundTable
-            .innerJoin(SessionTable, { RoundTable.sessionId }, { SessionTable.id })
-            .innerJoin(GameTable, { RoundTable.gameId }, { GameTable.id })
-            .innerJoin(ProviderTable, { GameTable.providerId }, { ProviderTable.id })
-            .let { baseJoin ->
-                if (query.freeSpinId != null) {
-                    baseJoin.leftJoin(SpinTable, { RoundTable.id }, { SpinTable.roundId })
-                } else {
-                    baseJoin
-                }
+        // Get round IDs with pagination
+        val roundIds = if (needsAmountFilter) {
+            // Apply pagination to pre-filtered IDs
+            // First get ordered IDs
+            val orderedIds = if (filteredRoundIds!!.isNotEmpty()) {
+                RoundTable
+                    .select(RoundTable.id)
+                    .where { RoundTable.id inList filteredRoundIds }
+                    .orderBy(RoundTable.createdAt to SortOrder.DESC)
+                    .map { it[RoundTable.id].value }
+            } else {
+                emptyList()
             }
-            .select(RoundTable.id)
-            .where { whereClause }
-            .groupBy(RoundTable.id)
-            .orderBy(RoundTable.createdAt to SortOrder.DESC)
-            .limit(query.pageable.sizeReal)
-            .offset(query.pageable.offset.toLong())
-            .map { it[RoundTable.id].value }
+
+            orderedIds
+                .drop(query.pageable.offset.toInt())
+                .take(query.pageable.sizeReal)
+        } else {
+            RoundTable
+                .innerJoin(SessionTable, { RoundTable.sessionId }, { SessionTable.id })
+                .innerJoin(GameTable, { RoundTable.gameId }, { GameTable.id })
+                .innerJoin(ProviderTable, { GameTable.providerId }, { ProviderTable.id })
+                .let { baseJoin ->
+                    if (query.freeSpinId != null) {
+                        baseJoin.leftJoin(SpinTable, { RoundTable.id }, { SpinTable.roundId })
+                    } else {
+                        baseJoin
+                    }
+                }
+                .select(RoundTable.id)
+                .where { whereClause }
+                .groupBy(RoundTable.id)
+                .orderBy(RoundTable.createdAt to SortOrder.DESC)
+                .limit(query.pageable.sizeReal)
+                .offset(query.pageable.offset.toLong())
+                .map { it[RoundTable.id].value }
+        }
 
         if (roundIds.isEmpty()) {
             return@newSuspendedTransaction Result.success(

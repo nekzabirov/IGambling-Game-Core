@@ -398,6 +398,10 @@ List rounds with pagination and filters.
 | `finished` | `bool` | No | Filter by completion status |
 | `start_at` | `google.protobuf.Timestamp` | No | Filter: created_at >= start_at |
 | `end_at` | `google.protobuf.Timestamp` | No | Filter: created_at <= end_at |
+| `min_place_amount` | `int64` | No | Filter: total place amount >= value |
+| `max_place_amount` | `int64` | No | Filter: total place amount <= value |
+| `min_settle_amount` | `int64` | No | Filter: total settle amount >= value |
+| `max_settle_amount` | `int64` | No | Filter: total settle amount <= value |
 
 **Response: `FindAllRoundResult`**
 
@@ -548,10 +552,39 @@ Manage game collections/categories.
 
 | Method | Request | Response | Description |
 |--------|---------|----------|-------------|
+| `Create` | `CreateCollectionCommand` | `CreateCollectionResult` | Create a new collection |
 | `Find` | `FindCollectionQuery` | `FindCollectionResult` | Get a single collection |
 | `FindAll` | `FindAllCollectionQuery` | `FindAllCollectionResult` | List collections |
 | `Update` | `UpdateCollectionCommand` | `UpdateCollectionResult` | Update collection config |
 | `UpdateGames` | `UpdateCollectionGamesCommand` | `UpdateCollectionGamesResult` | Add/remove games |
+
+---
+
+#### Create
+
+Create a new collection.
+
+**Request: `CreateCollectionCommand`**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `identity` | `string` | Yes | Unique collection identifier |
+| `name` | `LocaleNameDto` | Yes | Localized names |
+| `active` | `bool` | No | Active status (default: true) |
+| `order` | `int32` | No | Display order (default: 100) |
+
+**Response: `CreateCollectionResult`**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `collection` | `CollectionDto` | The created collection |
+
+**Errors:**
+
+| Error Code | gRPC Status | Condition |
+|------------|-------------|-----------|
+| `DUPLICATE_ENTITY` (1002) | `ALREADY_EXISTS` | Collection with this identity already exists |
+| `VALIDATION_ERROR` (1001) | `INVALID_ARGUMENT` | Invalid identity or name |
 
 ---
 

@@ -72,7 +72,11 @@ class RoundGrpcService(
             endAt = if (request.hasEndAt()) {
                 Instant.fromEpochSeconds(request.endAt.seconds, request.endAt.nanos)
                     .toLocalDateTime(TimeZone.UTC)
-            } else null
+            } else null,
+            minPlaceAmount = if (request.hasMinPlaceAmount()) request.minPlaceAmount else null,
+            maxPlaceAmount = if (request.hasMaxPlaceAmount()) request.maxPlaceAmount else null,
+            minSettleAmount = if (request.hasMinSettleAmount()) request.minSettleAmount else null,
+            maxSettleAmount = if (request.hasMaxSettleAmount()) request.maxSettleAmount else null
         )
 
         return findAllRoundQueryHandler.handle(query)

@@ -2,6 +2,8 @@ package infrastructure.api.grpc.service
 
 import application.port.inbound.CommandHandler
 import application.port.inbound.QueryHandler
+import com.nekgamebling.application.port.inbound.collection.command.CreateCollectionCommand
+import com.nekgamebling.application.port.inbound.collection.command.CreateCollectionResponse
 import com.nekgamebling.application.port.inbound.collection.command.UpdateCollectionCommand
 import com.nekgamebling.application.port.inbound.collection.command.UpdateCollectionGamesCommand
 import com.nekgamebling.application.port.inbound.collection.query.FindAllCollectionsQuery
@@ -11,27 +13,47 @@ import com.nekgamebling.application.port.inbound.collection.query.FindCollection
 import com.nekgamebling.game.dto.PaginationMetaDto
 import com.nekgamebling.game.service.CollectionItemDto
 import com.nekgamebling.game.service.CollectionServiceGrpcKt
+import com.nekgamebling.game.service.CreateCollectionResult
 import com.nekgamebling.game.service.FindAllCollectionResult
 import com.nekgamebling.game.service.FindCollectionResult
 import com.nekgamebling.game.service.UpdateCollectionResult
 import com.nekgamebling.game.service.UpdateCollectionGamesResult
+import shared.value.LocaleName
 import infrastructure.api.grpc.error.mapOrThrowGrpc
 import infrastructure.api.grpc.mapper.toProto
 import shared.value.Pageable
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
+import com.nekgamebling.game.service.CreateCollectionCommand as CreateCollectionCommandProto
 import com.nekgamebling.game.service.FindCollectionQuery as FindCollectionQueryProto
 import com.nekgamebling.game.service.FindAllCollectionQuery as FindAllCollectionQueryProto
 import com.nekgamebling.game.service.UpdateCollectionCommand as UpdateCollectionCommandProto
 import com.nekgamebling.game.service.UpdateCollectionGamesCommand as UpdateCollectionGamesCommandProto
 
 class CollectionGrpcService(
+    private val createCollectionCommandHandler: CommandHandler<CreateCollectionCommand, CreateCollectionResponse>,
     private val findCollectionQueryHandler: QueryHandler<FindCollectionQuery, FindCollectionResponse>,
     private val findAllCollectionsQueryHandler: QueryHandler<FindAllCollectionsQuery, FindAllCollectionsResponse>,
     private val updateCollectionCommandHandler: CommandHandler<UpdateCollectionCommand, Unit>,
     private val updateCollectionGamesCommandHandler: CommandHandler<UpdateCollectionGamesCommand, Unit>,
     coroutineContext: CoroutineContext = EmptyCoroutineContext
 ) : CollectionServiceGrpcKt.CollectionServiceCoroutineImplBase(coroutineContext) {
+
+    override suspend fun create(request: CreateCollectionCommandProto): CreateCollectionResult {
+        val command = CreateCollectionCommand(
+            identity = request.identity,
+            name = LocaleName(request.name.valuesMap),
+            active = if (request.hasActive()) request.active else true,
+            order = if (request.hasOrder()) request.order else 100
+        )
+
+        return createCollectionCommandHandler.handle(command)
+            .mapOrThrowGrpc { response ->
+                CreateCollectionResult.newBuilder()
+                    .setCollection(response.collection.toProto())
+                    .build()
+            }
+    }
 
     override suspend fun find(request: FindCollectionQueryProto): FindCollectionResult {
         val query = FindCollectionQuery(identity = request.identity)

@@ -25,6 +25,8 @@ import com.nekgamebling.application.port.inbound.provider.query.FindaProviderQue
 import com.nekgamebling.application.port.inbound.provider.query.FindaProviderResponse
 import com.nekgamebling.application.port.inbound.provider.command.UpdateProviderCommand
 import com.nekgamebling.application.port.inbound.provider.command.UpdateProviderImageCommand
+import com.nekgamebling.application.port.inbound.collection.command.CreateCollectionCommand
+import com.nekgamebling.application.port.inbound.collection.command.CreateCollectionResponse
 import com.nekgamebling.application.port.inbound.collection.command.UpdateCollectionCommand
 import com.nekgamebling.application.port.inbound.collection.command.UpdateCollectionGamesCommand
 import com.nekgamebling.application.port.inbound.collection.query.FindAllCollectionsQuery
@@ -33,6 +35,7 @@ import com.nekgamebling.application.port.inbound.collection.query.FindCollection
 import com.nekgamebling.application.port.inbound.collection.query.FindCollectionResponse
 import com.nekgamebling.infrastructure.handler.provider.command.UpdateProviderCommandHandler
 import com.nekgamebling.infrastructure.handler.provider.command.UpdateProviderImageCommandHandler
+import com.nekgamebling.infrastructure.handler.collection.command.CreateCollectionCommandHandler
 import com.nekgamebling.infrastructure.handler.collection.command.UpdateCollectionCommandHandler
 import com.nekgamebling.infrastructure.handler.collection.command.UpdateCollectionGamesCommandHandler
 import com.nekgamebling.application.port.inbound.game.command.PlayGameCommand
@@ -93,6 +96,7 @@ val handlerModule = module {
     single<CommandHandler<RemoveGameTagCommand, Unit>>(named("removeGameTag")) { RemoveGameTagCommandHandler() }
     single<CommandHandler<UpdateProviderCommand, Unit>>(named("updateProvider")) { UpdateProviderCommandHandler() }
     single<CommandHandler<UpdateProviderImageCommand, Unit>>(named("updateProviderImage")) { UpdateProviderImageCommandHandler(get()) }
+    single<CommandHandler<CreateCollectionCommand, CreateCollectionResponse>>(named("createCollection")) { CreateCollectionCommandHandler() }
     single<CommandHandler<UpdateCollectionCommand, Unit>>(named("updateCollection")) { UpdateCollectionCommandHandler() }
     single<CommandHandler<UpdateCollectionGamesCommand, Unit>>(named("updateCollectionGames")) { UpdateCollectionGamesCommandHandler() }
     single<CommandHandler<PlayGameCommand, PlayGameResponse>>(named("playGame")) { PlayGameCommandHandler(get()) }

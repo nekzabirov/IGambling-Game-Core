@@ -7,7 +7,7 @@
 set -e
 
 # Default version if not provided
-VERSION="${1:-1.0.2}"
+VERSION="${1:-1.0.0}"
 
 echo "=========================================="
 echo "Publishing gRPC Client to Maven Local"

@@ -19,7 +19,13 @@ data class FindAllRoundQuery(
     val freeSpinId: String?,
 
     val startAt: LocalDateTime? = null,
-    val endAt: LocalDateTime? = null
+    val endAt: LocalDateTime? = null,
+
+    // Amount range filters
+    val minPlaceAmount: Long? = null,
+    val maxPlaceAmount: Long? = null,
+    val minSettleAmount: Long? = null,
+    val maxSettleAmount: Long? = null
 ) : Query<FindAllRoundQueryResult>
 
 data class FindAllRoundQueryResult(

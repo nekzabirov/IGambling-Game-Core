@@ -40,6 +40,7 @@ val grpcModule = module {
 
     single {
         CollectionGrpcService(
+            createCollectionCommandHandler = get(named("createCollection")),
             findCollectionQueryHandler = get(named("findCollection")),
             findAllCollectionsQueryHandler = get(named("findAllCollections")),
             updateCollectionCommandHandler = get(named("updateCollection")),
